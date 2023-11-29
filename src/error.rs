@@ -17,13 +17,13 @@ pub enum Error {
     #[error("Too many fragments.")]
     TooManyFragments,
     #[error("Failed to bind.")]
-    FailedToBind(Box<dyn std::error::Error>),
+    FailedToBind(Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Failed to set socket option.")]
-    FailedToSetSocketOption(Box<dyn std::error::Error>),
+    FailedToSetSocketOption(Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Failed to send.")]
-    FailedToSend(Box<dyn std::error::Error>),
+    FailedToSend(Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Failed to receive.")]
-    FailedToReceive(Box<dyn std::error::Error>),
+    FailedToReceive(Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error("Unknown error.")]
     Unknown,
 }

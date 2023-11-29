@@ -17,7 +17,7 @@ pub enum SocketOption {
 pub trait Socket: Sized {
     type BindAddress;
     type PeerAddress: Address;
-    type Error: std::error::Error + 'static;
+    type Error: std::error::Error + Send + Sync + 'static;
 
     fn bind(address: Self::BindAddress) -> Result<Self, Self::Error>;
     fn set_option(&mut self, option: SocketOption, value: i32) -> Result<(), Self::Error>;
