@@ -718,7 +718,8 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
             as *mut Channel;
         if (*outgoing_command).command.header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE != 0
         {
-            (*channel).outgoing_reliable_sequence_number += 1;
+            (*channel).outgoing_reliable_sequence_number =
+                (*channel).outgoing_reliable_sequence_number.wrapping_add(1);
             (*channel).outgoing_unreliable_sequence_number = 0;
             (*outgoing_command).reliable_sequence_number =
                 (*channel).outgoing_reliable_sequence_number;
@@ -732,7 +733,9 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
             (*outgoing_command).unreliable_sequence_number = 0;
         } else {
             if (*outgoing_command).fragment_offset == 0 {
-                (*channel).outgoing_unreliable_sequence_number += 1;
+                (*channel).outgoing_unreliable_sequence_number = (*channel)
+                    .outgoing_unreliable_sequence_number
+                    .wrapping_add(1);
             }
             (*outgoing_command).reliable_sequence_number =
                 (*channel).outgoing_reliable_sequence_number;
