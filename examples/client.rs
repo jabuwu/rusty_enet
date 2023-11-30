@@ -5,9 +5,9 @@ use std::{
 };
 
 use rusty_enet::{
-    enet_address_set_host_ip, enet_host_connect, enet_host_create, enet_host_service,
+    c_void, enet_address_set_host_ip, enet_host_connect, enet_host_create, enet_host_service,
     enet_packet_create, enet_peer_send, ENetAddress, ENET_EVENT_TYPE_CONNECT,
-    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE, ENET_PACKET_FLAG_RELIABLE, c_void,
+    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE, ENET_PACKET_FLAG_RELIABLE,
 };
 
 fn make_address(ip: &str, port: u16) -> ENetAddress {
@@ -30,7 +30,7 @@ fn main() {
         assert!(!peer.is_null());
         loop {
             let mut event = zeroed();
-            let result = enet_host_service(host, &mut event, 0);
+            let result = enet_host_service(host, &mut event);
             if result > 0 {
                 match event.type_0 {
                     ENET_EVENT_TYPE_CONNECT => {

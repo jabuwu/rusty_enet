@@ -25,7 +25,7 @@ fn main() {
         let host = enet_host_create(&mut bind_address, 32, 2, 0, 0);
         loop {
             let mut event = zeroed();
-            let result = enet_host_service(host, &mut event, 0);
+            let result = enet_host_service(host, &mut event);
             if result > 0 {
                 match event.type_0 {
                     ENET_EVENT_TYPE_CONNECT => {

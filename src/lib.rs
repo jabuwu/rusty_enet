@@ -420,11 +420,6 @@ pub type _ENetSocketType = c_uint;
 pub const ENET_SOCKET_TYPE_DATAGRAM: _ENetSocketType = 2;
 pub const ENET_SOCKET_TYPE_STREAM: _ENetSocketType = 1;
 pub type ENetSocketType = _ENetSocketType;
-pub type _ENetSocketWait = c_uint;
-pub const ENET_SOCKET_WAIT_INTERRUPT: _ENetSocketWait = 4;
-pub const ENET_SOCKET_WAIT_RECEIVE: _ENetSocketWait = 2;
-pub const ENET_SOCKET_WAIT_SEND: _ENetSocketWait = 1;
-pub const ENET_SOCKET_WAIT_NONE: _ENetSocketWait = 0;
 pub type _ENetSocketOption = c_uint;
 pub const ENET_SOCKOPT_TTL: _ENetSocketOption = 10;
 pub const ENET_SOCKOPT_NODELAY: _ENetSocketOption = 9;
@@ -6547,12 +6542,7 @@ pub unsafe fn enet_host_check_events(mut host: *mut ENetHost, mut event: *mut EN
     (*event).packet = 0 as *mut ENetPacket;
     return enet_protocol_dispatch_incoming_commands(host, event);
 }
-pub unsafe fn enet_host_service(
-    mut host: *mut ENetHost,
-    mut event: *mut ENetEvent,
-    mut timeout: enet_uint32,
-) -> c_int {
-    let mut waitCondition: enet_uint32 = 0;
+pub unsafe fn enet_host_service(mut host: *mut ENetHost, mut event: *mut ENetEvent) -> c_int {
     if !event.is_null() {
         (*event).type_0 = ENET_EVENT_TYPE_NONE;
         (*event).peer = 0 as *mut ENetPeer;
@@ -6564,69 +6554,36 @@ pub unsafe fn enet_host_service(
         }
     }
     (*host).serviceTime = enet_time_get();
-    timeout = (timeout as c_uint).wrapping_add((*host).serviceTime) as enet_uint32 as enet_uint32;
-    loop {
-        if (if ((*host).serviceTime).wrapping_sub((*host).bandwidthThrottleEpoch)
-            >= 86400000 as c_int as c_uint
-        {
-            ((*host).bandwidthThrottleEpoch).wrapping_sub((*host).serviceTime)
-        } else {
-            ((*host).serviceTime).wrapping_sub((*host).bandwidthThrottleEpoch)
-        }) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL as c_int as c_uint
-        {
-            enet_host_bandwidth_throttle(host);
-        }
-        match enet_protocol_send_outgoing_commands(host, event, 1 as c_int) {
+    if (if ((*host).serviceTime).wrapping_sub((*host).bandwidthThrottleEpoch)
+        >= 86400000 as c_int as c_uint
+    {
+        ((*host).bandwidthThrottleEpoch).wrapping_sub((*host).serviceTime)
+    } else {
+        ((*host).serviceTime).wrapping_sub((*host).bandwidthThrottleEpoch)
+    }) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL as c_int as c_uint
+    {
+        enet_host_bandwidth_throttle(host);
+    }
+    match enet_protocol_send_outgoing_commands(host, event, 1 as c_int) {
+        1 => return 1 as c_int,
+        -1 => return -(1 as c_int),
+        _ => {}
+    }
+    match enet_protocol_receive_incoming_commands(host, event) {
+        1 => return 1 as c_int,
+        -1 => return -(1 as c_int),
+        _ => {}
+    }
+    match enet_protocol_send_outgoing_commands(host, event, 1 as c_int) {
+        1 => return 1 as c_int,
+        -1 => return -(1 as c_int),
+        _ => {}
+    }
+    if !event.is_null() {
+        match enet_protocol_dispatch_incoming_commands(host, event) {
             1 => return 1 as c_int,
             -1 => return -(1 as c_int),
             _ => {}
-        }
-        match enet_protocol_receive_incoming_commands(host, event) {
-            1 => return 1 as c_int,
-            -1 => return -(1 as c_int),
-            _ => {}
-        }
-        match enet_protocol_send_outgoing_commands(host, event, 1 as c_int) {
-            1 => return 1 as c_int,
-            -1 => return -(1 as c_int),
-            _ => {}
-        }
-        if !event.is_null() {
-            match enet_protocol_dispatch_incoming_commands(host, event) {
-                1 => return 1 as c_int,
-                -1 => return -(1 as c_int),
-                _ => {}
-            }
-        }
-        if !(((*host).serviceTime).wrapping_sub(timeout) >= 86400000 as c_int as c_uint) {
-            return 0 as c_int;
-        }
-        loop {
-            (*host).serviceTime = enet_time_get();
-            if !(((*host).serviceTime).wrapping_sub(timeout) >= 86400000 as c_int as c_uint) {
-                return 0 as c_int;
-            }
-            waitCondition = (ENET_SOCKET_WAIT_RECEIVE as c_int
-                | ENET_SOCKET_WAIT_INTERRUPT as c_int) as enet_uint32;
-            if enet_socket_wait(
-                (*host).socket,
-                &mut waitCondition,
-                if timeout.wrapping_sub((*host).serviceTime) >= 86400000 as c_int as c_uint {
-                    ((*host).serviceTime).wrapping_sub(timeout)
-                } else {
-                    timeout.wrapping_sub((*host).serviceTime)
-                },
-            ) != 0 as c_int
-            {
-                return -(1 as c_int);
-            }
-            if !(waitCondition & ENET_SOCKET_WAIT_INTERRUPT as c_int as c_uint != 0) {
-                break;
-            }
-        }
-        (*host).serviceTime = enet_time_get();
-        if !(waitCondition & ENET_SOCKET_WAIT_RECEIVE as c_int as c_uint != 0) {
-            break;
         }
     }
     return 0 as c_int;
@@ -7188,45 +7145,4 @@ pub unsafe fn enet_socketset_select(
         0 as *mut fd_set,
         &mut timeVal,
     );
-}
-pub unsafe fn enet_socket_wait(
-    mut socket_0: ENetSocket,
-    mut condition: *mut enet_uint32,
-    mut timeout: enet_uint32,
-) -> c_int {
-    let mut pollSocket: pollfd = pollfd {
-        fd: 0,
-        events: 0,
-        revents: 0,
-    };
-    let mut pollCount: c_int = 0;
-    pollSocket.fd = socket_0;
-    pollSocket.events = 0 as c_int as c_short;
-    if *condition & ENET_SOCKET_WAIT_SEND as c_int as c_uint != 0 {
-        pollSocket.events = (pollSocket.events as c_int | 0x4 as c_int) as c_short;
-    }
-    if *condition & ENET_SOCKET_WAIT_RECEIVE as c_int as c_uint != 0 {
-        pollSocket.events = (pollSocket.events as c_int | 0x1 as c_int) as c_short;
-    }
-    pollCount = poll(&mut pollSocket, 1 as c_int as nfds_t, timeout as c_int);
-    if pollCount < 0 as c_int {
-        if *__errno_location() == 4 as c_int
-            && *condition & ENET_SOCKET_WAIT_INTERRUPT as c_int as c_uint != 0
-        {
-            *condition = ENET_SOCKET_WAIT_INTERRUPT as c_int as enet_uint32;
-            return 0 as c_int;
-        }
-        return -(1 as c_int);
-    }
-    *condition = ENET_SOCKET_WAIT_NONE as c_int as enet_uint32;
-    if pollCount == 0 as c_int {
-        return 0 as c_int;
-    }
-    if pollSocket.revents as c_int & 0x4 as c_int != 0 {
-        *condition |= ENET_SOCKET_WAIT_SEND as c_int as c_uint;
-    }
-    if pollSocket.revents as c_int & 0x1 as c_int != 0 {
-        *condition |= ENET_SOCKET_WAIT_RECEIVE as c_int as c_uint;
-    }
-    return 0 as c_int;
 }
