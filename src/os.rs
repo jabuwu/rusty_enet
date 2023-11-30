@@ -5,15 +5,20 @@ use std::{
     sync::{Arc, Mutex, Once},
 };
 
-pub type c_void = libc::c_void;
-pub type c_char = libc::c_char;
-pub type c_uchar = libc::c_uchar;
-pub type c_short = libc::c_short;
-pub type c_ushort = libc::c_ushort;
-pub type c_int = libc::c_int;
-pub type c_uint = libc::c_uint;
-pub type c_long = libc::c_long;
-pub type c_ulong = libc::c_ulong;
+#[repr(u8)]
+pub enum c_void {
+    __variant1,
+    __variant2,
+}
+
+pub type c_char = std::ffi::c_char;
+pub type c_uchar = u8;
+pub type c_short = i16;
+pub type c_ushort = u16;
+pub type c_int = i32;
+pub type c_uint = u32;
+pub type c_long = i64;
+pub type c_ulong = u64;
 
 pub type size_t = usize;
 pub type __uint16_t = c_ushort;
