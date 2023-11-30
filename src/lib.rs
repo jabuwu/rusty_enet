@@ -8,10 +8,9 @@
     unused_mut
 )]
 
-use std::{
-    mem::MaybeUninit,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::mem::MaybeUninit;
+
+use wasm_timer::{SystemTime, UNIX_EPOCH};
 
 mod address;
 mod error;
