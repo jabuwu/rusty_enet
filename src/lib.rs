@@ -772,8 +772,7 @@ static mut callbacks: ENetCallbacks = unsafe {
         init
     }
 };
-#[no_mangle]
-pub unsafe extern "C" fn enet_initialize_with_callbacks(
+pub unsafe fn enet_initialize_with_callbacks(
     mut version: ENetVersion,
     mut inits: *const ENetCallbacks,
 ) -> libc::c_int {
@@ -796,8 +795,7 @@ pub unsafe extern "C" fn enet_initialize_with_callbacks(
     }
     return enet_initialize();
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_linked_version() -> ENetVersion {
+pub unsafe fn enet_linked_version() -> ENetVersion {
     return ((1 as libc::c_int) << 16 as libc::c_int
         | (3 as libc::c_int) << 8 as libc::c_int
         | 17 as libc::c_int) as ENetVersion;
@@ -1970,10 +1968,7 @@ pub unsafe extern "C" fn enet_range_coder_decompress(
     }
     return outData.offset_from(outStart) as libc::c_long as size_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_compress_with_range_coder(
-    mut host: *mut ENetHost,
-) -> libc::c_int {
+pub unsafe fn enet_host_compress_with_range_coder(mut host: *mut ENetHost) -> libc::c_int {
     let mut compressor: ENetCompressor = ENetCompressor {
         context: 0 as *mut libc::c_void,
         compress: None,
@@ -2015,8 +2010,7 @@ pub unsafe extern "C" fn enet_host_compress_with_range_coder(
     enet_host_compress(host, &mut compressor);
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_create(
+pub unsafe fn enet_host_create(
     mut address: *const ENetAddress,
     mut peerCount: size_t,
     mut channelLimit: size_t,
@@ -2137,8 +2131,7 @@ pub unsafe extern "C" fn enet_host_create(
     }
     return host;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_destroy(mut host: *mut ENetHost) {
+pub unsafe fn enet_host_destroy(mut host: *mut ENetHost) {
     let mut currentPeer: *mut ENetPeer = 0 as *mut ENetPeer;
     if host.is_null() {
         return;
@@ -2156,8 +2149,7 @@ pub unsafe extern "C" fn enet_host_destroy(mut host: *mut ENetHost) {
     enet_free((*host).peers as *mut libc::c_void);
     enet_free(host as *mut libc::c_void);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_random(mut host: *mut ENetHost) -> enet_uint32 {
+pub unsafe fn enet_host_random(mut host: *mut ENetHost) -> enet_uint32 {
     (*host).randomSeed = ((*host).randomSeed as libc::c_uint)
         .wrapping_add(0x6d2b79f5 as libc::c_uint) as enet_uint32
         as enet_uint32;
@@ -2166,8 +2158,7 @@ pub unsafe extern "C" fn enet_host_random(mut host: *mut ENetHost) -> enet_uint3
     n ^= n.wrapping_add((n ^ n >> 7 as libc::c_int).wrapping_mul(n | 61 as libc::c_uint));
     return n ^ n >> 14 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_connect(
+pub unsafe fn enet_host_connect(
     mut host: *mut ENetHost,
     mut address: *const ENetAddress,
     mut channelCount: size_t,
@@ -2269,8 +2260,7 @@ pub unsafe extern "C" fn enet_host_connect(
     );
     return currentPeer;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_broadcast(
+pub unsafe fn enet_host_broadcast(
     mut host: *mut ENetHost,
     mut channelID: enet_uint8,
     mut packet: *mut ENetPacket,
@@ -2289,11 +2279,7 @@ pub unsafe extern "C" fn enet_host_broadcast(
         enet_packet_destroy(packet);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_compress(
-    mut host: *mut ENetHost,
-    mut compressor: *const ENetCompressor,
-) {
+pub unsafe fn enet_host_compress(mut host: *mut ENetHost, mut compressor: *const ENetCompressor) {
     if !((*host).compressor.context).is_null() && ((*host).compressor.destroy).is_some() {
         (Some(((*host).compressor.destroy).expect("non-null function pointer")))
             .expect("non-null function pointer")((*host).compressor.context);
@@ -2304,11 +2290,7 @@ pub unsafe extern "C" fn enet_host_compress(
         (*host).compressor.context = 0 as *mut libc::c_void;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_channel_limit(
-    mut host: *mut ENetHost,
-    mut channelLimit: size_t,
-) {
+pub unsafe fn enet_host_channel_limit(mut host: *mut ENetHost, mut channelLimit: size_t) {
     if channelLimit == 0
         || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as libc::c_int as libc::c_ulong
     {
@@ -2318,8 +2300,7 @@ pub unsafe extern "C" fn enet_host_channel_limit(
     }
     (*host).channelLimit = channelLimit;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_bandwidth_limit(
+pub unsafe fn enet_host_bandwidth_limit(
     mut host: *mut ENetHost,
     mut incomingBandwidth: enet_uint32,
     mut outgoingBandwidth: enet_uint32,
@@ -2328,8 +2309,7 @@ pub unsafe extern "C" fn enet_host_bandwidth_limit(
     (*host).outgoingBandwidth = outgoingBandwidth;
     (*host).recalculateBandwidthLimits = 1 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
+pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
     let mut timeCurrent: enet_uint32 = enet_time_get();
     let mut elapsedTime: enet_uint32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
     let mut peersRemaining: enet_uint32 = (*host).connectedPeers as enet_uint32;
@@ -2521,13 +2501,11 @@ pub unsafe extern "C" fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_list_clear(mut list: *mut ENetList) {
+pub unsafe fn enet_list_clear(mut list: *mut ENetList) {
     (*list).sentinel.next = &mut (*list).sentinel;
     (*list).sentinel.previous = &mut (*list).sentinel;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_list_insert(
+pub unsafe fn enet_list_insert(
     mut position: ENetListIterator,
     mut data: *mut libc::c_void,
 ) -> ENetListIterator {
@@ -2538,14 +2516,12 @@ pub unsafe extern "C" fn enet_list_insert(
     (*position).previous = result;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_list_remove(mut position: ENetListIterator) -> *mut libc::c_void {
+pub unsafe fn enet_list_remove(mut position: ENetListIterator) -> *mut libc::c_void {
     (*(*position).previous).next = (*position).next;
     (*(*position).next).previous = (*position).previous;
     return position as *mut libc::c_void;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_list_move(
+pub unsafe fn enet_list_move(
     mut position: ENetListIterator,
     mut dataFirst: *mut libc::c_void,
     mut dataLast: *mut libc::c_void,
@@ -2560,8 +2536,7 @@ pub unsafe extern "C" fn enet_list_move(
     (*position).previous = last;
     return first;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_list_size(mut list: *mut ENetList) -> size_t {
+pub unsafe fn enet_list_size(mut list: *mut ENetList) -> size_t {
     let mut size: size_t = 0 as libc::c_int as size_t;
     let mut position: ENetListIterator = 0 as *mut ENetListNode;
     position = (*list).sentinel.next;
@@ -2571,8 +2546,7 @@ pub unsafe extern "C" fn enet_list_size(mut list: *mut ENetList) -> size_t {
     }
     return size;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_packet_create(
+pub unsafe fn enet_packet_create(
     mut data: *const libc::c_void,
     mut dataLength: size_t,
     mut flags: enet_uint32,
@@ -2603,8 +2577,7 @@ pub unsafe extern "C" fn enet_packet_create(
     (*packet).userData = 0 as *mut libc::c_void;
     return packet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_packet_destroy(mut packet: *mut ENetPacket) {
+pub unsafe fn enet_packet_destroy(mut packet: *mut ENetPacket) {
     if packet.is_null() {
         return;
     }
@@ -2619,8 +2592,7 @@ pub unsafe extern "C" fn enet_packet_destroy(mut packet: *mut ENetPacket) {
     }
     enet_free(packet as *mut libc::c_void);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_packet_resize(
+pub unsafe fn enet_packet_resize(
     mut packet: *mut ENetPacket,
     mut dataLength: size_t,
 ) -> libc::c_int {
@@ -2929,8 +2901,7 @@ pub unsafe extern "C" fn enet_crc32(
     }
     return htonl(!crc);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_throttle_configure(
+pub unsafe fn enet_peer_throttle_configure(
     mut peer: *mut ENetPeer,
     mut interval: enet_uint32,
     mut acceleration: enet_uint32,
@@ -2961,11 +2932,7 @@ pub unsafe extern "C" fn enet_peer_throttle_configure(
         0 as libc::c_int as enet_uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_throttle(
-    mut peer: *mut ENetPeer,
-    mut rtt: enet_uint32,
-) -> libc::c_int {
+pub unsafe fn enet_peer_throttle(mut peer: *mut ENetPeer, mut rtt: enet_uint32) -> libc::c_int {
     if (*peer).lastRoundTripTime <= (*peer).lastRoundTripTimeVariance {
         (*peer).packetThrottle = (*peer).packetThrottleLimit;
     } else if rtt <= (*peer).lastRoundTripTime {
@@ -2994,8 +2961,7 @@ pub unsafe extern "C" fn enet_peer_throttle(
     }
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_send(
+pub unsafe fn enet_peer_send(
     mut peer: *mut ENetPeer,
     mut channelID: enet_uint8,
     mut packet: *mut ENetPacket,
@@ -3143,8 +3109,7 @@ pub unsafe extern "C" fn enet_peer_send(
     }
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_receive(
+pub unsafe fn enet_peer_receive(
     mut peer: *mut ENetPeer,
     mut channelID: *mut enet_uint8,
 ) -> *mut ENetPacket {
@@ -3170,7 +3135,7 @@ pub unsafe extern "C" fn enet_peer_receive(
         .wrapping_sub((*packet).dataLength) as size_t as size_t;
     return packet;
 }
-unsafe extern "C" fn enet_peer_reset_outgoing_commands(mut queue: *mut ENetList) {
+unsafe fn enet_peer_reset_outgoing_commands(mut queue: *mut ENetList) {
     let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
     while !((*queue).sentinel.next == &mut (*queue).sentinel as *mut ENetListNode) {
         outgoingCommand = enet_list_remove((*queue).sentinel.next) as *mut ENetOutgoingCommand;
@@ -3184,7 +3149,7 @@ unsafe extern "C" fn enet_peer_reset_outgoing_commands(mut queue: *mut ENetList)
         enet_free(outgoingCommand as *mut libc::c_void);
     }
 }
-unsafe extern "C" fn enet_peer_remove_incoming_commands(
+unsafe fn enet_peer_remove_incoming_commands(
     mut _queue: *mut ENetList,
     mut startCommand: ENetListIterator,
     mut endCommand: ENetListIterator,
@@ -3213,7 +3178,7 @@ unsafe extern "C" fn enet_peer_remove_incoming_commands(
         enet_free(incomingCommand as *mut libc::c_void);
     }
 }
-unsafe extern "C" fn enet_peer_reset_incoming_commands(mut queue: *mut ENetList) {
+unsafe fn enet_peer_reset_incoming_commands(mut queue: *mut ENetList) {
     enet_peer_remove_incoming_commands(
         queue,
         (*queue).sentinel.next,
@@ -3221,8 +3186,7 @@ unsafe extern "C" fn enet_peer_reset_incoming_commands(mut queue: *mut ENetList)
         0 as *mut ENetIncomingCommand,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_reset_queues(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_reset_queues(mut peer: *mut ENetPeer) {
     let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
     if (*peer).flags as libc::c_int & ENET_PEER_FLAG_NEEDS_DISPATCH as libc::c_int != 0 {
         enet_list_remove(&mut (*peer).dispatchList);
@@ -3253,8 +3217,7 @@ pub unsafe extern "C" fn enet_peer_reset_queues(mut peer: *mut ENetPeer) {
     (*peer).channels = 0 as *mut ENetChannel;
     (*peer).channelCount = 0 as libc::c_int as size_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_on_connect(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_on_connect(mut peer: *mut ENetPeer) {
     if (*peer).state as libc::c_uint != ENET_PEER_STATE_CONNECTED as libc::c_int as libc::c_uint
         && (*peer).state as libc::c_uint
             != ENET_PEER_STATE_DISCONNECT_LATER as libc::c_int as libc::c_uint
@@ -3266,8 +3229,7 @@ pub unsafe extern "C" fn enet_peer_on_connect(mut peer: *mut ENetPeer) {
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_on_disconnect(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_on_disconnect(mut peer: *mut ENetPeer) {
     if (*peer).state as libc::c_uint == ENET_PEER_STATE_CONNECTED as libc::c_int as libc::c_uint
         || (*peer).state as libc::c_uint
             == ENET_PEER_STATE_DISCONNECT_LATER as libc::c_int as libc::c_uint
@@ -3279,8 +3241,7 @@ pub unsafe extern "C" fn enet_peer_on_disconnect(mut peer: *mut ENetPeer) {
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_sub(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_reset(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_reset(mut peer: *mut ENetPeer) {
     enet_peer_on_disconnect(peer);
     (*peer).outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID as libc::c_int as enet_uint16;
     (*peer).connectID = 0 as libc::c_int as enet_uint32;
@@ -3336,8 +3297,7 @@ pub unsafe extern "C" fn enet_peer_reset(mut peer: *mut ENetPeer) {
     );
     enet_peer_reset_queues(peer);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_ping(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_ping(mut peer: *mut ENetPeer) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3360,19 +3320,14 @@ pub unsafe extern "C" fn enet_peer_ping(mut peer: *mut ENetPeer) {
         0 as libc::c_int as enet_uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_ping_interval(
-    mut peer: *mut ENetPeer,
-    mut pingInterval: enet_uint32,
-) {
+pub unsafe fn enet_peer_ping_interval(mut peer: *mut ENetPeer, mut pingInterval: enet_uint32) {
     (*peer).pingInterval = if pingInterval != 0 {
         pingInterval
     } else {
         ENET_PEER_PING_INTERVAL as libc::c_int as libc::c_uint
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_timeout(
+pub unsafe fn enet_peer_timeout(
     mut peer: *mut ENetPeer,
     mut timeoutLimit: enet_uint32,
     mut timeoutMinimum: enet_uint32,
@@ -3394,8 +3349,7 @@ pub unsafe extern "C" fn enet_peer_timeout(
         ENET_PEER_TIMEOUT_MAXIMUM as libc::c_int as libc::c_uint
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_disconnect_now(mut peer: *mut ENetPeer, mut data: enet_uint32) {
+pub unsafe fn enet_peer_disconnect_now(mut peer: *mut ENetPeer, mut data: enet_uint32) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3428,8 +3382,7 @@ pub unsafe extern "C" fn enet_peer_disconnect_now(mut peer: *mut ENetPeer, mut d
     }
     enet_peer_reset(peer);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_disconnect(mut peer: *mut ENetPeer, mut data: enet_uint32) {
+pub unsafe fn enet_peer_disconnect(mut peer: *mut ENetPeer, mut data: enet_uint32) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3480,8 +3433,7 @@ pub unsafe extern "C" fn enet_peer_disconnect(mut peer: *mut ENetPeer, mut data:
         enet_peer_reset(peer);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_has_outgoing_commands(mut peer: *mut ENetPeer) -> libc::c_int {
+pub unsafe fn enet_peer_has_outgoing_commands(mut peer: *mut ENetPeer) -> libc::c_int {
     if (*peer).outgoingCommands.sentinel.next
         == &mut (*peer).outgoingCommands.sentinel as *mut ENetListNode
         && (*peer).outgoingSendReliableCommands.sentinel.next
@@ -3493,11 +3445,7 @@ pub unsafe extern "C" fn enet_peer_has_outgoing_commands(mut peer: *mut ENetPeer
     }
     return 1 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_disconnect_later(
-    mut peer: *mut ENetPeer,
-    mut data: enet_uint32,
-) {
+pub unsafe fn enet_peer_disconnect_later(mut peer: *mut ENetPeer, mut data: enet_uint32) {
     if ((*peer).state as libc::c_uint == ENET_PEER_STATE_CONNECTED as libc::c_int as libc::c_uint
         || (*peer).state as libc::c_uint
             == ENET_PEER_STATE_DISCONNECT_LATER as libc::c_int as libc::c_uint)
@@ -3509,8 +3457,7 @@ pub unsafe extern "C" fn enet_peer_disconnect_later(
         enet_peer_disconnect(peer, data);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_queue_acknowledgement(
+pub unsafe fn enet_peer_queue_acknowledgement(
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
     mut sentTime: enet_uint16,
@@ -3558,8 +3505,7 @@ pub unsafe extern "C" fn enet_peer_queue_acknowledgement(
     );
     return acknowledgement;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_setup_outgoing_command(
+pub unsafe fn enet_peer_setup_outgoing_command(
     mut peer: *mut ENetPeer,
     mut outgoingCommand: *mut ENetOutgoingCommand,
 ) {
@@ -3640,8 +3586,7 @@ pub unsafe extern "C" fn enet_peer_setup_outgoing_command(
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_queue_outgoing_command(
+pub unsafe fn enet_peer_queue_outgoing_command(
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
     mut packet: *mut ENetPacket,
@@ -3664,8 +3609,7 @@ pub unsafe extern "C" fn enet_peer_queue_outgoing_command(
     enet_peer_setup_outgoing_command(peer, outgoingCommand);
     return outgoingCommand;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_dispatch_incoming_unreliable_commands(
+pub unsafe fn enet_peer_dispatch_incoming_unreliable_commands(
     mut peer: *mut ENetPeer,
     mut channel: *mut ENetChannel,
     mut queuedCommand: *mut ENetIncomingCommand,
@@ -3795,8 +3739,7 @@ pub unsafe extern "C" fn enet_peer_dispatch_incoming_unreliable_commands(
         queuedCommand,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_dispatch_incoming_reliable_commands(
+pub unsafe fn enet_peer_dispatch_incoming_reliable_commands(
     mut peer: *mut ENetPeer,
     mut channel: *mut ENetChannel,
     mut queuedCommand: *mut ENetIncomingCommand,
@@ -3846,8 +3789,7 @@ pub unsafe extern "C" fn enet_peer_dispatch_incoming_reliable_commands(
         enet_peer_dispatch_incoming_unreliable_commands(peer, channel, queuedCommand);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_peer_queue_incoming_command(
+pub unsafe fn enet_peer_queue_incoming_command(
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
     mut data: *const libc::c_void,
@@ -4838,12 +4780,11 @@ static mut commandSizes: [size_t; 13] = [
     ::core::mem::size_of::<ENetProtocolThrottleConfigure>() as libc::c_ulong,
     ::core::mem::size_of::<ENetProtocolSendFragment>() as libc::c_ulong,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn enet_protocol_command_size(mut commandNumber: enet_uint8) -> size_t {
+pub unsafe fn enet_protocol_command_size(mut commandNumber: enet_uint8) -> size_t {
     return commandSizes
         [(commandNumber as libc::c_int & ENET_PROTOCOL_COMMAND_MASK as libc::c_int) as usize];
 }
-unsafe extern "C" fn enet_protocol_change_state(
+unsafe fn enet_protocol_change_state(
     mut _host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut state: ENetPeerState,
@@ -4857,7 +4798,7 @@ unsafe extern "C" fn enet_protocol_change_state(
     }
     (*peer).state = state;
 }
-unsafe extern "C" fn enet_protocol_dispatch_state(
+unsafe fn enet_protocol_dispatch_state(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut state: ENetPeerState,
@@ -4872,7 +4813,7 @@ unsafe extern "C" fn enet_protocol_dispatch_state(
             | ENET_PEER_FLAG_NEEDS_DISPATCH as libc::c_int) as enet_uint16;
     }
 }
-unsafe extern "C" fn enet_protocol_dispatch_incoming_commands(
+unsafe fn enet_protocol_dispatch_incoming_commands(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
 ) -> libc::c_int {
@@ -4930,7 +4871,7 @@ unsafe extern "C" fn enet_protocol_dispatch_incoming_commands(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_notify_connect(
+unsafe fn enet_protocol_notify_connect(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut event: *mut ENetEvent,
@@ -4955,7 +4896,7 @@ unsafe extern "C" fn enet_protocol_notify_connect(
         );
     };
 }
-unsafe extern "C" fn enet_protocol_notify_disconnect(
+unsafe fn enet_protocol_notify_disconnect(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut event: *mut ENetEvent,
@@ -4980,7 +4921,7 @@ unsafe extern "C" fn enet_protocol_notify_disconnect(
         enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
     };
 }
-unsafe extern "C" fn enet_protocol_remove_sent_unreliable_commands(
+unsafe fn enet_protocol_remove_sent_unreliable_commands(
     mut peer: *mut ENetPeer,
     mut sentUnreliableCommands: *mut ENetList,
 ) {
@@ -5017,7 +4958,7 @@ unsafe extern "C" fn enet_protocol_remove_sent_unreliable_commands(
         enet_peer_disconnect(peer, (*peer).eventData);
     }
 }
-unsafe extern "C" fn enet_protocol_find_sent_reliable_command(
+unsafe fn enet_protocol_find_sent_reliable_command(
     mut list: *mut ENetList,
     mut reliableSequenceNumber: enet_uint16,
     mut channelID: enet_uint8,
@@ -5046,7 +4987,7 @@ unsafe extern "C" fn enet_protocol_find_sent_reliable_command(
     }
     return 0 as *mut ENetOutgoingCommand;
 }
-unsafe extern "C" fn enet_protocol_remove_sent_reliable_command(
+unsafe fn enet_protocol_remove_sent_reliable_command(
     mut peer: *mut ENetPeer,
     mut reliableSequenceNumber: enet_uint16,
     mut channelID: enet_uint8,
@@ -5130,7 +5071,7 @@ unsafe extern "C" fn enet_protocol_remove_sent_reliable_command(
         ((*outgoingCommand).sentTime).wrapping_add((*outgoingCommand).roundTripTimeout);
     return commandNumber;
 }
-unsafe extern "C" fn enet_protocol_handle_connect(
+unsafe fn enet_protocol_handle_connect(
     mut host: *mut ENetHost,
     mut _header: *mut ENetProtocolHeader,
     mut command: *mut ENetProtocol,
@@ -5333,7 +5274,7 @@ unsafe extern "C" fn enet_protocol_handle_connect(
     );
     return peer;
 }
-unsafe extern "C" fn enet_protocol_handle_send_reliable(
+unsafe fn enet_protocol_handle_send_reliable(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5373,7 +5314,7 @@ unsafe extern "C" fn enet_protocol_handle_send_reliable(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_send_unsequenced(
+unsafe fn enet_protocol_handle_send_unsequenced(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5450,7 +5391,7 @@ unsafe extern "C" fn enet_protocol_handle_send_unsequenced(
             as libc::c_uint;
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_send_unreliable(
+unsafe fn enet_protocol_handle_send_unreliable(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5490,7 +5431,7 @@ unsafe extern "C" fn enet_protocol_handle_send_unreliable(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_send_fragment(
+unsafe fn enet_protocol_handle_send_fragment(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5654,7 +5595,7 @@ unsafe extern "C" fn enet_protocol_handle_send_fragment(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_send_unreliable_fragment(
+unsafe fn enet_protocol_handle_send_unreliable_fragment(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5833,7 +5774,7 @@ unsafe extern "C" fn enet_protocol_handle_send_unreliable_fragment(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_ping(
+unsafe fn enet_protocol_handle_ping(
     mut _host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut _command: *const ENetProtocol,
@@ -5846,7 +5787,7 @@ unsafe extern "C" fn enet_protocol_handle_ping(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_bandwidth_limit(
+unsafe fn enet_protocol_handle_bandwidth_limit(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5896,7 +5837,7 @@ unsafe extern "C" fn enet_protocol_handle_bandwidth_limit(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_throttle_configure(
+unsafe fn enet_protocol_handle_throttle_configure(
     mut _host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5914,7 +5855,7 @@ unsafe extern "C" fn enet_protocol_handle_throttle_configure(
         ntohl((*command).throttleConfigure.packetThrottleDeceleration);
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_disconnect(
+unsafe fn enet_protocol_handle_disconnect(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut command: *const ENetProtocol,
@@ -5960,7 +5901,7 @@ unsafe extern "C" fn enet_protocol_handle_disconnect(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_acknowledge(
+unsafe fn enet_protocol_handle_acknowledge(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
     mut peer: *mut ENetPeer,
@@ -6095,7 +6036,7 @@ unsafe extern "C" fn enet_protocol_handle_acknowledge(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_verify_connect(
+unsafe fn enet_protocol_handle_verify_connect(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
     mut peer: *mut ENetPeer,
@@ -6156,7 +6097,7 @@ unsafe extern "C" fn enet_protocol_handle_verify_connect(
     enet_protocol_notify_connect(host, peer, event);
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_handle_incoming_commands(
+unsafe fn enet_protocol_handle_incoming_commands(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
 ) -> libc::c_int {
@@ -6418,7 +6359,7 @@ unsafe extern "C" fn enet_protocol_handle_incoming_commands(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_receive_incoming_commands(
+unsafe fn enet_protocol_receive_incoming_commands(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
 ) -> libc::c_int {
@@ -6505,10 +6446,7 @@ unsafe extern "C" fn enet_protocol_receive_incoming_commands(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_send_acknowledgements(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
-) {
+unsafe fn enet_protocol_send_acknowledgements(mut host: *mut ENetHost, mut peer: *mut ENetPeer) {
     let mut command: *mut ENetProtocol = &mut *((*host).commands)
         .as_mut_ptr()
         .offset((*host).commandCount as isize)
@@ -6576,7 +6514,7 @@ unsafe extern "C" fn enet_protocol_send_acknowledgements(
     (*host).bufferCount =
         buffer.offset_from(((*host).buffers).as_mut_ptr()) as libc::c_long as size_t;
 }
-unsafe extern "C" fn enet_protocol_check_timeouts(
+unsafe fn enet_protocol_check_timeouts(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut event: *mut ENetEvent,
@@ -6659,7 +6597,7 @@ unsafe extern "C" fn enet_protocol_check_timeouts(
     }
     return 0 as libc::c_int;
 }
-unsafe extern "C" fn enet_protocol_check_outgoing_commands(
+unsafe fn enet_protocol_check_outgoing_commands(
     mut host: *mut ENetHost,
     mut peer: *mut ENetPeer,
     mut sentUnreliableCommands: *mut ENetList,
@@ -6936,7 +6874,7 @@ unsafe extern "C" fn enet_protocol_check_outgoing_commands(
     }
     return canPing;
 }
-unsafe extern "C" fn enet_protocol_send_outgoing_commands(
+unsafe fn enet_protocol_send_outgoing_commands(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
     mut checkForTimeouts: libc::c_int,
@@ -7185,13 +7123,11 @@ unsafe extern "C" fn enet_protocol_send_outgoing_commands(
     }
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_flush(mut host: *mut ENetHost) {
+pub unsafe fn enet_host_flush(mut host: *mut ENetHost) {
     (*host).serviceTime = enet_time_get();
     enet_protocol_send_outgoing_commands(host, 0 as *mut ENetEvent, 0 as libc::c_int);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_check_events(
+pub unsafe fn enet_host_check_events(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
 ) -> libc::c_int {
@@ -7203,8 +7139,7 @@ pub unsafe extern "C" fn enet_host_check_events(
     (*event).packet = 0 as *mut ENetPacket;
     return enet_protocol_dispatch_incoming_commands(host, event);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_service(
+pub unsafe fn enet_host_service(
     mut host: *mut ENetHost,
     mut event: *mut ENetEvent,
     mut timeout: enet_uint32,
@@ -7296,18 +7231,14 @@ pub unsafe extern "C" fn enet_host_service(
     return 0 as libc::c_int;
 }
 static mut timeBase: enet_uint32 = 0 as libc::c_int as enet_uint32;
-#[no_mangle]
-pub unsafe extern "C" fn enet_initialize() -> libc::c_int {
+pub unsafe fn enet_initialize() -> libc::c_int {
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_deinitialize() {}
-#[no_mangle]
-pub unsafe extern "C" fn enet_host_random_seed() -> enet_uint32 {
+pub unsafe fn enet_deinitialize() {}
+pub unsafe fn enet_host_random_seed() -> enet_uint32 {
     return time(0 as *mut time_t) as enet_uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_time_get() -> enet_uint32 {
+pub unsafe fn enet_time_get() -> enet_uint32 {
     let mut timeVal: timeval = timeval {
         tv_sec: 0,
         tv_usec: 0,
@@ -7317,8 +7248,7 @@ pub unsafe extern "C" fn enet_time_get() -> enet_uint32 {
         + timeVal.tv_usec / 1000 as libc::c_int as libc::c_long
         - timeBase as libc::c_long) as enet_uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_time_set(mut newTimeBase: enet_uint32) {
+pub unsafe fn enet_time_set(mut newTimeBase: enet_uint32) {
     let mut timeVal: timeval = timeval {
         tv_sec: 0,
         tv_usec: 0,
@@ -7328,8 +7258,7 @@ pub unsafe extern "C" fn enet_time_set(mut newTimeBase: enet_uint32) {
         + timeVal.tv_usec / 1000 as libc::c_int as libc::c_long
         - newTimeBase as libc::c_long) as enet_uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_address_set_host_ip(
+pub unsafe fn enet_address_set_host_ip(
     mut address: *mut ENetAddress,
     mut name: *const libc::c_char,
 ) -> libc::c_int {
@@ -7343,8 +7272,7 @@ pub unsafe extern "C" fn enet_address_set_host_ip(
     }
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_address_set_host(
+pub unsafe fn enet_address_set_host(
     mut address: *mut ENetAddress,
     mut name: *const libc::c_char,
 ) -> libc::c_int {
@@ -7394,8 +7322,7 @@ pub unsafe extern "C" fn enet_address_set_host(
     }
     return enet_address_set_host_ip(address, name);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_address_get_host_ip(
+pub unsafe fn enet_address_get_host_ip(
     mut address: *const ENetAddress,
     mut name: *mut libc::c_char,
     mut nameLength: size_t,
@@ -7412,8 +7339,7 @@ pub unsafe extern "C" fn enet_address_get_host_ip(
     }
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_address_get_host(
+pub unsafe fn enet_address_get_host(
     mut address: *const ENetAddress,
     mut name: *mut libc::c_char,
     mut nameLength: size_t,
@@ -7456,8 +7382,7 @@ pub unsafe extern "C" fn enet_address_get_host(
     }
     return enet_address_get_host_ip(address, name, nameLength);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_bind(
+pub unsafe fn enet_socket_bind(
     mut socket_0: ENetSocket,
     mut address: *const ENetAddress,
 ) -> libc::c_int {
@@ -7486,8 +7411,7 @@ pub unsafe extern "C" fn enet_socket_bind(
         ::core::mem::size_of::<sockaddr_in>() as libc::c_ulong as socklen_t,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_get_address(
+pub unsafe fn enet_socket_get_address(
     mut socket_0: ENetSocket,
     mut address: *mut ENetAddress,
 ) -> libc::c_int {
@@ -7511,8 +7435,7 @@ pub unsafe extern "C" fn enet_socket_get_address(
     (*address).port = ntohs(sin.sin_port);
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_listen(
+pub unsafe fn enet_socket_listen(
     mut socket_0: ENetSocket,
     mut backlog: libc::c_int,
 ) -> libc::c_int {
@@ -7525,8 +7448,7 @@ pub unsafe extern "C" fn enet_socket_listen(
         },
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_create(mut type_0: ENetSocketType) -> ENetSocket {
+pub unsafe fn enet_socket_create(mut type_0: ENetSocketType) -> ENetSocket {
     return socket(
         2 as libc::c_int,
         if type_0 as libc::c_uint == ENET_SOCKET_TYPE_DATAGRAM as libc::c_int as libc::c_uint {
@@ -7537,8 +7459,7 @@ pub unsafe extern "C" fn enet_socket_create(mut type_0: ENetSocketType) -> ENetS
         0 as libc::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_set_option(
+pub unsafe fn enet_socket_set_option(
     mut socket_0: ENetSocket,
     mut option: ENetSocketOption,
     mut value: libc::c_int,
@@ -7649,8 +7570,7 @@ pub unsafe extern "C" fn enet_socket_set_option(
         0 as libc::c_int
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_get_option(
+pub unsafe fn enet_socket_get_option(
     mut socket_0: ENetSocket,
     mut option: ENetSocketOption,
     mut value: *mut libc::c_int,
@@ -7686,8 +7606,7 @@ pub unsafe extern "C" fn enet_socket_get_option(
         0 as libc::c_int
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_connect(
+pub unsafe fn enet_socket_connect(
     mut socket_0: ENetSocket,
     mut address: *const ENetAddress,
 ) -> libc::c_int {
@@ -7716,8 +7635,7 @@ pub unsafe extern "C" fn enet_socket_connect(
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_accept(
+pub unsafe fn enet_socket_accept(
     mut socket_0: ENetSocket,
     mut address: *mut ENetAddress,
 ) -> ENetSocket {
@@ -7752,21 +7670,18 @@ pub unsafe extern "C" fn enet_socket_accept(
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_shutdown(
+pub unsafe fn enet_socket_shutdown(
     mut socket_0: ENetSocket,
     mut how: ENetSocketShutdown,
 ) -> libc::c_int {
     return shutdown(socket_0, how as libc::c_int);
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_destroy(mut socket_0: ENetSocket) {
+pub unsafe fn enet_socket_destroy(mut socket_0: ENetSocket) {
     if socket_0 != -(1 as libc::c_int) {
         close(socket_0);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_send(
+pub unsafe fn enet_socket_send(
     mut socket_0: ENetSocket,
     mut address: *const ENetAddress,
     mut buffers: *const ENetBuffer,
@@ -7816,8 +7731,7 @@ pub unsafe extern "C" fn enet_socket_send(
     }
     return sentLength;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_receive(
+pub unsafe fn enet_socket_receive(
     mut socket_0: ENetSocket,
     mut address: *mut ENetAddress,
     mut buffers: *mut ENetBuffer,
@@ -7866,8 +7780,7 @@ pub unsafe extern "C" fn enet_socket_receive(
     }
     return recvLength;
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socketset_select(
+pub unsafe fn enet_socketset_select(
     mut maxSocket: ENetSocket,
     mut readSet: *mut ENetSocketSet,
     mut writeSet: *mut ENetSocketSet,
@@ -7889,8 +7802,7 @@ pub unsafe extern "C" fn enet_socketset_select(
         &mut timeVal,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn enet_socket_wait(
+pub unsafe fn enet_socket_wait(
     mut socket_0: ENetSocket,
     mut condition: *mut enet_uint32,
     mut timeout: enet_uint32,
