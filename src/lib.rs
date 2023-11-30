@@ -18,7 +18,6 @@ pub struct ENetBuffer {
     pub data: *mut c_void,
     pub dataLength: size_t,
 }
-pub type ENetSocketSet = fd_set;
 pub type enet_uint8 = c_uchar;
 pub type enet_uint16 = c_ushort;
 pub type enet_uint32 = c_uint;
@@ -571,7 +570,7 @@ pub unsafe fn enet_initialize_with_callbacks(
     if ((*inits).no_memory).is_some() {
         callbacks.no_memory = (*inits).no_memory;
     }
-    return enet_initialize();
+    return 0;
 }
 pub unsafe fn enet_linked_version() -> ENetVersion {
     return ((1 as c_int) << 16 as c_int | (3 as c_int) << 8 as c_int | 17 as c_int) as ENetVersion;
@@ -6588,11 +6587,6 @@ pub unsafe fn enet_host_service(mut host: *mut ENetHost, mut event: *mut ENetEve
     }
     return 0 as c_int;
 }
-static mut timeBase: enet_uint32 = 0 as c_int as enet_uint32;
-pub unsafe fn enet_initialize() -> c_int {
-    return 0 as c_int;
-}
-pub unsafe fn enet_deinitialize() {}
 pub unsafe fn enet_host_random_seed() -> enet_uint32 {
     return time(0 as *mut time_t) as enet_uint32;
 }
@@ -6602,18 +6596,8 @@ pub unsafe fn enet_time_get() -> enet_uint32 {
         tv_usec: 0,
     };
     gettimeofday(&mut timeVal, 0 as *mut c_void);
-    return (timeVal.tv_sec * 1000 as c_int as c_long + timeVal.tv_usec / 1000 as c_int as c_long
-        - timeBase as c_long) as enet_uint32;
-}
-pub unsafe fn enet_time_set(mut newTimeBase: enet_uint32) {
-    let mut timeVal: timeval = timeval {
-        tv_sec: 0,
-        tv_usec: 0,
-    };
-    gettimeofday(&mut timeVal, 0 as *mut c_void);
-    timeBase = (timeVal.tv_sec * 1000 as c_int as c_long
-        + timeVal.tv_usec / 1000 as c_int as c_long
-        - newTimeBase as c_long) as enet_uint32;
+    return (timeVal.tv_sec * 1000 as c_int as c_long + timeVal.tv_usec / 1000 as c_int as c_long)
+        as enet_uint32;
 }
 pub unsafe fn enet_address_set_host_ip(
     mut address: *mut ENetAddress,
@@ -6628,115 +6612,6 @@ pub unsafe fn enet_address_set_host_ip(
         return -(1 as c_int);
     }
     return 0 as c_int;
-}
-pub unsafe fn enet_address_set_host(
-    mut address: *mut ENetAddress,
-    mut name: *const c_char,
-) -> c_int {
-    let mut hints: addrinfo = addrinfo {
-        ai_flags: 0,
-        ai_family: 0,
-        ai_socktype: 0,
-        ai_protocol: 0,
-        ai_addrlen: 0,
-        ai_addr: 0 as *mut sockaddr,
-        ai_canonname: 0 as *mut c_char,
-        ai_next: 0 as *mut addrinfo,
-    };
-    let mut resultList: *mut addrinfo = 0 as *mut addrinfo;
-    let mut result: *mut addrinfo = 0 as *mut addrinfo;
-    memset(
-        &mut hints as *mut addrinfo as *mut c_void,
-        0 as c_int,
-        ::core::mem::size_of::<addrinfo>() as c_ulong,
-    );
-    hints.ai_family = 2 as c_int;
-    if getaddrinfo(
-        name,
-        0 as *const c_char,
-        0 as *const addrinfo,
-        &mut resultList,
-    ) != 0 as c_int
-    {
-        return -(1 as c_int);
-    }
-    result = resultList;
-    while !result.is_null() {
-        if (*result).ai_family == 2 as c_int
-            && !((*result).ai_addr).is_null()
-            && (*result).ai_addrlen as c_ulong >= ::core::mem::size_of::<sockaddr_in>() as c_ulong
-        {
-            let mut sin: *mut sockaddr_in = (*result).ai_addr as *mut sockaddr_in;
-            (*address).host = (*sin).sin_addr.s_addr;
-            freeaddrinfo(resultList);
-            return 0 as c_int;
-        }
-        result = (*result).ai_next;
-    }
-    if !resultList.is_null() {
-        freeaddrinfo(resultList);
-    }
-    return enet_address_set_host_ip(address, name);
-}
-pub unsafe fn enet_address_get_host_ip(
-    mut address: *const ENetAddress,
-    mut name: *mut c_char,
-    mut nameLength: size_t,
-) -> c_int {
-    if (inet_ntop(
-        2 as c_int,
-        &(*address).host as *const enet_uint32 as *const c_void,
-        name,
-        nameLength as socklen_t,
-    ))
-    .is_null()
-    {
-        return -(1 as c_int);
-    }
-    return 0 as c_int;
-}
-pub unsafe fn enet_address_get_host(
-    mut address: *const ENetAddress,
-    mut name: *mut c_char,
-    mut nameLength: size_t,
-) -> c_int {
-    let mut sin: sockaddr_in = sockaddr_in {
-        sin_family: 0,
-        sin_port: 0,
-        sin_addr: in_addr { s_addr: 0 },
-        sin_zero: [0; 8],
-    };
-    let mut err: c_int = 0;
-    memset(
-        &mut sin as *mut sockaddr_in as *mut c_void,
-        0 as c_int,
-        ::core::mem::size_of::<sockaddr_in>() as c_ulong,
-    );
-    sin.sin_family = 2 as c_int as sa_family_t;
-    sin.sin_port = htons((*address).port);
-    sin.sin_addr.s_addr = (*address).host;
-    err = getnameinfo(
-        &mut sin as *mut sockaddr_in as *mut sockaddr,
-        ::core::mem::size_of::<sockaddr_in>() as c_ulong as socklen_t,
-        name,
-        nameLength as socklen_t,
-        0 as *mut c_char,
-        0 as c_int as socklen_t,
-        8 as c_int,
-    );
-    if err == 0 {
-        if !name.is_null()
-            && nameLength > 0 as c_int as c_ulong
-            && (memchr(name as *const c_void, '\0' as i32, nameLength)).is_null()
-        {
-            return -(1 as c_int);
-        }
-        return 0 as c_int;
-    }
-    if err != -(2 as c_int) {
-        return -(1 as c_int);
-    }
-    return enet_address_get_host_ip(address, name, nameLength);
 }
 pub unsafe fn enet_socket_bind(mut socket_0: ENetSocket, mut address: *const ENetAddress) -> c_int {
     let mut sin: sockaddr_in = sockaddr_in {
@@ -6786,16 +6661,6 @@ pub unsafe fn enet_socket_get_address(
     (*address).host = sin.sin_addr.s_addr;
     (*address).port = ntohs(sin.sin_port);
     return 0 as c_int;
-}
-pub unsafe fn enet_socket_listen(mut socket_0: ENetSocket, mut backlog: c_int) -> c_int {
-    return listen(
-        socket_0,
-        if backlog < 0 as c_int {
-            4096 as c_int
-        } else {
-            backlog
-        },
-    );
 }
 pub unsafe fn enet_socket_create(mut type_0: ENetSocketType) -> ENetSocket {
     return socket(
@@ -6918,108 +6783,6 @@ pub unsafe fn enet_socket_set_option(
         0 as c_int
     };
 }
-pub unsafe fn enet_socket_get_option(
-    mut socket_0: ENetSocket,
-    mut option: ENetSocketOption,
-    mut value: *mut c_int,
-) -> c_int {
-    let mut result: c_int = -(1 as c_int);
-    let mut len: socklen_t = 0;
-    match option as c_uint {
-        8 => {
-            len = ::core::mem::size_of::<c_int>() as c_ulong as socklen_t;
-            result = getsockopt(
-                socket_0,
-                1 as c_int,
-                4 as c_int,
-                value as *mut c_void,
-                &mut len,
-            );
-        }
-        10 => {
-            len = ::core::mem::size_of::<c_int>() as c_ulong as socklen_t;
-            result = getsockopt(
-                socket_0,
-                IPPROTO_IP as c_int,
-                2 as c_int,
-                value as *mut c_char as *mut c_void,
-                &mut len,
-            );
-        }
-        _ => {}
-    }
-    return if result == -(1 as c_int) {
-        -(1 as c_int)
-    } else {
-        0 as c_int
-    };
-}
-pub unsafe fn enet_socket_connect(
-    mut socket_0: ENetSocket,
-    mut address: *const ENetAddress,
-) -> c_int {
-    let mut sin: sockaddr_in = sockaddr_in {
-        sin_family: 0,
-        sin_port: 0,
-        sin_addr: in_addr { s_addr: 0 },
-        sin_zero: [0; 8],
-    };
-    let mut result: c_int = 0;
-    memset(
-        &mut sin as *mut sockaddr_in as *mut c_void,
-        0 as c_int,
-        ::core::mem::size_of::<sockaddr_in>() as c_ulong,
-    );
-    sin.sin_family = 2 as c_int as sa_family_t;
-    sin.sin_port = htons((*address).port);
-    sin.sin_addr.s_addr = (*address).host;
-    result = connect(
-        socket_0,
-        &mut sin as *mut sockaddr_in as *mut sockaddr,
-        ::core::mem::size_of::<sockaddr_in>() as c_ulong as socklen_t,
-    );
-    if result == -(1 as c_int) && *__errno_location() == 115 as c_int {
-        return 0 as c_int;
-    }
-    return result;
-}
-pub unsafe fn enet_socket_accept(
-    mut socket_0: ENetSocket,
-    mut address: *mut ENetAddress,
-) -> ENetSocket {
-    let mut result: c_int = 0;
-    let mut sin: sockaddr_in = sockaddr_in {
-        sin_family: 0,
-        sin_port: 0,
-        sin_addr: in_addr { s_addr: 0 },
-        sin_zero: [0; 8],
-    };
-    let mut sinLength: socklen_t = ::core::mem::size_of::<sockaddr_in>() as c_ulong as socklen_t;
-    result = accept(
-        socket_0,
-        if !address.is_null() {
-            &mut sin as *mut sockaddr_in as *mut sockaddr
-        } else {
-            0 as *mut sockaddr
-        },
-        if !address.is_null() {
-            &mut sinLength
-        } else {
-            0 as *mut socklen_t
-        },
-    );
-    if result == -(1 as c_int) {
-        return -(1 as c_int);
-    }
-    if !address.is_null() {
-        (*address).host = sin.sin_addr.s_addr;
-        (*address).port = ntohs(sin.sin_port);
-    }
-    return result;
-}
-pub unsafe fn enet_socket_shutdown(mut socket_0: ENetSocket, mut how: ENetSocketShutdown) -> c_int {
-    return shutdown(socket_0, how as c_int);
-}
 pub unsafe fn enet_socket_destroy(mut socket_0: ENetSocket) {
     if socket_0 != -(1 as c_int) {
         close(socket_0);
@@ -7123,26 +6886,4 @@ pub unsafe fn enet_socket_receive(
         (*address).port = ntohs(sin.sin_port);
     }
     return recvLength;
-}
-pub unsafe fn enet_socketset_select(
-    mut maxSocket: ENetSocket,
-    mut readSet: *mut ENetSocketSet,
-    mut writeSet: *mut ENetSocketSet,
-    mut timeout: enet_uint32,
-) -> c_int {
-    let mut timeVal: timeval = timeval {
-        tv_sec: 0,
-        tv_usec: 0,
-    };
-    timeVal.tv_sec = timeout.wrapping_div(1000 as c_int as c_uint) as __time_t;
-    timeVal.tv_usec = timeout
-        .wrapping_rem(1000 as c_int as c_uint)
-        .wrapping_mul(1000 as c_int as c_uint) as __suseconds_t;
-    return select(
-        maxSocket + 1 as c_int,
-        readSet,
-        writeSet,
-        0 as *mut fd_set,
-        &mut timeVal,
-    );
 }

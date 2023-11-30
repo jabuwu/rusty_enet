@@ -1,11 +1,4 @@
 extern "C" {
-    pub fn select(
-        __nfds: c_int,
-        __readfds: *mut fd_set,
-        __writefds: *mut fd_set,
-        __exceptfds: *mut fd_set,
-        __timeout: *mut timeval,
-    ) -> c_int;
     pub fn malloc(_: c_ulong) -> *mut c_void;
     pub fn free(__ptr: *mut c_void);
     pub fn abort() -> !;
@@ -13,16 +6,8 @@ extern "C" {
     pub fn socket(__domain: c_int, __type: c_int, __protocol: c_int) -> c_int;
     pub fn bind(__fd: c_int, __addr: *const sockaddr, __len: socklen_t) -> c_int;
     pub fn getsockname(__fd: c_int, __addr: *mut sockaddr, __len: *mut socklen_t) -> c_int;
-    pub fn connect(__fd: c_int, __addr: *const sockaddr, __len: socklen_t) -> c_int;
     pub fn sendmsg(__fd: c_int, __message: *const msghdr, __flags: c_int) -> ssize_t;
     pub fn recvmsg(__fd: c_int, __message: *mut msghdr, __flags: c_int) -> ssize_t;
-    pub fn getsockopt(
-        __fd: c_int,
-        __level: c_int,
-        __optname: c_int,
-        __optval: *mut c_void,
-        __optlen: *mut socklen_t,
-    ) -> c_int;
     pub fn setsockopt(
         __fd: c_int,
         __level: c_int,
@@ -30,44 +15,18 @@ extern "C" {
         __optval: *const c_void,
         __optlen: socklen_t,
     ) -> c_int;
-    pub fn listen(__fd: c_int, __n: c_int) -> c_int;
-    pub fn accept(__fd: c_int, __addr: *mut sockaddr, __addr_len: *mut socklen_t) -> c_int;
-    pub fn shutdown(__fd: c_int, __how: c_int) -> c_int;
     pub fn ntohl(__netlong: uint32_t) -> uint32_t;
     pub fn ntohs(__netshort: uint16_t) -> uint16_t;
     pub fn htonl(__hostlong: uint32_t) -> uint32_t;
     pub fn htons(__hostshort: uint16_t) -> uint16_t;
     pub fn inet_pton(__af: c_int, __cp: *const c_char, __buf: *mut c_void) -> c_int;
-    pub fn inet_ntop(
-        __af: c_int,
-        __cp: *const c_void,
-        __buf: *mut c_char,
-        __len: socklen_t,
-    ) -> *const c_char;
     pub fn close(__fd: c_int) -> c_int;
     pub fn memcpy(_: *mut c_void, _: *const c_void, _: c_ulong) -> *mut c_void;
     pub fn memset(_: *mut c_void, _: c_int, _: c_ulong) -> *mut c_void;
-    pub fn memchr(_: *const c_void, _: c_int, _: c_ulong) -> *mut c_void;
-    pub fn getaddrinfo(
-        __name: *const c_char,
-        __service: *const c_char,
-        __req: *const addrinfo,
-        __pai: *mut *mut addrinfo,
-    ) -> c_int;
     pub fn freeaddrinfo(__ai: *mut addrinfo);
-    pub fn getnameinfo(
-        __sa: *const sockaddr,
-        __salen: socklen_t,
-        __host: *mut c_char,
-        __hostlen: socklen_t,
-        __serv: *mut c_char,
-        __servlen: socklen_t,
-        __flags: c_int,
-    ) -> c_int;
     pub fn __errno_location() -> *mut c_int;
     pub fn time(__timer: *mut time_t) -> time_t;
     pub fn fcntl(__fd: c_int, __cmd: c_int, _: ...) -> c_int;
-    pub fn poll(__fds: *mut pollfd, __nfds: nfds_t, __timeout: c_int) -> c_int;
 }
 pub type c_void = libc::c_void;
 pub type c_char = libc::c_char;
