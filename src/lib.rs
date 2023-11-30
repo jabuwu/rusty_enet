@@ -14,11 +14,19 @@ use std::{
 };
 
 mod address;
+mod error;
+mod event;
+mod host;
 mod os;
+mod packet;
 mod socket;
 
 pub use address::*;
+pub use error::*;
+pub use event::*;
+pub use host::*;
 pub use os::*;
+pub use packet::*;
 pub use socket::*;
 
 #[derive(Copy, Clone)]
@@ -6146,15 +6154,14 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int
             != 0
         {
-            channel = if ((*outgoingCommand).command.header.channelID as size_t)
-                < (*peer).channelCount
-            {
-                &mut *((*peer).channels)
-                    .offset((*outgoingCommand).command.header.channelID as isize)
-                    as *mut ENetChannel
-            } else {
-                0 as *mut ENetChannel
-            };
+            channel =
+                if ((*outgoingCommand).command.header.channelID as size_t) < (*peer).channelCount {
+                    &mut *((*peer).channels)
+                        .offset((*outgoingCommand).command.header.channelID as isize)
+                        as *mut ENetChannel
+                } else {
+                    0 as *mut ENetChannel
+                };
             reliableWindow = ((*outgoingCommand).reliableSequenceNumber as c_int
                 / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
                 as enet_uint16;

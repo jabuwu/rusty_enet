@@ -1,49 +1,35 @@
 use std::{
-    ffi::CStr,
-    mem::zeroed,
     net::{SocketAddr, UdpSocket},
-    str::FromStr,
+    str::{self, FromStr},
     time::Duration,
 };
 
-use rusty_enet::{
-    enet_host_create, enet_host_service, enet_peer_send, ENET_EVENT_TYPE_CONNECT,
-    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
-};
-
-fn make_address(ip: &str, port: u16) -> SocketAddr {
-    SocketAddr::from_str(&format!("{}:{}", ip, port)).unwrap()
-}
+use rusty_enet::{Event, Host};
 
 fn main() {
-    unsafe {
-        let bind_address = make_address("127.0.0.1", 6060);
-        let host = enet_host_create::<UdpSocket>(bind_address, 32, 2, 0, 0);
-        loop {
-            let mut event = zeroed();
-            let result = enet_host_service(host, &mut event);
-            if result > 0 {
-                match event.type_0 {
-                    ENET_EVENT_TYPE_CONNECT => {
-                        println!("Peer {} connected!", event.peer.offset_from((*host).peers));
-                    }
-                    ENET_EVENT_TYPE_DISCONNECT => {
-                        println!(
-                            "Peer {} disconnected!",
-                            event.peer.offset_from((*host).peers)
-                        );
-                    }
-                    ENET_EVENT_TYPE_RECEIVE => {
-                        let message = CStr::from_ptr((*event.packet).data as *const i8);
-                        println!("Received packet: {:?}", message);
-                        enet_peer_send(event.peer, event.channelID, event.packet);
-                    }
-                    _ => unreachable!(),
+    let address = SocketAddr::from_str("127.0.0.1:6060").unwrap();
+    let mut network = Host::<UdpSocket>::create(address, 32, 2, 0, 0).unwrap();
+    loop {
+        while let Some(event) = network.service().unwrap() {
+            match event {
+                Event::Connect { peer, .. } => {
+                    println!("Peer {} connected", peer.0);
                 }
-            } else if result < 0 {
-                panic!("Error");
+                Event::Disconnect { peer, .. } => {
+                    println!("Peer {} disconnected", peer.0);
+                }
+                Event::Receive {
+                    peer,
+                    channel_id,
+                    packet,
+                } => {
+                    if let Ok(message) = str::from_utf8(packet.data()) {
+                        println!("Received packet: {:?}", message);
+                        _ = network.send(peer, channel_id, packet);
+                    }
+                }
             }
-            std::thread::sleep(Duration::from_millis(10));
         }
+        std::thread::sleep(Duration::from_millis(10));
     }
 }
