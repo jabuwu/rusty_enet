@@ -1,28 +1,24 @@
 use std::{
-    ffi::{CStr, CString},
+    ffi::CStr,
     mem::zeroed,
+    net::{SocketAddr, UdpSocket},
+    str::FromStr,
     time::Duration,
 };
 
 use rusty_enet::{
-    enet_address_set_host_ip, enet_host_create, enet_host_service, enet_peer_send, ENetAddress,
-    ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
+    enet_host_create, enet_host_service, enet_peer_send, ENET_EVENT_TYPE_CONNECT,
+    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
 };
 
-fn make_address(ip: &str, port: u16) -> ENetAddress {
-    unsafe {
-        let mut address: ENetAddress = zeroed();
-        let ip = CString::new(ip).unwrap();
-        assert_eq!(enet_address_set_host_ip(&mut address, ip.as_ptr()), 0);
-        address.port = port;
-        address
-    }
+fn make_address(ip: &str, port: u16) -> SocketAddr {
+    SocketAddr::from_str(&format!("{}:{}", ip, port)).unwrap()
 }
 
 fn main() {
     unsafe {
-        let mut bind_address = make_address("127.0.0.1", 6060);
-        let host = enet_host_create(&mut bind_address, 32, 2, 0, 0);
+        let bind_address = make_address("127.0.0.1", 6060);
+        let host = enet_host_create::<UdpSocket>(bind_address, 32, 2, 0, 0);
         loop {
             let mut event = zeroed();
             let result = enet_host_service(host, &mut event);

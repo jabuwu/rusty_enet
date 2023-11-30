@@ -232,7 +232,6 @@ pub type ENetCallbacks = _ENetCallbacks;
 pub type ENetVersion = enet_uint32;
 pub struct _ENetHost<S: Socket> {
     pub socket: MaybeUninit<S>,
-    pub address: ENetAddress,
     pub incomingBandwidth: enet_uint32,
     pub outgoingBandwidth: enet_uint32,
     pub bandwidthThrottleEpoch: enet_uint32,
@@ -254,7 +253,7 @@ pub struct _ENetHost<S: Socket> {
     pub checksum: ENetChecksumCallback,
     pub compressor: ENetCompressor,
     pub packetData: [[enet_uint8; 4096]; 2],
-    pub receivedAddress: ENetAddress,
+    pub receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
     pub receivedData: *mut enet_uint8,
     pub receivedDataLength: size_t,
     pub totalSentData: enet_uint32,
@@ -292,7 +291,6 @@ pub struct _ENetPacket {
 }
 pub type ENetPacketFreeCallback = Option<unsafe extern "C" fn(*mut _ENetPacket) -> ()>;
 pub type ENetPeer<S> = _ENetPeer<S>;
-#[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _ENetPeer<S: Socket> {
     pub dispatchList: ENetListNode,
@@ -302,7 +300,7 @@ pub struct _ENetPeer<S: Socket> {
     pub connectID: enet_uint32,
     pub outgoingSessionID: enet_uint8,
     pub incomingSessionID: enet_uint8,
-    pub address: ENetAddress,
+    pub address: MaybeUninit<Option<S::PeerAddress>>,
     pub data: *mut c_void,
     pub state: ENetPeerState,
     pub channels: *mut ENetChannel,
@@ -381,13 +379,6 @@ pub const ENET_PEER_STATE_CONNECTION_PENDING: _ENetPeerState = 3;
 pub const ENET_PEER_STATE_ACKNOWLEDGING_CONNECT: _ENetPeerState = 2;
 pub const ENET_PEER_STATE_CONNECTING: _ENetPeerState = 1;
 pub const ENET_PEER_STATE_DISCONNECTED: _ENetPeerState = 0;
-pub type ENetAddress = _ENetAddress;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct _ENetAddress {
-    pub host: enet_uint32,
-    pub port: enet_uint16,
-}
 pub type ENetEventType = _ENetEventType;
 pub type _ENetEventType = c_uint;
 pub const ENET_EVENT_TYPE_RECEIVE: _ENetEventType = 3;
@@ -1714,7 +1705,7 @@ pub unsafe fn enet_host_compress_with_range_coder<S: Socket>(mut host: *mut ENet
     return 0 as c_int;
 }
 pub unsafe fn enet_host_create<S: Socket>(
-    mut address: *const ENetAddress,
+    mut address: S::BindAddress,
     mut peerCount: size_t,
     mut channelLimit: size_t,
     mut incomingBandwidth: enet_uint32,
@@ -1746,34 +1737,22 @@ pub unsafe fn enet_host_create<S: Socket>(
         0 as c_int,
         peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as c_ulong),
     );
-    (*host).socket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
-    if (*host).socket == -(1 as c_int)
-        || !address.is_null() && enet_socket_bind((*host).socket, address) < 0 as c_int
-    {
-        if (*host).socket != -(1 as c_int) {
-            enet_socket_destroy((*host).socket);
-        }
+    let Ok(mut socket) = S::bind(address) else {
         enet_free((*host).peers as *mut c_void);
         enet_free(host as *mut c_void);
         return 0 as *mut ENetHost<S>;
-    }
-    enet_socket_set_option((*host).socket, ENET_SOCKOPT_NONBLOCK, 1 as c_int);
-    enet_socket_set_option((*host).socket, ENET_SOCKOPT_BROADCAST, 1 as c_int);
-    enet_socket_set_option(
-        (*host).socket,
-        ENET_SOCKOPT_RCVBUF,
+    };
+    _ = socket.set_option(SocketOption::NonBlocking, 1);
+    _ = socket.set_option(SocketOption::Broadcast, 1);
+    _ = socket.set_option(
+        SocketOption::ReceiveBuffer,
         ENET_HOST_RECEIVE_BUFFER_SIZE as c_int,
     );
-    enet_socket_set_option(
-        (*host).socket,
-        ENET_SOCKOPT_SNDBUF,
+    _ = socket.set_option(
+        SocketOption::SendBuffer,
         ENET_HOST_SEND_BUFFER_SIZE as c_int,
     );
-    if !address.is_null()
-        && enet_socket_get_address((*host).socket, &mut (*host).address) < 0 as c_int
-    {
-        (*host).address = *address;
-    }
+    (*host).socket.write(socket);
     if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong {
         channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
     } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong {
@@ -1793,8 +1772,7 @@ pub unsafe fn enet_host_create<S: Socket>(
     (*host).commandCount = 0 as c_int as size_t;
     (*host).bufferCount = 0 as c_int as size_t;
     (*host).checksum = None;
-    (*host).receivedAddress.host = 0 as c_int as enet_uint32;
-    (*host).receivedAddress.port = 0 as c_int as enet_uint16;
+    (*host).receivedAddress.write(None);
     (*host).receivedData = 0 as *mut enet_uint8;
     (*host).receivedDataLength = 0 as c_int as size_t;
     (*host).totalSentData = 0 as c_int as enet_uint32;
@@ -1821,6 +1799,7 @@ pub unsafe fn enet_host_create<S: Socket>(
             currentPeer.offset_from((*host).peers) as c_long as enet_uint16;
         (*currentPeer).incomingSessionID = 0xff as c_int as enet_uint8;
         (*currentPeer).outgoingSessionID = (*currentPeer).incomingSessionID;
+        (*currentPeer).address.write(None);
         (*currentPeer).data = 0 as *mut c_void;
         enet_list_clear(&mut (*currentPeer).acknowledgements);
         enet_list_clear(&mut (*currentPeer).sentReliableCommands);
@@ -1837,17 +1816,19 @@ pub unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
     if host.is_null() {
         return;
     }
-    enet_socket_destroy((*host).socket);
+    (*host).socket.assume_init_drop();
     currentPeer = (*host).peers;
     while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
     {
         enet_peer_reset(currentPeer);
+        (*currentPeer).address.assume_init_drop();
         currentPeer = currentPeer.offset(1);
     }
     if !((*host).compressor.context).is_null() && ((*host).compressor.destroy).is_some() {
         (Some(((*host).compressor.destroy).expect("non-null function pointer")))
             .expect("non-null function pointer")((*host).compressor.context);
     }
+    (*host).receivedAddress.assume_init_drop();
     enet_free((*host).peers as *mut c_void);
     enet_free(host as *mut c_void);
 }
@@ -1861,7 +1842,7 @@ pub unsafe fn enet_host_random<S: Socket>(mut host: *mut ENetHost<S>) -> enet_ui
 }
 pub unsafe fn enet_host_connect<S: Socket>(
     mut host: *mut ENetHost<S>,
-    mut address: *const ENetAddress,
+    mut address: S::PeerAddress,
     mut channelCount: size_t,
     mut data: enet_uint32,
 ) -> *mut ENetPeer<S> {
@@ -1898,7 +1879,7 @@ pub unsafe fn enet_host_connect<S: Socket>(
     }
     (*currentPeer).channelCount = channelCount;
     (*currentPeer).state = ENET_PEER_STATE_CONNECTING;
-    (*currentPeer).address = *address;
+    *(*currentPeer).address.assume_init_mut() = Some(address);
     (*currentPeer).connectID = enet_host_random(host);
     (*currentPeer).mtu = (*host).mtu;
     if (*host).outgoingBandwidth == 0 as c_int as c_uint {
@@ -4654,9 +4635,19 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
                 peer = currentPeer;
             }
         } else if (*currentPeer).state as c_uint != ENET_PEER_STATE_CONNECTING as c_int as c_uint
-            && (*currentPeer).address.host == (*host).receivedAddress.host
+            && (*currentPeer)
+                .address
+                .assume_init_ref()
+                .as_ref()
+                .unwrap()
+                .same_host((*host).receivedAddress.assume_init_ref().as_ref().unwrap())
         {
-            if (*currentPeer).address.port as c_int == (*host).receivedAddress.port as c_int
+            if (*currentPeer)
+                .address
+                .assume_init_ref()
+                .as_ref()
+                .unwrap()
+                .same((*host).receivedAddress.assume_init_ref().as_ref().unwrap())
                 && (*currentPeer).connectID == (*command).connect.connectID
             {
                 return 0 as *mut ENetPeer<S>;
@@ -4680,7 +4671,14 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     (*peer).channelCount = channelCount;
     (*peer).state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
     (*peer).connectID = (*command).connect.connectID;
-    (*peer).address = (*host).receivedAddress;
+    *(*peer).address.assume_init_mut() = Some(
+        (*host)
+            .receivedAddress
+            .assume_init_ref()
+            .as_ref()
+            .cloned()
+            .unwrap(),
+    );
     (*peer).mtu = (*host).mtu;
     (*peer).outgoingPeerID = ntohs((*command).connect.outgoingPeerID);
     (*peer).incomingBandwidth = ntohl((*command).connect.incomingBandwidth);
@@ -5627,9 +5625,18 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         peer = &mut *((*host).peers).offset(peerID as isize) as *mut ENetPeer<S>;
         if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
             || (*peer).state as c_uint == ENET_PEER_STATE_ZOMBIE as c_int as c_uint
-            || ((*host).receivedAddress.host != (*peer).address.host
-                || (*host).receivedAddress.port as c_int != (*peer).address.port as c_int)
-                && (*peer).address.host != 0xffffffff as c_uint
+            || !(*host)
+                .receivedAddress
+                .assume_init_ref()
+                .as_ref()
+                .unwrap()
+                .same((*peer).address.assume_init_ref().as_ref().unwrap())
+                && !(*peer)
+                    .address
+                    .assume_init_ref()
+                    .as_ref()
+                    .unwrap()
+                    .is_broadcast()
             || ((*peer).outgoingPeerID as c_int) < ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int
                 && sessionID as c_int != (*peer).incomingSessionID as c_int
         {
@@ -5687,8 +5694,14 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         }
     }
     if !peer.is_null() {
-        (*peer).address.host = (*host).receivedAddress.host;
-        (*peer).address.port = (*host).receivedAddress.port;
+        *(*peer).address.assume_init_mut() = Some(
+            (*host)
+                .receivedAddress
+                .assume_init_ref()
+                .as_ref()
+                .cloned()
+                .unwrap(),
+        );
         (*peer).incomingDataTotal = ((*peer).incomingDataTotal as c_ulong)
             .wrapping_add((*host).receivedDataLength)
             as enet_uint32 as enet_uint32;
@@ -5848,72 +5861,81 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
         };
         buffer.data = ((*host).packetData[0 as c_int as usize]).as_mut_ptr() as *mut c_void;
         buffer.dataLength = ::core::mem::size_of::<[enet_uint8; 4096]>() as c_ulong;
-        receivedLength = enet_socket_receive(
-            (*host).socket,
-            &mut (*host).receivedAddress,
-            &mut buffer,
-            1 as c_int as size_t,
-        );
-        if !(receivedLength == -(2 as c_int)) {
-            if receivedLength < 0 as c_int {
-                return -(1 as c_int);
+        receivedLength = match (*host)
+            .socket
+            .assume_init_mut()
+            .receive(buffer.dataLength as usize)
+        {
+            Ok(Some((received_address, received_data))) => {
+                *(*host).receivedAddress.assume_init_mut() = Some(received_address);
+                _enet_memcpy(
+                    buffer.data,
+                    received_data.as_ptr() as *const c_void,
+                    received_data.len() as size_t,
+                );
+                received_data.len() as c_int
             }
-            if receivedLength == 0 as c_int {
-                return 0 as c_int;
-            }
-            (*host).receivedData = ((*host).packetData[0 as c_int as usize]).as_mut_ptr();
-            (*host).receivedDataLength = receivedLength as size_t;
-            (*host).totalReceivedData = ((*host).totalReceivedData as c_uint)
-                .wrapping_add(receivedLength as c_uint)
-                as enet_uint32 as enet_uint32;
-            (*host).totalReceivedPackets = ((*host).totalReceivedPackets).wrapping_add(1);
-            if ((*host).intercept).is_some() {
-                match ((*host).intercept).expect("non-null function pointer")(host, event) {
-                    1 => {
-                        current_block_17 = 11187707480244993007;
-                        match current_block_17 {
-                            15717549315443811277 => return -(1 as c_int),
-                            _ => {
-                                if !event.is_null()
-                                    && (*event).type_0 as c_uint
-                                        != ENET_EVENT_TYPE_NONE as c_int as c_uint
-                                {
-                                    return 1 as c_int;
-                                }
+            Ok(None) => 0,
+            Err(_) => -1,
+        };
+        if receivedLength < 0 as c_int {
+            return -(1 as c_int);
+        }
+        if receivedLength == 0 as c_int {
+            return 0 as c_int;
+        }
+        (*host).receivedData = ((*host).packetData[0 as c_int as usize]).as_mut_ptr();
+        (*host).receivedDataLength = receivedLength as size_t;
+        (*host).totalReceivedData = ((*host).totalReceivedData as c_uint)
+            .wrapping_add(receivedLength as c_uint)
+            as enet_uint32 as enet_uint32;
+        (*host).totalReceivedPackets = ((*host).totalReceivedPackets).wrapping_add(1);
+        if ((*host).intercept).is_some() {
+            match ((*host).intercept).expect("non-null function pointer")(host, event) {
+                1 => {
+                    current_block_17 = 11187707480244993007;
+                    match current_block_17 {
+                        15717549315443811277 => return -(1 as c_int),
+                        _ => {
+                            if !event.is_null()
+                                && (*event).type_0 as c_uint
+                                    != ENET_EVENT_TYPE_NONE as c_int as c_uint
+                            {
+                                return 1 as c_int;
                             }
                         }
-                        current_block_17 = 11174649648027449784;
                     }
-                    -1 => {
-                        current_block_17 = 15717549315443811277;
-                        match current_block_17 {
-                            15717549315443811277 => return -(1 as c_int),
-                            _ => {
-                                if !event.is_null()
-                                    && (*event).type_0 as c_uint
-                                        != ENET_EVENT_TYPE_NONE as c_int as c_uint
-                                {
-                                    return 1 as c_int;
-                                }
-                            }
-                        }
-                        current_block_17 = 11174649648027449784;
-                    }
-                    _ => {
-                        current_block_17 = 5143058163439228106;
-                    }
+                    current_block_17 = 11174649648027449784;
                 }
-            } else {
-                current_block_17 = 5143058163439228106;
+                -1 => {
+                    current_block_17 = 15717549315443811277;
+                    match current_block_17 {
+                        15717549315443811277 => return -(1 as c_int),
+                        _ => {
+                            if !event.is_null()
+                                && (*event).type_0 as c_uint
+                                    != ENET_EVENT_TYPE_NONE as c_int as c_uint
+                            {
+                                return 1 as c_int;
+                            }
+                        }
+                    }
+                    current_block_17 = 11174649648027449784;
+                }
+                _ => {
+                    current_block_17 = 5143058163439228106;
+                }
             }
-            match current_block_17 {
-                11174649648027449784 => {}
-                _ => match enet_protocol_handle_incoming_commands(host, event) {
-                    1 => return 1 as c_int,
-                    -1 => return -(1 as c_int),
-                    _ => {}
-                },
-            }
+        } else {
+            current_block_17 = 5143058163439228106;
+        }
+        match current_block_17 {
+            11174649648027449784 => {}
+            _ => match enet_protocol_handle_incoming_commands(host, event) {
+                1 => return 1 as c_int,
+                -1 => return -(1 as c_int),
+                _ => {}
+            },
         }
         packets += 1;
     }
@@ -6532,12 +6554,26 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             (*host).bufferCount = 2 as c_int as size_t;
                         }
                         (*currentPeer).lastSendTime = (*host).serviceTime;
-                        sentLength = enet_socket_send(
-                            (*host).socket,
-                            &mut (*currentPeer).address,
-                            ((*host).buffers).as_mut_ptr(),
-                            (*host).bufferCount,
-                        );
+                        let mut conglomerate_buffer = vec![];
+                        for buffer_index in 0..(*host).bufferCount {
+                            let buffer = &(*host).buffers[buffer_index as usize];
+                            conglomerate_buffer.extend_from_slice(std::slice::from_raw_parts(
+                                buffer.data as *mut u8,
+                                buffer.dataLength as usize,
+                            ));
+                        }
+                        sentLength = match (*host).socket.assume_init_mut().send(
+                            (*currentPeer)
+                                .address
+                                .assume_init_ref()
+                                .as_ref()
+                                .cloned()
+                                .unwrap(),
+                            &conglomerate_buffer,
+                        ) {
+                            Ok(sent) => sent as c_int,
+                            Err(_) => -1,
+                        };
                         enet_protocol_remove_sent_unreliable_commands(
                             currentPeer,
                             &mut sentUnreliableCommands,
