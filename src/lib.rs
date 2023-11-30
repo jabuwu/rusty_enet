@@ -9,6 +9,8 @@
 )]
 
 mod os;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 pub use os::*;
 
 pub type ENetSocket = c_int;
@@ -6588,16 +6590,14 @@ pub unsafe fn enet_host_service(mut host: *mut ENetHost, mut event: *mut ENetEve
     return 0 as c_int;
 }
 pub unsafe fn enet_host_random_seed() -> enet_uint32 {
-    return time(0 as *mut time_t) as enet_uint32;
+    enet_time_get()
 }
 pub unsafe fn enet_time_get() -> enet_uint32 {
-    let mut timeVal: timeval = timeval {
-        tv_sec: 0,
-        tv_usec: 0,
-    };
-    gettimeofday(&mut timeVal, 0 as *mut c_void);
-    return (timeVal.tv_sec * 1000 as c_int as c_long + timeVal.tv_usec / 1000 as c_int as c_long)
-        as enet_uint32;
+    (SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_millis()
+        % u32::MAX as u128) as enet_uint32
 }
 pub unsafe fn enet_address_set_host_ip(
     mut address: *mut ENetAddress,

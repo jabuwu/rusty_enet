@@ -25,10 +25,6 @@ extern "C" {
     pub fn fcntl(__fd: c_int, __cmd: c_int, _: ...) -> c_int;
     pub fn __errno_location() -> *mut c_int;
 }
-extern "C" {
-    pub fn time(__timer: *mut time_t) -> time_t;
-    pub fn gettimeofday(__tv: *mut timeval, __tz: *mut c_void) -> c_int;
-}
 pub type c_void = libc::c_void;
 pub type c_char = libc::c_char;
 pub type c_uchar = libc::c_uchar;
