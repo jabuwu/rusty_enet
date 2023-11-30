@@ -34,7 +34,7 @@ fn main() {
                         let message = CString::new("hello world").unwrap();
                         let packet = enet_packet_create(
                             message.as_ptr() as *mut c_void,
-                            message.to_bytes().len() as u64,
+                            message.to_bytes().len(),
                             ENET_PACKET_FLAG_RELIABLE,
                         );
                         enet_peer_send(peer, 0, packet);

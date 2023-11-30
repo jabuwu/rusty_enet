@@ -15,7 +15,7 @@ pub type c_uint = libc::c_uint;
 pub type c_long = libc::c_long;
 pub type c_ulong = libc::c_ulong;
 
-pub type size_t = c_ulong;
+pub type size_t = usize;
 pub type __uint16_t = c_ushort;
 pub type __uint32_t = c_uint;
 pub type __time_t = c_long;
@@ -80,7 +80,7 @@ impl Allocator {
     }
 }
 
-pub(crate) unsafe extern "C" fn _enet_malloc(size: c_ulong) -> *mut c_void {
+pub(crate) unsafe extern "C" fn _enet_malloc(size: size_t) -> *mut c_void {
     let singleton = Allocator::singleton();
     let mut allocator = singleton.lock().unwrap();
     allocator.malloc(size as usize)
@@ -98,7 +98,7 @@ pub(crate) unsafe extern "C" fn _enet_abort() -> ! {
     std::process::abort()
 }
 
-pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: c_int, n: c_ulong) -> *mut c_void {
+pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: c_int, n: size_t) -> *mut c_void {
     for offset in 0..n {
         (*(s.cast::<u8>()).add(offset as usize)) = c as u8;
     }
@@ -108,7 +108,7 @@ pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: c_int, n: c_ulon
 pub(crate) unsafe extern "C" fn _enet_memcpy(
     destination: *mut c_void,
     source: *const c_void,
-    num: c_ulong,
+    num: size_t,
 ) -> *mut c_void {
     copy_nonoverlapping(source, destination, num as usize);
     destination

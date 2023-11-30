@@ -541,7 +541,7 @@ pub type C2RustUnnamed_3 = c_uint;
 static mut callbacks: ENetCallbacks = unsafe {
     {
         let mut init = _ENetCallbacks {
-            malloc: Some(_enet_malloc as unsafe extern "C" fn(c_ulong) -> *mut c_void),
+            malloc: Some(_enet_malloc as unsafe extern "C" fn(size_t) -> *mut c_void),
             free: Some(_enet_free as unsafe extern "C" fn(*mut c_void) -> ()),
             no_memory: ::core::mem::transmute::<
                 Option<unsafe extern "C" fn() -> !>,
@@ -588,7 +588,7 @@ pub unsafe extern "C" fn enet_free(mut memory: *mut c_void) {
 #[no_mangle]
 pub unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
     let mut rangeCoder: *mut ENetRangeCoder =
-        enet_malloc(::core::mem::size_of::<ENetRangeCoder>() as c_ulong) as *mut ENetRangeCoder;
+        enet_malloc(::core::mem::size_of::<ENetRangeCoder>() as size_t) as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
         return 0 as *mut c_void;
     }
@@ -642,8 +642,8 @@ pub unsafe extern "C" fn enet_range_coder_compress(
     let mut order: size_t = 0 as c_int as size_t;
     let mut nextSymbol: size_t = 0 as c_int as size_t;
     if rangeCoder.is_null()
-        || inBufferCount <= 0 as c_int as c_ulong
-        || inLimit <= 0 as c_int as c_ulong
+        || inBufferCount <= 0 as c_int as size_t
+        || inLimit <= 0 as c_int as size_t
     {
         return 0 as c_int as size_t;
     }
@@ -677,7 +677,7 @@ pub unsafe extern "C" fn enet_range_coder_compress(
         let mut parent: *mut enet_uint16 = &mut predicted;
         let mut total: enet_uint16 = 0;
         if inData >= inEnd {
-            if inBufferCount <= 0 as c_int as c_ulong {
+            if inBufferCount <= 0 as c_int as size_t {
                 break;
             }
             inData = (*inBuffers).data as *const enet_uint8;
@@ -1019,15 +1019,15 @@ pub unsafe extern "C" fn enet_range_coder_compress(
             }
             _ => {}
         }
-        if order >= ENET_SUBCONTEXT_ORDER as c_int as c_ulong {
+        if order >= ENET_SUBCONTEXT_ORDER as c_int as size_t {
             predicted = (*rangeCoder).symbols[predicted as usize].parent;
         } else {
             order = order.wrapping_add(1);
         }
         if nextSymbol
-            >= (::core::mem::size_of::<[ENetSymbol; 4096]>() as c_ulong)
-                .wrapping_div(::core::mem::size_of::<ENetSymbol>() as c_ulong)
-                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as c_ulong)
+            >= (::core::mem::size_of::<[ENetSymbol; 4096]>() as size_t)
+                .wrapping_div(::core::mem::size_of::<ENetSymbol>() as size_t)
+                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as size_t)
         {
             nextSymbol = 0 as c_int as size_t;
             let fresh11 = nextSymbol;
@@ -1083,7 +1083,7 @@ pub unsafe extern "C" fn enet_range_coder_decompress(
     let mut predicted: enet_uint16 = 0 as c_int as enet_uint16;
     let mut order: size_t = 0 as c_int as size_t;
     let mut nextSymbol: size_t = 0 as c_int as size_t;
-    if rangeCoder.is_null() || inLimit <= 0 as c_int as c_ulong {
+    if rangeCoder.is_null() || inLimit <= 0 as c_int as size_t {
         return 0 as c_int as size_t;
     }
     let fresh13 = nextSymbol;
@@ -1627,15 +1627,15 @@ pub unsafe extern "C" fn enet_range_coder_decompress(
         let fresh28 = outData;
         outData = outData.offset(1);
         *fresh28 = value;
-        if order >= ENET_SUBCONTEXT_ORDER as c_int as c_ulong {
+        if order >= ENET_SUBCONTEXT_ORDER as c_int as size_t {
             predicted = (*rangeCoder).symbols[predicted as usize].parent;
         } else {
             order = order.wrapping_add(1);
         }
         if nextSymbol
-            >= (::core::mem::size_of::<[ENetSymbol; 4096]>() as c_ulong)
-                .wrapping_div(::core::mem::size_of::<ENetSymbol>() as c_ulong)
-                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as c_ulong)
+            >= (::core::mem::size_of::<[ENetSymbol; 4096]>() as size_t)
+                .wrapping_div(::core::mem::size_of::<ENetSymbol>() as size_t)
+                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as size_t)
         {
             nextSymbol = 0 as c_int as size_t;
             let fresh29 = nextSymbol;
@@ -1673,7 +1673,7 @@ pub unsafe fn enet_host_compress_with_range_coder<S: Socket>(mut host: *mut ENet
     _enet_memset(
         &mut compressor as *mut ENetCompressor as *mut c_void,
         0 as c_int,
-        ::core::mem::size_of::<ENetCompressor>() as c_ulong,
+        ::core::mem::size_of::<ENetCompressor>() as size_t,
     );
     compressor.context = enet_range_coder_create();
     if (compressor.context).is_null() {
@@ -1713,20 +1713,20 @@ pub unsafe fn enet_host_create<S: Socket>(
 ) -> *mut ENetHost<S> {
     let mut host: *mut ENetHost<S> = 0 as *mut ENetHost<S>;
     let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
-    if peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as c_ulong {
+    if peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as size_t {
         return 0 as *mut ENetHost<S>;
     }
-    host = enet_malloc(::core::mem::size_of::<ENetHost<S>>() as c_ulong) as *mut ENetHost<S>;
+    host = enet_malloc(::core::mem::size_of::<ENetHost<S>>() as size_t) as *mut ENetHost<S>;
     if host.is_null() {
         return 0 as *mut ENetHost<S>;
     }
     _enet_memset(
         host as *mut c_void,
         0 as c_int,
-        ::core::mem::size_of::<ENetHost<S>>() as c_ulong,
+        ::core::mem::size_of::<ENetHost<S>>() as size_t,
     );
     (*host).peers =
-        enet_malloc(peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as c_ulong))
+        enet_malloc(peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as size_t))
             as *mut ENetPeer<S>;
     if ((*host).peers).is_null() {
         enet_free(host as *mut c_void);
@@ -1735,7 +1735,7 @@ pub unsafe fn enet_host_create<S: Socket>(
     _enet_memset(
         (*host).peers as *mut c_void,
         0 as c_int,
-        peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as c_ulong),
+        peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as size_t),
     );
     let Ok(mut socket) = S::bind(address) else {
         enet_free((*host).peers as *mut c_void);
@@ -1753,9 +1753,9 @@ pub unsafe fn enet_host_create<S: Socket>(
         ENET_HOST_SEND_BUFFER_SIZE as c_int,
     );
     (*host).socket.write(socket);
-    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong {
+    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t {
         channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
-    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong {
+    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t {
         channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
     }
     (*host).randomSeed = host as size_t as enet_uint32;
@@ -1855,9 +1855,9 @@ pub unsafe fn enet_host_connect<S: Socket>(
             reliableSequenceNumber: 0,
         },
     };
-    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong {
+    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t {
         channelCount = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
-    } else if channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong {
+    } else if channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t {
         channelCount = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
     }
     currentPeer = (*host).peers;
@@ -1872,7 +1872,7 @@ pub unsafe fn enet_host_connect<S: Socket>(
         return 0 as *mut ENetPeer<S>;
     }
     (*currentPeer).channels =
-        enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as c_ulong))
+        enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as size_t))
             as *mut ENetChannel;
     if ((*currentPeer).channels).is_null() {
         return 0 as *mut ENetPeer<S>;
@@ -1908,7 +1908,7 @@ pub unsafe fn enet_host_connect<S: Socket>(
         _enet_memset(
             ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
             0 as c_int,
-            ::core::mem::size_of::<[enet_uint16; 16]>() as c_ulong,
+            ::core::mem::size_of::<[enet_uint16; 16]>() as size_t,
         );
         channel = channel.offset(1);
     }
@@ -1952,7 +1952,7 @@ pub unsafe fn enet_host_broadcast<S: Socket>(
         }
         currentPeer = currentPeer.offset(1);
     }
-    if (*packet).referenceCount == 0 as c_int as c_ulong {
+    if (*packet).referenceCount == 0 as c_int as size_t {
         enet_packet_destroy(packet);
     }
 }
@@ -1974,9 +1974,9 @@ pub unsafe fn enet_host_channel_limit<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut channelLimit: size_t,
 ) {
-    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong {
+    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t {
         channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
-    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong {
+    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t {
         channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
     }
     (*host).channelLimit = channelLimit;
@@ -1998,7 +1998,7 @@ pub unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENetHost<S>
     let mut bandwidth: enet_uint32 = !(0 as c_int) as enet_uint32;
     let mut throttle: enet_uint32 = 0 as c_int as enet_uint32;
     let mut bandwidthLimit: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut needsAdjustment: c_int = if (*host).bandwidthLimitedPeers > 0 as c_int as c_ulong {
+    let mut needsAdjustment: c_int = if (*host).bandwidthLimitedPeers > 0 as c_int as size_t {
         1 as c_int
     } else {
         0 as c_int
@@ -2219,13 +2219,13 @@ pub unsafe fn enet_packet_create(
     mut flags: enet_uint32,
 ) -> *mut ENetPacket {
     let mut packet: *mut ENetPacket =
-        enet_malloc(::core::mem::size_of::<ENetPacket>() as c_ulong) as *mut ENetPacket;
+        enet_malloc(::core::mem::size_of::<ENetPacket>() as size_t) as *mut ENetPacket;
     if packet.is_null() {
         return 0 as *mut ENetPacket;
     }
     if flags & ENET_PACKET_FLAG_NO_ALLOCATE as c_int as c_uint != 0 {
         (*packet).data = data as *mut enet_uint8;
-    } else if dataLength <= 0 as c_int as c_ulong {
+    } else if dataLength <= 0 as c_int as size_t {
         (*packet).data = 0 as *mut enet_uint8;
     } else {
         (*packet).data = enet_malloc(dataLength) as *mut enet_uint8;
@@ -2548,7 +2548,7 @@ pub unsafe extern "C" fn enet_crc32(
     loop {
         let fresh30 = bufferCount;
         bufferCount = bufferCount.wrapping_sub(1);
-        if !(fresh30 > 0 as c_int as c_ulong) {
+        if !(fresh30 > 0 as c_int as size_t) {
             break;
         }
         let mut data: *const enet_uint8 = (*buffers).data as *const enet_uint8;
@@ -2642,15 +2642,15 @@ pub unsafe fn enet_peer_send<S: Socket>(
     };
     let mut fragmentLength: size_t = 0;
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
-        || channelID as c_ulong >= (*peer).channelCount
+        || channelID as size_t >= (*peer).channelCount
         || (*packet).dataLength > (*(*peer).host).maximumPacketSize
     {
         return -(1 as c_int);
     }
     channel = &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
-    fragmentLength = ((*peer).mtu as c_ulong)
-        .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>() as c_ulong)
-        .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong);
+    fragmentLength = ((*peer).mtu as size_t)
+        .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>() as size_t)
+        .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>() as size_t);
     if ((*(*peer).host).checksum).is_some() {
         fragmentLength = (fragmentLength as c_ulong)
             .wrapping_sub(::core::mem::size_of::<enet_uint32>() as c_ulong)
@@ -2659,7 +2659,7 @@ pub unsafe fn enet_peer_send<S: Socket>(
     if (*packet).dataLength > fragmentLength {
         let mut fragmentCount: enet_uint32 = ((*packet).dataLength)
             .wrapping_add(fragmentLength)
-            .wrapping_sub(1 as c_int as c_ulong)
+            .wrapping_sub(1 as c_int as size_t)
             .wrapping_div(fragmentLength)
             as enet_uint32;
         let mut fragmentNumber: enet_uint32 = 0;
@@ -2697,11 +2697,11 @@ pub unsafe fn enet_peer_send<S: Socket>(
         enet_list_clear(&mut fragments);
         fragmentNumber = 0 as c_int as enet_uint32;
         fragmentOffset = 0 as c_int as enet_uint32;
-        while (fragmentOffset as c_ulong) < (*packet).dataLength {
-            if ((*packet).dataLength).wrapping_sub(fragmentOffset as c_ulong) < fragmentLength {
-                fragmentLength = ((*packet).dataLength).wrapping_sub(fragmentOffset as c_ulong);
+        while (fragmentOffset as size_t) < (*packet).dataLength {
+            if ((*packet).dataLength).wrapping_sub(fragmentOffset as size_t) < fragmentLength {
+                fragmentLength = ((*packet).dataLength).wrapping_sub(fragmentOffset as size_t);
             }
-            fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>() as c_ulong)
+            fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>() as size_t)
                 as *mut ENetOutgoingCommand;
             if fragment.is_null() {
                 while !(fragments.sentinel.next == &mut fragments.sentinel as *mut ENetListNode) {
@@ -2724,7 +2724,7 @@ pub unsafe fn enet_peer_send<S: Socket>(
             (*fragment).command.sendFragment.fragmentOffset = ntohl(fragmentOffset);
             enet_list_insert(&mut fragments.sentinel, fragment as *mut c_void);
             fragmentNumber = fragmentNumber.wrapping_add(1);
-            fragmentOffset = (fragmentOffset as c_ulong).wrapping_add(fragmentLength) as enet_uint32
+            fragmentOffset = (fragmentOffset as size_t).wrapping_add(fragmentLength) as enet_uint32
                 as enet_uint32;
         }
         (*packet).referenceCount = ((*packet).referenceCount as c_ulong)
@@ -2791,8 +2791,8 @@ pub unsafe fn enet_peer_receive<S: Socket>(
         enet_free((*incomingCommand).fragments as *mut c_void);
     }
     enet_free(incomingCommand as *mut c_void);
-    (*peer).totalWaitingData = ((*peer).totalWaitingData as c_ulong)
-        .wrapping_sub((*packet).dataLength) as size_t as size_t;
+    (*peer).totalWaitingData =
+        ((*peer).totalWaitingData as size_t).wrapping_sub((*packet).dataLength) as size_t as size_t;
     return packet;
 }
 unsafe fn enet_peer_reset_outgoing_commands(mut queue: *mut ENetList) {
@@ -2802,7 +2802,7 @@ unsafe fn enet_peer_reset_outgoing_commands(mut queue: *mut ENetList) {
         if !((*outgoingCommand).packet).is_null() {
             (*(*outgoingCommand).packet).referenceCount =
                 ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as c_ulong {
+            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
                 enet_packet_destroy((*outgoingCommand).packet);
             }
         }
@@ -2828,7 +2828,7 @@ unsafe fn enet_peer_remove_incoming_commands(
         if !((*incomingCommand).packet).is_null() {
             (*(*incomingCommand).packet).referenceCount =
                 ((*(*incomingCommand).packet).referenceCount).wrapping_sub(1);
-            if (*(*incomingCommand).packet).referenceCount == 0 as c_int as c_ulong {
+            if (*(*incomingCommand).packet).referenceCount == 0 as c_int as size_t {
                 enet_packet_destroy((*incomingCommand).packet);
             }
         }
@@ -2862,7 +2862,7 @@ pub unsafe fn enet_peer_reset_queues<S: Socket>(mut peer: *mut ENetPeer<S>) {
     enet_peer_reset_outgoing_commands(&mut (*peer).outgoingCommands);
     enet_peer_reset_outgoing_commands(&mut (*peer).outgoingSendReliableCommands);
     enet_peer_reset_incoming_commands(&mut (*peer).dispatchedCommands);
-    if !((*peer).channels).is_null() && (*peer).channelCount > 0 as c_int as c_ulong {
+    if !((*peer).channels).is_null() && (*peer).channelCount > 0 as c_int as size_t {
         channel = (*peer).channels;
         while channel
             < &mut *((*peer).channels).offset((*peer).channelCount as isize) as *mut ENetChannel
@@ -2949,7 +2949,7 @@ pub unsafe fn enet_peer_reset<S: Socket>(mut peer: *mut ENetPeer<S>) {
     _enet_memset(
         ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
         0 as c_int,
-        ::core::mem::size_of::<[enet_uint32; 32]>() as c_ulong,
+        ::core::mem::size_of::<[enet_uint32; 32]>() as size_t,
     );
     enet_peer_reset_queues(peer);
 }
@@ -3121,7 +3121,7 @@ pub unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
     mut sentTime: enet_uint16,
 ) -> *mut ENetAcknowledgement {
     let mut acknowledgement: *mut ENetAcknowledgement = 0 as *mut ENetAcknowledgement;
-    if ((*command).header.channelID as c_ulong) < (*peer).channelCount {
+    if ((*command).header.channelID as size_t) < (*peer).channelCount {
         let mut channel: *mut ENetChannel = &mut *((*peer).channels)
             .offset((*command).header.channelID as isize)
             as *mut ENetChannel;
@@ -3145,7 +3145,7 @@ pub unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
             return 0 as *mut ENetAcknowledgement;
         }
     }
-    acknowledgement = enet_malloc(::core::mem::size_of::<ENetAcknowledgement>() as c_ulong)
+    acknowledgement = enet_malloc(::core::mem::size_of::<ENetAcknowledgement>() as size_t)
         as *mut ENetAcknowledgement;
     if acknowledgement.is_null() {
         return 0 as *mut ENetAcknowledgement;
@@ -3165,9 +3165,9 @@ pub unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut outgoingCommand: *mut ENetOutgoingCommand,
 ) {
-    (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as c_ulong).wrapping_add(
+    (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as size_t).wrapping_add(
         (enet_protocol_command_size((*outgoingCommand).command.header.command))
-            .wrapping_add((*outgoingCommand).fragmentLength as c_ulong),
+            .wrapping_add((*outgoingCommand).fragmentLength as size_t),
     ) as enet_uint32 as enet_uint32;
     if (*outgoingCommand).command.header.channelID as c_int == 0xff as c_int {
         (*peer).outgoingReliableSequenceNumber =
@@ -3248,7 +3248,7 @@ pub unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
     mut length: enet_uint16,
 ) -> *mut ENetOutgoingCommand {
     let mut outgoingCommand: *mut ENetOutgoingCommand =
-        enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>() as c_ulong)
+        enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>() as size_t)
             as *mut ENetOutgoingCommand;
     if outgoingCommand.is_null() {
         return 0 as *mut ENetOutgoingCommand;
@@ -3665,8 +3665,9 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incomingCommand =
-                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>()
-                                            as c_ulong)
+                                        enet_malloc(
+                                            ::core::mem::size_of::<ENetIncomingCommand>() as size_t
+                                        )
                                             as *mut ENetIncomingCommand;
                                     if incomingCommand.is_null() {
                                         current_block = 15492018734234176694;
@@ -3690,12 +3691,12 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as c_ulong)
+                                                        as size_t)
                                                         .wrapping_mul(::core::mem::size_of::<
                                                             enet_uint32,
                                                         >(
                                                         )
-                                                            as c_ulong),
+                                                            as size_t),
                                                 )
                                                     as *mut enet_uint32;
                                             }
@@ -3709,12 +3710,12 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as c_ulong)
+                                                        as size_t)
                                                         .wrapping_mul(::core::mem::size_of::<
                                                             enet_uint32,
                                                         >(
                                                         )
-                                                            as c_ulong),
+                                                            as size_t),
                                                 );
                                                 current_block = 13321564401369230990;
                                             }
@@ -3728,7 +3729,7 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (*packet).referenceCount =
                                                         ((*packet).referenceCount).wrapping_add(1);
                                                     (*peer).totalWaitingData =
-                                                        ((*peer).totalWaitingData as c_ulong)
+                                                        ((*peer).totalWaitingData as size_t)
                                                             .wrapping_add((*packet).dataLength)
                                                             as size_t
                                                             as size_t;
@@ -3926,8 +3927,9 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incomingCommand =
-                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>()
-                                            as c_ulong)
+                                        enet_malloc(
+                                            ::core::mem::size_of::<ENetIncomingCommand>() as size_t
+                                        )
                                             as *mut ENetIncomingCommand;
                                     if incomingCommand.is_null() {
                                         current_block = 15492018734234176694;
@@ -3951,12 +3953,12 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as c_ulong)
+                                                        as size_t)
                                                         .wrapping_mul(::core::mem::size_of::<
                                                             enet_uint32,
                                                         >(
                                                         )
-                                                            as c_ulong),
+                                                            as size_t),
                                                 )
                                                     as *mut enet_uint32;
                                             }
@@ -3970,12 +3972,12 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as c_ulong)
+                                                        as size_t)
                                                         .wrapping_mul(::core::mem::size_of::<
                                                             enet_uint32,
                                                         >(
                                                         )
-                                                            as c_ulong),
+                                                            as size_t),
                                                 );
                                                 current_block = 13321564401369230990;
                                             }
@@ -3989,7 +3991,7 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (*packet).referenceCount =
                                                         ((*packet).referenceCount).wrapping_add(1);
                                                     (*peer).totalWaitingData =
-                                                        ((*peer).totalWaitingData as c_ulong)
+                                                        ((*peer).totalWaitingData as size_t)
                                                             .wrapping_add((*packet).dataLength)
                                                             as size_t
                                                             as size_t;
@@ -4187,8 +4189,9 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incomingCommand =
-                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>()
-                                            as c_ulong)
+                                        enet_malloc(
+                                            ::core::mem::size_of::<ENetIncomingCommand>() as size_t
+                                        )
                                             as *mut ENetIncomingCommand;
                                     if incomingCommand.is_null() {
                                         current_block = 15492018734234176694;
@@ -4212,12 +4215,12 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as c_ulong)
+                                                        as size_t)
                                                         .wrapping_mul(::core::mem::size_of::<
                                                             enet_uint32,
                                                         >(
                                                         )
-                                                            as c_ulong),
+                                                            as size_t),
                                                 )
                                                     as *mut enet_uint32;
                                             }
@@ -4231,12 +4234,12 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as c_ulong)
+                                                        as size_t)
                                                         .wrapping_mul(::core::mem::size_of::<
                                                             enet_uint32,
                                                         >(
                                                         )
-                                                            as c_ulong),
+                                                            as size_t),
                                                 );
                                                 current_block = 13321564401369230990;
                                             }
@@ -4250,7 +4253,7 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (*packet).referenceCount =
                                                         ((*packet).referenceCount).wrapping_add(1);
                                                     (*peer).totalWaitingData =
-                                                        ((*peer).totalWaitingData as c_ulong)
+                                                        ((*peer).totalWaitingData as size_t)
                                                             .wrapping_add((*packet).dataLength)
                                                             as size_t
                                                             as size_t;
@@ -4295,7 +4298,7 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     match current_block {
         9207730764507465628 => {
             if !(fragmentCount > 0 as c_int as c_uint) {
-                if !packet.is_null() && (*packet).referenceCount == 0 as c_int as c_ulong {
+                if !packet.is_null() && (*packet).referenceCount == 0 as c_int as size_t {
                     enet_packet_destroy(packet);
                 }
                 return &mut dummyCommand;
@@ -4303,25 +4306,25 @@ pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         }
         _ => {}
     }
-    if !packet.is_null() && (*packet).referenceCount == 0 as c_int as c_ulong {
+    if !packet.is_null() && (*packet).referenceCount == 0 as c_int as size_t {
         enet_packet_destroy(packet);
     }
     return 0 as *mut ENetIncomingCommand;
 }
 static mut commandSizes: [size_t; 13] = [
     0 as c_int as size_t,
-    ::core::mem::size_of::<ENetProtocolAcknowledge>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolConnect>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolVerifyConnect>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolDisconnect>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolPing>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolSendReliable>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolSendUnreliable>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolSendUnsequenced>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolBandwidthLimit>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolThrottleConfigure>() as c_ulong,
-    ::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong,
+    ::core::mem::size_of::<ENetProtocolAcknowledge>() as size_t,
+    ::core::mem::size_of::<ENetProtocolConnect>() as size_t,
+    ::core::mem::size_of::<ENetProtocolVerifyConnect>() as size_t,
+    ::core::mem::size_of::<ENetProtocolDisconnect>() as size_t,
+    ::core::mem::size_of::<ENetProtocolPing>() as size_t,
+    ::core::mem::size_of::<ENetProtocolSendReliable>() as size_t,
+    ::core::mem::size_of::<ENetProtocolSendUnreliable>() as size_t,
+    ::core::mem::size_of::<ENetProtocolSendFragment>() as size_t,
+    ::core::mem::size_of::<ENetProtocolSendUnsequenced>() as size_t,
+    ::core::mem::size_of::<ENetProtocolBandwidthLimit>() as size_t,
+    ::core::mem::size_of::<ENetProtocolThrottleConfigure>() as size_t,
+    ::core::mem::size_of::<ENetProtocolSendFragment>() as size_t,
 ];
 pub unsafe fn enet_protocol_command_size(mut commandNumber: enet_uint8) -> size_t {
     return commandSizes[(commandNumber as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int) as usize];
@@ -4474,7 +4477,7 @@ unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
         if !((*outgoingCommand).packet).is_null() {
             (*(*outgoingCommand).packet).referenceCount =
                 ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as c_ulong {
+            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
                 (*(*outgoingCommand).packet).flags |= ENET_PACKET_FLAG_SENT as c_int as c_uint;
                 enet_packet_destroy((*outgoingCommand).packet);
             }
@@ -4556,7 +4559,7 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
     if outgoingCommand.is_null() {
         return ENET_PROTOCOL_COMMAND_NONE;
     }
-    if (channelID as c_ulong) < (*peer).channelCount {
+    if (channelID as size_t) < (*peer).channelCount {
         let mut channel: *mut ENetChannel =
             &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
         let mut reliableWindow: enet_uint16 = (reliableSequenceNumber as c_int
@@ -4583,7 +4586,7 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
         }
         (*(*outgoingCommand).packet).referenceCount =
             ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-        if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as c_ulong {
+        if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
             (*(*outgoingCommand).packet).flags |= ENET_PACKET_FLAG_SENT as c_int as c_uint;
             enet_packet_destroy((*outgoingCommand).packet);
         }
@@ -4622,8 +4625,8 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         },
     };
     channelCount = ntohl((*command).connect.channelCount) as size_t;
-    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong
-        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong
+    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t
+        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t
     {
         return 0 as *mut ENetPeer<S>;
     }
@@ -4663,7 +4666,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         channelCount = (*host).channelLimit;
     }
     (*peer).channels =
-        enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as c_ulong))
+        enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as size_t))
             as *mut ENetChannel;
     if ((*peer).channels).is_null() {
         return 0 as *mut ENetPeer<S>;
@@ -4729,7 +4732,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         _enet_memset(
             ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
             0 as c_int,
-            ::core::mem::size_of::<[enet_uint16; 16]>() as c_ulong,
+            ::core::mem::size_of::<[enet_uint16; 16]>() as size_t,
         );
         channel = channel.offset(1);
     }
@@ -4819,7 +4822,7 @@ unsafe fn enet_protocol_handle_send_reliable<S: Socket>(
     mut currentData: *mut *mut enet_uint8,
 ) -> c_int {
     let mut dataLength: size_t = 0;
-    if (*command).header.channelID as c_ulong >= (*peer).channelCount
+    if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -4860,7 +4863,7 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     let mut unsequencedGroup: enet_uint32 = 0;
     let mut index: enet_uint32 = 0;
     let mut dataLength: size_t = 0;
-    if (*command).header.channelID as c_ulong >= (*peer).channelCount
+    if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -4896,7 +4899,7 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
         _enet_memset(
             ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
             0 as c_int,
-            ::core::mem::size_of::<[enet_uint32; 32]>() as c_ulong,
+            ::core::mem::size_of::<[enet_uint32; 32]>() as size_t,
         );
     } else if (*peer).unsequencedWindow[index.wrapping_div(32 as c_int as c_uint) as usize]
         & ((1 as c_int) << index.wrapping_rem(32 as c_int as c_uint)) as c_uint
@@ -4929,7 +4932,7 @@ unsafe fn enet_protocol_handle_send_unreliable<S: Socket>(
     mut currentData: *mut *mut enet_uint8,
 ) -> c_int {
     let mut dataLength: size_t = 0;
-    if (*command).header.channelID as c_ulong >= (*peer).channelCount
+    if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -4978,7 +4981,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     let mut currentWindow: enet_uint16 = 0;
     let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
     let mut startCommand: *mut ENetIncomingCommand = 0 as *mut ENetIncomingCommand;
-    if (*command).header.channelID as c_ulong >= (*peer).channelCount
+    if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -4987,7 +4990,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     fragmentLength = ntohs((*command).sendFragment.dataLength) as enet_uint32;
     *currentData = (*currentData).offset(fragmentLength as isize);
     if fragmentLength <= 0 as c_int as c_uint
-        || fragmentLength as c_ulong > (*host).maximumPacketSize
+        || fragmentLength as size_t > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
         || *currentData
             > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
@@ -5018,7 +5021,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     totalLength = ntohl((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int as c_uint
         || fragmentNumber >= fragmentCount
-        || totalLength as c_ulong > (*host).maximumPacketSize
+        || totalLength as size_t > (*host).maximumPacketSize
         || totalLength < fragmentCount
         || fragmentOffset >= totalLength
         || fragmentLength > totalLength.wrapping_sub(fragmentOffset)
@@ -5055,7 +5058,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
                     if (*incomingCommand).command.header.command as c_int
                         & ENET_PROTOCOL_COMMAND_MASK as c_int
                         != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT as c_int
-                        || totalLength as c_ulong != (*(*incomingCommand).packet).dataLength
+                        || totalLength as size_t != (*(*incomingCommand).packet).dataLength
                         || fragmentCount != (*incomingCommand).fragmentCount
                     {
                         return -(1 as c_int);
@@ -5092,19 +5095,18 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
         let ref mut fresh32 = *((*startCommand).fragments)
             .offset(fragmentNumber.wrapping_div(32 as c_int as c_uint) as isize);
         *fresh32 |= ((1 as c_int) << fragmentNumber.wrapping_rem(32 as c_int as c_uint)) as c_uint;
-        if fragmentOffset.wrapping_add(fragmentLength) as c_ulong
+        if fragmentOffset.wrapping_add(fragmentLength) as size_t
             > (*(*startCommand).packet).dataLength
         {
             fragmentLength = ((*(*startCommand).packet).dataLength)
-                .wrapping_sub(fragmentOffset as c_ulong)
-                as enet_uint32;
+                .wrapping_sub(fragmentOffset as size_t) as enet_uint32;
         }
         _enet_memcpy(
             ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
             (command as *mut enet_uint8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong as isize)
                 as *const c_void,
-            fragmentLength as c_ulong,
+            fragmentLength as size_t,
         );
         if (*startCommand).fragmentsRemaining <= 0 as c_int as c_uint {
             enet_peer_dispatch_incoming_reliable_commands(
@@ -5134,7 +5136,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
     let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
     let mut startCommand: *mut ENetIncomingCommand = 0 as *mut ENetIncomingCommand;
-    if (*command).header.channelID as c_ulong >= (*peer).channelCount
+    if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -5142,7 +5144,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     }
     fragmentLength = ntohs((*command).sendFragment.dataLength) as enet_uint32;
     *currentData = (*currentData).offset(fragmentLength as isize);
-    if fragmentLength as c_ulong > (*host).maximumPacketSize
+    if fragmentLength as size_t > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
         || *currentData
             > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
@@ -5180,7 +5182,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     totalLength = ntohl((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int as c_uint
         || fragmentNumber >= fragmentCount
-        || totalLength as c_ulong > (*host).maximumPacketSize
+        || totalLength as size_t > (*host).maximumPacketSize
         || fragmentOffset >= totalLength
         || fragmentLength > totalLength.wrapping_sub(fragmentOffset)
     {
@@ -5224,7 +5226,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
                         if (*incomingCommand).command.header.command as c_int
                             & ENET_PROTOCOL_COMMAND_MASK as c_int
                             != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT as c_int
-                            || totalLength as c_ulong != (*(*incomingCommand).packet).dataLength
+                            || totalLength as size_t != (*(*incomingCommand).packet).dataLength
                             || fragmentCount != (*incomingCommand).fragmentCount
                         {
                             return -(1 as c_int);
@@ -5260,19 +5262,18 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
         let ref mut fresh33 = *((*startCommand).fragments)
             .offset(fragmentNumber.wrapping_div(32 as c_int as c_uint) as isize);
         *fresh33 |= ((1 as c_int) << fragmentNumber.wrapping_rem(32 as c_int as c_uint)) as c_uint;
-        if fragmentOffset.wrapping_add(fragmentLength) as c_ulong
+        if fragmentOffset.wrapping_add(fragmentLength) as size_t
             > (*(*startCommand).packet).dataLength
         {
             fragmentLength = ((*(*startCommand).packet).dataLength)
-                .wrapping_sub(fragmentOffset as c_ulong)
-                as enet_uint32;
+                .wrapping_sub(fragmentOffset as size_t) as enet_uint32;
         }
         _enet_memcpy(
             ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
             (command as *mut enet_uint8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong as isize)
                 as *const c_void,
-            fragmentLength as c_ulong,
+            fragmentLength as size_t,
         );
         if (*startCommand).fragmentsRemaining <= 0 as c_int as c_uint {
             enet_peer_dispatch_incoming_unreliable_commands(
@@ -5536,8 +5537,8 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
         return 0 as c_int;
     }
     channelCount = ntohl((*command).verifyConnect.channelCount) as size_t;
-    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong
-        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong
+    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t
+        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t
         || ntohl((*command).verifyConnect.packetThrottleInterval) != (*peer).packetThrottleInterval
         || ntohl((*command).verifyConnect.packetThrottleAcceleration)
             != (*peer).packetThrottleAcceleration
@@ -5608,7 +5609,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         & !(ENET_PROTOCOL_HEADER_FLAG_MASK as c_int | ENET_PROTOCOL_HEADER_SESSION_MASK as c_int))
         as enet_uint16;
     headerSize = if flags as c_int & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as c_int != 0 {
-        ::core::mem::size_of::<ENetProtocolHeader>() as c_ulong
+        ::core::mem::size_of::<ENetProtocolHeader>() as size_t
     } else {
         2 as size_t
     };
@@ -5619,7 +5620,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
     }
     if peerID as c_int == ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int {
         peer = 0 as *mut ENetPeer<S>;
-    } else if peerID as c_ulong >= (*host).peerCount {
+    } else if peerID as size_t >= (*host).peerCount {
         return 0 as c_int;
     } else {
         peer = &mut *((*host).peers).offset(peerID as isize) as *mut ENetPeer<S>;
@@ -5655,11 +5656,11 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             ((*host).packetData[1 as c_int as usize])
                 .as_mut_ptr()
                 .offset(headerSize as isize),
-            (::core::mem::size_of::<[enet_uint8; 4096]>() as c_ulong).wrapping_sub(headerSize),
+            (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize),
         );
-        if originalSize <= 0 as c_int as c_ulong
+        if originalSize <= 0 as c_int as size_t
             || originalSize
-                > (::core::mem::size_of::<[enet_uint8; 4096]>() as c_ulong).wrapping_sub(headerSize)
+                > (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize)
         {
             return 0 as c_int;
         }
@@ -5673,7 +5674,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
     }
     if ((*host).checksum).is_some() {
         let mut checksum: *mut enet_uint32 = &mut *((*host).receivedData).offset(
-            headerSize.wrapping_sub(::core::mem::size_of::<enet_uint32>() as c_ulong) as isize,
+            headerSize.wrapping_sub(::core::mem::size_of::<enet_uint32>() as size_t) as isize,
         ) as *mut enet_uint8 as *mut enet_uint32;
         let mut desiredChecksum: enet_uint32 = *checksum;
         let mut buffer: ENetBuffer = ENetBuffer {
@@ -5702,7 +5703,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
                 .cloned()
                 .unwrap(),
         );
-        (*peer).incomingDataTotal = ((*peer).incomingDataTotal as c_ulong)
+        (*peer).incomingDataTotal = ((*peer).incomingDataTotal as size_t)
             .wrapping_add((*host).receivedDataLength)
             as enet_uint32 as enet_uint32;
     }
@@ -5727,7 +5728,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             break;
         }
         commandSize = commandSizes[commandNumber as usize];
-        if commandSize == 0 as c_int as c_ulong
+        if commandSize == 0 as c_int as size_t
             || currentData.offset(commandSize as isize)
                 > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
                     as *mut enet_uint8
@@ -5860,7 +5861,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             dataLength: 0,
         };
         buffer.data = ((*host).packetData[0 as c_int as usize]).as_mut_ptr() as *mut c_void;
-        buffer.dataLength = ::core::mem::size_of::<[enet_uint8; 4096]>() as c_ulong;
+        buffer.dataLength = ::core::mem::size_of::<[enet_uint8; 4096]>() as size_t;
         receivedLength = match (*host)
             .socket
             .assume_init_mut()
@@ -5970,8 +5971,8 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
                         .wrapping_div(::core::mem::size_of::<ENetBuffer>() as c_ulong)
                         as isize,
                 ) as *mut ENetBuffer
-            || ((*peer).mtu as c_ulong).wrapping_sub((*host).packetSize)
-                < ::core::mem::size_of::<ENetProtocolAcknowledge>() as c_ulong
+            || ((*peer).mtu as size_t).wrapping_sub((*host).packetSize)
+                < ::core::mem::size_of::<ENetProtocolAcknowledge>() as size_t
         {
             (*peer).flags =
                 ((*peer).flags as c_int | ENET_PEER_FLAG_CONTINUE_SENDING as c_int) as enet_uint16;
@@ -5980,8 +5981,8 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
             acknowledgement = currentAcknowledgement as *mut ENetAcknowledgement;
             currentAcknowledgement = (*currentAcknowledgement).next;
             (*buffer).data = command as *mut c_void;
-            (*buffer).dataLength = ::core::mem::size_of::<ENetProtocolAcknowledge>() as c_ulong;
-            (*host).packetSize = ((*host).packetSize as c_ulong).wrapping_add((*buffer).dataLength)
+            (*buffer).dataLength = ::core::mem::size_of::<ENetProtocolAcknowledge>() as size_t;
+            (*host).packetSize = ((*host).packetSize as size_t).wrapping_add((*buffer).dataLength)
                 as size_t as size_t;
             reliableSequenceNumber =
                 htons((*acknowledgement).command.header.reliableSequenceNumber);
@@ -6145,7 +6146,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int
             != 0
         {
-            channel = if ((*outgoingCommand).command.header.channelID as c_ulong)
+            channel = if ((*outgoingCommand).command.header.channelID as size_t)
                 < (*peer).channelCount
             {
                 &mut *((*peer).channels)
@@ -6220,11 +6221,11 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                         .wrapping_div(::core::mem::size_of::<ENetBuffer>() as c_ulong)
                         as isize,
                 ) as *mut ENetBuffer
-            || ((*peer).mtu as c_ulong).wrapping_sub((*host).packetSize) < commandSize
+            || ((*peer).mtu as size_t).wrapping_sub((*host).packetSize) < commandSize
             || !((*outgoingCommand).packet).is_null()
-                && (((*peer).mtu as c_ulong).wrapping_sub((*host).packetSize) as enet_uint16
+                && (((*peer).mtu as size_t).wrapping_sub((*host).packetSize) as enet_uint16
                     as c_int)
-                    < commandSize.wrapping_add((*outgoingCommand).fragmentLength as c_ulong)
+                    < commandSize.wrapping_add((*outgoingCommand).fragmentLength as size_t)
                         as enet_uint16 as c_int
         {
             (*peer).flags =
@@ -6285,8 +6286,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                         loop {
                             (*(*outgoingCommand).packet).referenceCount =
                                 ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-                            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as c_ulong
-                            {
+                            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
                                 enet_packet_destroy((*outgoingCommand).packet);
                             }
                             enet_list_remove(&mut (*outgoingCommand).outgoingCommandList);
@@ -6319,7 +6319,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             }
             (*buffer).data = command as *mut c_void;
             (*buffer).dataLength = commandSize;
-            (*host).packetSize = ((*host).packetSize as c_ulong).wrapping_add((*buffer).dataLength)
+            (*host).packetSize = ((*host).packetSize as size_t).wrapping_add((*buffer).dataLength)
                 as size_t as size_t;
             *command = (*outgoingCommand).command;
             if !((*outgoingCommand).packet).is_null() {
@@ -6388,7 +6388,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                 (*host).headerFlags = 0 as c_int as enet_uint16;
                 (*host).commandCount = 0 as c_int as size_t;
                 (*host).bufferCount = 1 as c_int as size_t;
-                (*host).packetSize = ::core::mem::size_of::<ENetProtocolHeader>() as c_ulong;
+                (*host).packetSize = ::core::mem::size_of::<ENetProtocolHeader>() as size_t;
                 if !((*currentPeer).acknowledgements.sentinel.next
                     == &mut (*currentPeer).acknowledgements.sentinel as *mut ENetListNode)
                 {
@@ -6427,8 +6427,8 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         } else {
                             ((*host).serviceTime).wrapping_sub((*currentPeer).lastReceiveTime)
                         }) >= (*currentPeer).pingInterval
-                        && ((*currentPeer).mtu as c_ulong).wrapping_sub((*host).packetSize)
-                            >= ::core::mem::size_of::<ENetProtocolPing>() as c_ulong
+                        && ((*currentPeer).mtu as size_t).wrapping_sub((*host).packetSize)
+                            >= ::core::mem::size_of::<ENetProtocolPing>() as size_t
                     {
                         enet_peer_ping(currentPeer);
                         enet_protocol_check_outgoing_commands(
@@ -6437,7 +6437,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             &mut sentUnreliableCommands,
                         );
                     }
-                    if !((*host).commandCount == 0 as c_int as c_ulong) {
+                    if !((*host).commandCount == 0 as c_int as size_t) {
                         if (*currentPeer).packetLossEpoch == 0 as c_int as c_uint {
                             (*currentPeer).packetLossEpoch = (*host).serviceTime;
                         } else if (if ((*host).serviceTime)
@@ -6479,7 +6479,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                 ((*host).serviceTime & 0xffff as c_int as c_uint) as uint16_t,
                             );
                             (*((*host).buffers).as_mut_ptr()).dataLength =
-                                ::core::mem::size_of::<ENetProtocolHeader>() as c_ulong;
+                                ::core::mem::size_of::<ENetProtocolHeader>() as size_t;
                         } else {
                             (*((*host).buffers).as_mut_ptr()).dataLength = 2 as size_t;
                         }
@@ -6492,17 +6492,17 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                     ENetProtocolHeader,
                                 >(
                                 )
-                                    as c_ulong);
+                                    as size_t);
                             let mut compressedSize: size_t = ((*host).compressor.compress)
                                 .expect("non-null function pointer")(
                                 (*host).compressor.context,
                                 &mut *((*host).buffers).as_mut_ptr().offset(1 as c_int as isize),
-                                ((*host).bufferCount).wrapping_sub(1 as c_int as c_ulong),
+                                ((*host).bufferCount).wrapping_sub(1 as c_int as size_t),
                                 originalSize,
                                 ((*host).packetData[1 as c_int as usize]).as_mut_ptr(),
                                 originalSize,
                             );
-                            if compressedSize > 0 as c_int as c_ulong
+                            if compressedSize > 0 as c_int as size_t
                                 && compressedSize < originalSize
                             {
                                 (*host).headerFlags = ((*host).headerFlags as c_int
@@ -6546,7 +6546,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                 (*host).bufferCount,
                             );
                         }
-                        if shouldCompress > 0 as c_int as c_ulong {
+                        if shouldCompress > 0 as c_int as size_t {
                             (*host).buffers[1 as c_int as usize].data =
                                 ((*host).packetData[1 as c_int as usize]).as_mut_ptr()
                                     as *mut c_void;
