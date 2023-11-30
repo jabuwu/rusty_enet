@@ -8,12 +8,19 @@
     unused_mut
 )]
 
+use std::{
+    mem::MaybeUninit,
+    time::{SystemTime, UNIX_EPOCH},
+};
+
+mod address;
 mod os;
-use std::time::{SystemTime, UNIX_EPOCH};
+mod socket;
 
+pub use address::*;
 pub use os::*;
+pub use socket::*;
 
-pub type ENetSocket = c_int;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct ENetBuffer {
@@ -223,10 +230,8 @@ pub struct _ENetCallbacks {
 }
 pub type ENetCallbacks = _ENetCallbacks;
 pub type ENetVersion = enet_uint32;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct _ENetHost {
-    pub socket: ENetSocket,
+pub struct _ENetHost<S: Socket> {
+    pub socket: MaybeUninit<S>,
     pub address: ENetAddress,
     pub incomingBandwidth: enet_uint32,
     pub outgoingBandwidth: enet_uint32,
@@ -234,7 +239,7 @@ pub struct _ENetHost {
     pub mtu: enet_uint32,
     pub randomSeed: enet_uint32,
     pub recalculateBandwidthLimits: c_int,
-    pub peers: *mut ENetPeer,
+    pub peers: *mut ENetPeer<S>,
     pub peerCount: size_t,
     pub channelLimit: size_t,
     pub serviceTime: enet_uint32,
@@ -256,20 +261,20 @@ pub struct _ENetHost {
     pub totalSentPackets: enet_uint32,
     pub totalReceivedData: enet_uint32,
     pub totalReceivedPackets: enet_uint32,
-    pub intercept: ENetInterceptCallback,
+    pub intercept: ENetInterceptCallback<S>,
     pub connectedPeers: size_t,
     pub bandwidthLimitedPeers: size_t,
     pub duplicatePeers: size_t,
     pub maximumPacketSize: size_t,
     pub maximumWaitingData: size_t,
 }
-pub type ENetInterceptCallback =
-    Option<unsafe extern "C" fn(*mut _ENetHost, *mut _ENetEvent) -> c_int>;
+pub type ENetInterceptCallback<S> =
+    Option<unsafe extern "C" fn(*mut _ENetHost<S>, *mut _ENetEvent<S>) -> c_int>;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetEvent {
+pub struct _ENetEvent<S: Socket> {
     pub type_0: ENetEventType,
-    pub peer: *mut ENetPeer,
+    pub peer: *mut ENetPeer<S>,
     pub channelID: enet_uint8,
     pub data: enet_uint32,
     pub packet: *mut ENetPacket,
@@ -286,12 +291,12 @@ pub struct _ENetPacket {
     pub userData: *mut c_void,
 }
 pub type ENetPacketFreeCallback = Option<unsafe extern "C" fn(*mut _ENetPacket) -> ()>;
-pub type ENetPeer = _ENetPeer;
+pub type ENetPeer<S> = _ENetPeer<S>;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetPeer {
+pub struct _ENetPeer<S: Socket> {
     pub dispatchList: ENetListNode,
-    pub host: *mut _ENetHost,
+    pub host: *mut _ENetHost<S>,
     pub outgoingPeerID: enet_uint16,
     pub incomingPeerID: enet_uint16,
     pub connectID: enet_uint32,
@@ -511,8 +516,8 @@ pub const ENET_HOST_RECEIVE_BUFFER_SIZE: C2RustUnnamed_2 = 262144;
 pub type _ENetPeerFlag = c_uint;
 pub const ENET_PEER_FLAG_CONTINUE_SENDING: _ENetPeerFlag = 2;
 pub const ENET_PEER_FLAG_NEEDS_DISPATCH: _ENetPeerFlag = 1;
-pub type ENetHost = _ENetHost;
-pub type ENetEvent = _ENetEvent;
+pub type ENetHost<S> = _ENetHost<S>;
+pub type ENetEvent<S> = _ENetEvent<S>;
 pub type ENetRangeCoder = _ENetRangeCoder;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1667,7 +1672,7 @@ pub unsafe extern "C" fn enet_range_coder_decompress(
     }
     return outData.offset_from(outStart) as c_long as size_t;
 }
-pub unsafe fn enet_host_compress_with_range_coder(mut host: *mut ENetHost) -> c_int {
+pub unsafe fn enet_host_compress_with_range_coder<S: Socket>(mut host: *mut ENetHost<S>) -> c_int {
     let mut compressor: ENetCompressor = ENetCompressor {
         context: 0 as *mut c_void,
         compress: None,
@@ -1708,38 +1713,38 @@ pub unsafe fn enet_host_compress_with_range_coder(mut host: *mut ENetHost) -> c_
     enet_host_compress(host, &mut compressor);
     return 0 as c_int;
 }
-pub unsafe fn enet_host_create(
+pub unsafe fn enet_host_create<S: Socket>(
     mut address: *const ENetAddress,
     mut peerCount: size_t,
     mut channelLimit: size_t,
     mut incomingBandwidth: enet_uint32,
     mut outgoingBandwidth: enet_uint32,
-) -> *mut ENetHost {
-    let mut host: *mut ENetHost = 0 as *mut ENetHost;
-    let mut currentPeer: *mut ENetPeer = 0 as *mut ENetPeer;
+) -> *mut ENetHost<S> {
+    let mut host: *mut ENetHost<S> = 0 as *mut ENetHost<S>;
+    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     if peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as c_ulong {
-        return 0 as *mut ENetHost;
+        return 0 as *mut ENetHost<S>;
     }
-    host = enet_malloc(::core::mem::size_of::<ENetHost>() as c_ulong) as *mut ENetHost;
+    host = enet_malloc(::core::mem::size_of::<ENetHost<S>>() as c_ulong) as *mut ENetHost<S>;
     if host.is_null() {
-        return 0 as *mut ENetHost;
+        return 0 as *mut ENetHost<S>;
     }
     _enet_memset(
         host as *mut c_void,
         0 as c_int,
-        ::core::mem::size_of::<ENetHost>() as c_ulong,
+        ::core::mem::size_of::<ENetHost<S>>() as c_ulong,
     );
     (*host).peers =
-        enet_malloc(peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer>() as c_ulong))
-            as *mut ENetPeer;
+        enet_malloc(peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as c_ulong))
+            as *mut ENetPeer<S>;
     if ((*host).peers).is_null() {
         enet_free(host as *mut c_void);
-        return 0 as *mut ENetHost;
+        return 0 as *mut ENetHost<S>;
     }
     _enet_memset(
         (*host).peers as *mut c_void,
         0 as c_int,
-        peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer>() as c_ulong),
+        peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as c_ulong),
     );
     (*host).socket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
     if (*host).socket == -(1 as c_int)
@@ -1750,7 +1755,7 @@ pub unsafe fn enet_host_create(
         }
         enet_free((*host).peers as *mut c_void);
         enet_free(host as *mut c_void);
-        return 0 as *mut ENetHost;
+        return 0 as *mut ENetHost<S>;
     }
     enet_socket_set_option((*host).socket, ENET_SOCKOPT_NONBLOCK, 1 as c_int);
     enet_socket_set_option((*host).socket, ENET_SOCKOPT_BROADCAST, 1 as c_int);
@@ -1809,7 +1814,8 @@ pub unsafe fn enet_host_create(
     (*host).intercept = None;
     enet_list_clear(&mut (*host).dispatchQueue);
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
+    {
         (*currentPeer).host = host;
         (*currentPeer).incomingPeerID =
             currentPeer.offset_from((*host).peers) as c_long as enet_uint16;
@@ -1826,14 +1832,15 @@ pub unsafe fn enet_host_create(
     }
     return host;
 }
-pub unsafe fn enet_host_destroy(mut host: *mut ENetHost) {
-    let mut currentPeer: *mut ENetPeer = 0 as *mut ENetPeer;
+pub unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
+    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     if host.is_null() {
         return;
     }
     enet_socket_destroy((*host).socket);
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
+    {
         enet_peer_reset(currentPeer);
         currentPeer = currentPeer.offset(1);
     }
@@ -1844,7 +1851,7 @@ pub unsafe fn enet_host_destroy(mut host: *mut ENetHost) {
     enet_free((*host).peers as *mut c_void);
     enet_free(host as *mut c_void);
 }
-pub unsafe fn enet_host_random(mut host: *mut ENetHost) -> enet_uint32 {
+pub unsafe fn enet_host_random<S: Socket>(mut host: *mut ENetHost<S>) -> enet_uint32 {
     (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(0x6d2b79f5 as c_uint)
         as enet_uint32 as enet_uint32;
     let mut n: enet_uint32 = (*host).randomSeed;
@@ -1852,13 +1859,13 @@ pub unsafe fn enet_host_random(mut host: *mut ENetHost) -> enet_uint32 {
     n ^= n.wrapping_add((n ^ n >> 7 as c_int).wrapping_mul(n | 61 as c_uint));
     return n ^ n >> 14 as c_int;
 }
-pub unsafe fn enet_host_connect(
-    mut host: *mut ENetHost,
+pub unsafe fn enet_host_connect<S: Socket>(
+    mut host: *mut ENetHost<S>,
     mut address: *const ENetAddress,
     mut channelCount: size_t,
     mut data: enet_uint32,
-) -> *mut ENetPeer {
-    let mut currentPeer: *mut ENetPeer = 0 as *mut ENetPeer;
+) -> *mut ENetPeer<S> {
+    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
@@ -1873,20 +1880,21 @@ pub unsafe fn enet_host_connect(
         channelCount = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
     }
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
+    {
         if (*currentPeer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint {
             break;
         }
         currentPeer = currentPeer.offset(1);
     }
-    if currentPeer >= &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
-        return 0 as *mut ENetPeer;
+    if currentPeer >= &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
+        return 0 as *mut ENetPeer<S>;
     }
     (*currentPeer).channels =
         enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as c_ulong))
             as *mut ENetChannel;
     if ((*currentPeer).channels).is_null() {
-        return 0 as *mut ENetPeer;
+        return 0 as *mut ENetPeer<S>;
     }
     (*currentPeer).channelCount = channelCount;
     (*currentPeer).state = ENET_PEER_STATE_CONNECTING;
@@ -1949,14 +1957,15 @@ pub unsafe fn enet_host_connect(
     );
     return currentPeer;
 }
-pub unsafe fn enet_host_broadcast(
-    mut host: *mut ENetHost,
+pub unsafe fn enet_host_broadcast<S: Socket>(
+    mut host: *mut ENetHost<S>,
     mut channelID: enet_uint8,
     mut packet: *mut ENetPacket,
 ) {
-    let mut currentPeer: *mut ENetPeer = 0 as *mut ENetPeer;
+    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
+    {
         if !((*currentPeer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint) {
             enet_peer_send(currentPeer, channelID, packet);
         }
@@ -1966,7 +1975,10 @@ pub unsafe fn enet_host_broadcast(
         enet_packet_destroy(packet);
     }
 }
-pub unsafe fn enet_host_compress(mut host: *mut ENetHost, mut compressor: *const ENetCompressor) {
+pub unsafe fn enet_host_compress<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut compressor: *const ENetCompressor,
+) {
     if !((*host).compressor.context).is_null() && ((*host).compressor.destroy).is_some() {
         (Some(((*host).compressor.destroy).expect("non-null function pointer")))
             .expect("non-null function pointer")((*host).compressor.context);
@@ -1977,7 +1989,10 @@ pub unsafe fn enet_host_compress(mut host: *mut ENetHost, mut compressor: *const
         (*host).compressor.context = 0 as *mut c_void;
     };
 }
-pub unsafe fn enet_host_channel_limit(mut host: *mut ENetHost, mut channelLimit: size_t) {
+pub unsafe fn enet_host_channel_limit<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut channelLimit: size_t,
+) {
     if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong {
         channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
     } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong {
@@ -1985,8 +2000,8 @@ pub unsafe fn enet_host_channel_limit(mut host: *mut ENetHost, mut channelLimit:
     }
     (*host).channelLimit = channelLimit;
 }
-pub unsafe fn enet_host_bandwidth_limit(
-    mut host: *mut ENetHost,
+pub unsafe fn enet_host_bandwidth_limit<S: Socket>(
+    mut host: *mut ENetHost<S>,
     mut incomingBandwidth: enet_uint32,
     mut outgoingBandwidth: enet_uint32,
 ) {
@@ -1994,7 +2009,7 @@ pub unsafe fn enet_host_bandwidth_limit(
     (*host).outgoingBandwidth = outgoingBandwidth;
     (*host).recalculateBandwidthLimits = 1 as c_int;
 }
-pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
+pub unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENetHost<S>) {
     let mut timeCurrent: enet_uint32 = enet_time_get();
     let mut elapsedTime: enet_uint32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
     let mut peersRemaining: enet_uint32 = (*host).connectedPeers as enet_uint32;
@@ -2007,7 +2022,7 @@ pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
     } else {
         0 as c_int
     };
-    let mut peer: *mut ENetPeer = 0 as *mut ENetPeer;
+    let mut peer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -2028,7 +2043,7 @@ pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
             .wrapping_mul(elapsedTime)
             .wrapping_div(1000 as c_int as c_uint);
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
             {
@@ -2048,7 +2063,7 @@ pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
                 .wrapping_div(dataTotal);
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
             let mut peerBandwidth: enet_uint32 = 0;
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
@@ -2095,7 +2110,7 @@ pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
                 .wrapping_div(dataTotal);
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
                 || (*peer).outgoingBandwidthThrottleEpoch == timeCurrent)
@@ -2123,7 +2138,7 @@ pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
                 bandwidthLimit = bandwidth.wrapping_div(peersRemaining);
                 peer = (*host).peers;
                 while peer
-                    < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer
+                    < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
                 {
                     if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                         && (*peer).state as c_uint
@@ -2146,7 +2161,7 @@ pub unsafe fn enet_host_bandwidth_throttle(mut host: *mut ENetHost) {
             }
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
             {
@@ -2568,8 +2583,8 @@ pub unsafe extern "C" fn enet_crc32(
     }
     return htonl(!crc);
 }
-pub unsafe fn enet_peer_throttle_configure(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_throttle_configure<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut interval: enet_uint32,
     mut acceleration: enet_uint32,
     mut deceleration: enet_uint32,
@@ -2599,7 +2614,10 @@ pub unsafe fn enet_peer_throttle_configure(
         0 as c_int as enet_uint16,
     );
 }
-pub unsafe fn enet_peer_throttle(mut peer: *mut ENetPeer, mut rtt: enet_uint32) -> c_int {
+pub unsafe fn enet_peer_throttle<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
+    mut rtt: enet_uint32,
+) -> c_int {
     if (*peer).lastRoundTripTime <= (*peer).lastRoundTripTimeVariance {
         (*peer).packetThrottle = (*peer).packetThrottleLimit;
     } else if rtt <= (*peer).lastRoundTripTime {
@@ -2628,8 +2646,8 @@ pub unsafe fn enet_peer_throttle(mut peer: *mut ENetPeer, mut rtt: enet_uint32) 
     }
     return 0 as c_int;
 }
-pub unsafe fn enet_peer_send(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_send<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut channelID: enet_uint8,
     mut packet: *mut ENetPacket,
 ) -> c_int {
@@ -2770,8 +2788,8 @@ pub unsafe fn enet_peer_send(
     }
     return 0 as c_int;
 }
-pub unsafe fn enet_peer_receive(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_receive<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut channelID: *mut enet_uint8,
 ) -> *mut ENetPacket {
     let mut incomingCommand: *mut ENetIncomingCommand = 0 as *mut ENetIncomingCommand;
@@ -2847,7 +2865,7 @@ unsafe fn enet_peer_reset_incoming_commands(mut queue: *mut ENetList) {
         0 as *mut ENetIncomingCommand,
     );
 }
-pub unsafe fn enet_peer_reset_queues(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_reset_queues<S: Socket>(mut peer: *mut ENetPeer<S>) {
     let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
     if (*peer).flags as c_int & ENET_PEER_FLAG_NEEDS_DISPATCH as c_int != 0 {
         enet_list_remove(&mut (*peer).dispatchList);
@@ -2877,7 +2895,7 @@ pub unsafe fn enet_peer_reset_queues(mut peer: *mut ENetPeer) {
     (*peer).channels = 0 as *mut ENetChannel;
     (*peer).channelCount = 0 as c_int as size_t;
 }
-pub unsafe fn enet_peer_on_connect(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_on_connect<S: Socket>(mut peer: *mut ENetPeer<S>) {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
         && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -2888,7 +2906,7 @@ pub unsafe fn enet_peer_on_connect(mut peer: *mut ENetPeer) {
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_add(1);
     }
 }
-pub unsafe fn enet_peer_on_disconnect(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_on_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>) {
     if (*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -2899,7 +2917,7 @@ pub unsafe fn enet_peer_on_disconnect(mut peer: *mut ENetPeer) {
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_sub(1);
     }
 }
-pub unsafe fn enet_peer_reset(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_reset<S: Socket>(mut peer: *mut ENetPeer<S>) {
     enet_peer_on_disconnect(peer);
     (*peer).outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as enet_uint16;
     (*peer).connectID = 0 as c_int as enet_uint32;
@@ -2954,7 +2972,7 @@ pub unsafe fn enet_peer_reset(mut peer: *mut ENetPeer) {
     );
     enet_peer_reset_queues(peer);
 }
-pub unsafe fn enet_peer_ping(mut peer: *mut ENetPeer) {
+pub unsafe fn enet_peer_ping<S: Socket>(mut peer: *mut ENetPeer<S>) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -2977,15 +2995,18 @@ pub unsafe fn enet_peer_ping(mut peer: *mut ENetPeer) {
         0 as c_int as enet_uint16,
     );
 }
-pub unsafe fn enet_peer_ping_interval(mut peer: *mut ENetPeer, mut pingInterval: enet_uint32) {
+pub unsafe fn enet_peer_ping_interval<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
+    mut pingInterval: enet_uint32,
+) {
     (*peer).pingInterval = if pingInterval != 0 {
         pingInterval
     } else {
         ENET_PEER_PING_INTERVAL as c_int as c_uint
     };
 }
-pub unsafe fn enet_peer_timeout(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_timeout<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut timeoutLimit: enet_uint32,
     mut timeoutMinimum: enet_uint32,
     mut timeoutMaximum: enet_uint32,
@@ -3006,7 +3027,10 @@ pub unsafe fn enet_peer_timeout(
         ENET_PEER_TIMEOUT_MAXIMUM as c_int as c_uint
     };
 }
-pub unsafe fn enet_peer_disconnect_now(mut peer: *mut ENetPeer, mut data: enet_uint32) {
+pub unsafe fn enet_peer_disconnect_now<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
+    mut data: enet_uint32,
+) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3037,7 +3061,7 @@ pub unsafe fn enet_peer_disconnect_now(mut peer: *mut ENetPeer, mut data: enet_u
     }
     enet_peer_reset(peer);
 }
-pub unsafe fn enet_peer_disconnect(mut peer: *mut ENetPeer, mut data: enet_uint32) {
+pub unsafe fn enet_peer_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>, mut data: enet_uint32) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3084,7 +3108,7 @@ pub unsafe fn enet_peer_disconnect(mut peer: *mut ENetPeer, mut data: enet_uint3
         enet_peer_reset(peer);
     };
 }
-pub unsafe fn enet_peer_has_outgoing_commands(mut peer: *mut ENetPeer) -> c_int {
+pub unsafe fn enet_peer_has_outgoing_commands<S: Socket>(mut peer: *mut ENetPeer<S>) -> c_int {
     if (*peer).outgoingCommands.sentinel.next
         == &mut (*peer).outgoingCommands.sentinel as *mut ENetListNode
         && (*peer).outgoingSendReliableCommands.sentinel.next
@@ -3096,7 +3120,10 @@ pub unsafe fn enet_peer_has_outgoing_commands(mut peer: *mut ENetPeer) -> c_int 
     }
     return 1 as c_int;
 }
-pub unsafe fn enet_peer_disconnect_later(mut peer: *mut ENetPeer, mut data: enet_uint32) {
+pub unsafe fn enet_peer_disconnect_later<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
+    mut data: enet_uint32,
+) {
     if ((*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
         && enet_peer_has_outgoing_commands(peer) != 0
@@ -3107,8 +3134,8 @@ pub unsafe fn enet_peer_disconnect_later(mut peer: *mut ENetPeer, mut data: enet
         enet_peer_disconnect(peer, data);
     };
 }
-pub unsafe fn enet_peer_queue_acknowledgement(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut sentTime: enet_uint16,
 ) -> *mut ENetAcknowledgement {
@@ -3153,8 +3180,8 @@ pub unsafe fn enet_peer_queue_acknowledgement(
     );
     return acknowledgement;
 }
-pub unsafe fn enet_peer_setup_outgoing_command(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut outgoingCommand: *mut ENetOutgoingCommand,
 ) {
     (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as c_ulong).wrapping_add(
@@ -3232,8 +3259,8 @@ pub unsafe fn enet_peer_setup_outgoing_command(
         );
     };
 }
-pub unsafe fn enet_peer_queue_outgoing_command(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut packet: *mut ENetPacket,
     mut offset: enet_uint32,
@@ -3255,8 +3282,8 @@ pub unsafe fn enet_peer_queue_outgoing_command(
     enet_peer_setup_outgoing_command(peer, outgoingCommand);
     return outgoingCommand;
 }
-pub unsafe fn enet_peer_dispatch_incoming_unreliable_commands(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut channel: *mut ENetChannel,
     mut queuedCommand: *mut ENetIncomingCommand,
 ) {
@@ -3377,8 +3404,8 @@ pub unsafe fn enet_peer_dispatch_incoming_unreliable_commands(
         queuedCommand,
     );
 }
-pub unsafe fn enet_peer_dispatch_incoming_reliable_commands(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut channel: *mut ENetChannel,
     mut queuedCommand: *mut ENetIncomingCommand,
 ) {
@@ -3426,8 +3453,8 @@ pub unsafe fn enet_peer_dispatch_incoming_reliable_commands(
         enet_peer_dispatch_incoming_unreliable_commands(peer, channel, queuedCommand);
     }
 }
-pub unsafe fn enet_peer_queue_incoming_command(
-    mut peer: *mut ENetPeer,
+pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut data: *const c_void,
     mut dataLength: size_t,
@@ -4318,9 +4345,9 @@ static mut commandSizes: [size_t; 13] = [
 pub unsafe fn enet_protocol_command_size(mut commandNumber: enet_uint8) -> size_t {
     return commandSizes[(commandNumber as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int) as usize];
 }
-unsafe fn enet_protocol_change_state(
-    mut _host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_change_state<S: Socket>(
+    mut _host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut state: ENetPeerState,
 ) {
     if state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
@@ -4332,9 +4359,9 @@ unsafe fn enet_protocol_change_state(
     }
     (*peer).state = state;
 }
-unsafe fn enet_protocol_dispatch_state(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_dispatch_state<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut state: ENetPeerState,
 ) {
     enet_protocol_change_state(host, peer, state);
@@ -4347,15 +4374,15 @@ unsafe fn enet_protocol_dispatch_state(
             ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as enet_uint16;
     }
 }
-unsafe fn enet_protocol_dispatch_incoming_commands(
-    mut host: *mut ENetHost,
-    mut event: *mut ENetEvent,
+unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
 ) -> c_int {
     while !((*host).dispatchQueue.sentinel.next
         == &mut (*host).dispatchQueue.sentinel as *mut ENetListNode)
     {
-        let mut peer: *mut ENetPeer =
-            enet_list_remove((*host).dispatchQueue.sentinel.next) as *mut ENetPeer;
+        let mut peer: *mut ENetPeer<S> =
+            enet_list_remove((*host).dispatchQueue.sentinel.next) as *mut ENetPeer<S>;
         (*peer).flags =
             ((*peer).flags as c_int & !(ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)) as enet_uint16;
         match (*peer).state as c_uint {
@@ -4404,10 +4431,10 @@ unsafe fn enet_protocol_dispatch_incoming_commands(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_notify_connect(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
-    mut event: *mut ENetEvent,
+unsafe fn enet_protocol_notify_connect<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
+    mut event: *mut ENetEvent<S>,
 ) {
     (*host).recalculateBandwidthLimits = 1 as c_int;
     if !event.is_null() {
@@ -4427,10 +4454,10 @@ unsafe fn enet_protocol_notify_connect(
         );
     };
 }
-unsafe fn enet_protocol_notify_disconnect(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
-    mut event: *mut ENetEvent,
+unsafe fn enet_protocol_notify_disconnect<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
+    mut event: *mut ENetEvent<S>,
 ) {
     if (*peer).state as c_uint >= ENET_PEER_STATE_CONNECTION_PENDING as c_int as c_uint {
         (*host).recalculateBandwidthLimits = 1 as c_int;
@@ -4449,8 +4476,8 @@ unsafe fn enet_protocol_notify_disconnect(
         enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
     };
 }
-unsafe fn enet_protocol_remove_sent_unreliable_commands(
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut sentUnreliableCommands: *mut ENetList,
 ) {
     let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
@@ -4511,8 +4538,8 @@ unsafe fn enet_protocol_find_sent_reliable_command(
     }
     return 0 as *mut ENetOutgoingCommand;
 }
-unsafe fn enet_protocol_remove_sent_reliable_command(
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
+    mut peer: *mut ENetPeer<S>,
     mut reliableSequenceNumber: enet_uint16,
     mut channelID: enet_uint8,
 ) -> ENetProtocolCommand {
@@ -4592,11 +4619,11 @@ unsafe fn enet_protocol_remove_sent_reliable_command(
         ((*outgoingCommand).sentTime).wrapping_add((*outgoingCommand).roundTripTimeout);
     return commandNumber;
 }
-unsafe fn enet_protocol_handle_connect(
-    mut host: *mut ENetHost,
+unsafe fn enet_protocol_handle_connect<S: Socket>(
+    mut host: *mut ENetHost<S>,
     mut _header: *mut ENetProtocolHeader,
     mut command: *mut ENetProtocol,
-) -> *mut ENetPeer {
+) -> *mut ENetPeer<S> {
     let mut incomingSessionID: enet_uint8 = 0;
     let mut outgoingSessionID: enet_uint8 = 0;
     let mut mtu: enet_uint32 = 0;
@@ -4604,8 +4631,8 @@ unsafe fn enet_protocol_handle_connect(
     let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
     let mut channelCount: size_t = 0;
     let mut duplicatePeers: size_t = 0 as c_int as size_t;
-    let mut currentPeer: *mut ENetPeer = 0 as *mut ENetPeer;
-    let mut peer: *mut ENetPeer = 0 as *mut ENetPeer;
+    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
+    let mut peer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     let mut verifyCommand: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -4617,10 +4644,11 @@ unsafe fn enet_protocol_handle_connect(
     if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as c_ulong
         || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as c_ulong
     {
-        return 0 as *mut ENetPeer;
+        return 0 as *mut ENetPeer<S>;
     }
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer {
+    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
+    {
         if (*currentPeer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint {
             if peer.is_null() {
                 peer = currentPeer;
@@ -4631,14 +4659,14 @@ unsafe fn enet_protocol_handle_connect(
             if (*currentPeer).address.port as c_int == (*host).receivedAddress.port as c_int
                 && (*currentPeer).connectID == (*command).connect.connectID
             {
-                return 0 as *mut ENetPeer;
+                return 0 as *mut ENetPeer<S>;
             }
             duplicatePeers = duplicatePeers.wrapping_add(1);
         }
         currentPeer = currentPeer.offset(1);
     }
     if peer.is_null() || duplicatePeers >= (*host).duplicatePeers {
-        return 0 as *mut ENetPeer;
+        return 0 as *mut ENetPeer<S>;
     }
     if channelCount > (*host).channelLimit {
         channelCount = (*host).channelLimit;
@@ -4647,7 +4675,7 @@ unsafe fn enet_protocol_handle_connect(
         enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as c_ulong))
             as *mut ENetChannel;
     if ((*peer).channels).is_null() {
-        return 0 as *mut ENetPeer;
+        return 0 as *mut ENetPeer<S>;
     }
     (*peer).channelCount = channelCount;
     (*peer).state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
@@ -4786,9 +4814,9 @@ unsafe fn enet_protocol_handle_connect(
     );
     return peer;
 }
-unsafe fn enet_protocol_handle_send_reliable(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_send_reliable<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut currentData: *mut *mut enet_uint8,
 ) -> c_int {
@@ -4825,9 +4853,9 @@ unsafe fn enet_protocol_handle_send_reliable(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_send_unsequenced(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut currentData: *mut *mut enet_uint8,
 ) -> c_int {
@@ -4896,9 +4924,9 @@ unsafe fn enet_protocol_handle_send_unsequenced(
         ((1 as c_int) << index.wrapping_rem(32 as c_int as c_uint)) as c_uint;
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_send_unreliable(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_send_unreliable<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut currentData: *mut *mut enet_uint8,
 ) -> c_int {
@@ -4935,9 +4963,9 @@ unsafe fn enet_protocol_handle_send_unreliable(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_send_fragment(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut currentData: *mut *mut enet_uint8,
 ) -> c_int {
@@ -5090,9 +5118,9 @@ unsafe fn enet_protocol_handle_send_fragment(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_send_unreliable_fragment(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut currentData: *mut *mut enet_uint8,
 ) -> c_int {
@@ -5258,9 +5286,9 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_ping(
-    mut _host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_ping<S: Socket>(
+    mut _host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut _command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
@@ -5270,9 +5298,9 @@ unsafe fn enet_protocol_handle_ping(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_bandwidth_limit(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
@@ -5318,9 +5346,9 @@ unsafe fn enet_protocol_handle_bandwidth_limit(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_throttle_configure(
-    mut _host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_throttle_configure<S: Socket>(
+    mut _host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
@@ -5335,9 +5363,9 @@ unsafe fn enet_protocol_handle_throttle_configure(
         ntohl((*command).throttleConfigure.packetThrottleDeceleration);
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_disconnect(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_disconnect<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
@@ -5371,10 +5399,10 @@ unsafe fn enet_protocol_handle_disconnect(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_acknowledge(
-    mut host: *mut ENetHost,
-    mut event: *mut ENetEvent,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
 ) -> c_int {
     let mut roundTripTime: enet_uint32 = 0;
@@ -5497,10 +5525,10 @@ unsafe fn enet_protocol_handle_acknowledge(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_verify_connect(
-    mut host: *mut ENetHost,
-    mut event: *mut ENetEvent,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
+    mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
 ) -> c_int {
     let mut mtu: enet_uint32 = 0;
@@ -5558,13 +5586,13 @@ unsafe fn enet_protocol_handle_verify_connect(
     enet_protocol_notify_connect(host, peer, event);
     return 0 as c_int;
 }
-unsafe fn enet_protocol_handle_incoming_commands(
-    mut host: *mut ENetHost,
-    mut event: *mut ENetEvent,
+unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
 ) -> c_int {
     let mut header: *mut ENetProtocolHeader = 0 as *mut ENetProtocolHeader;
     let mut command: *mut ENetProtocol = 0 as *mut ENetProtocol;
-    let mut peer: *mut ENetPeer = 0 as *mut ENetPeer;
+    let mut peer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     let mut currentData: *mut enet_uint8 = 0 as *mut enet_uint8;
     let mut headerSize: size_t = 0;
     let mut peerID: enet_uint16 = 0;
@@ -5592,11 +5620,11 @@ unsafe fn enet_protocol_handle_incoming_commands(
             as size_t as size_t;
     }
     if peerID as c_int == ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int {
-        peer = 0 as *mut ENetPeer;
+        peer = 0 as *mut ENetPeer<S>;
     } else if peerID as c_ulong >= (*host).peerCount {
         return 0 as c_int;
     } else {
-        peer = &mut *((*host).peers).offset(peerID as isize) as *mut ENetPeer;
+        peer = &mut *((*host).peers).offset(peerID as isize) as *mut ENetPeer<S>;
         if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
             || (*peer).state as c_uint == ENET_PEER_STATE_ZOMBIE as c_int as c_uint
             || ((*host).receivedAddress.host != (*peer).address.host
@@ -5805,9 +5833,9 @@ unsafe fn enet_protocol_handle_incoming_commands(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_receive_incoming_commands(
-    mut host: *mut ENetHost,
-    mut event: *mut ENetEvent,
+unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
 ) -> c_int {
     let mut packets: c_int = 0;
     let mut current_block_17: u64;
@@ -5891,7 +5919,10 @@ unsafe fn enet_protocol_receive_incoming_commands(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_send_acknowledgements(mut host: *mut ENetHost, mut peer: *mut ENetPeer) {
+unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
+) {
     let mut command: *mut ENetProtocol = &mut *((*host).commands)
         .as_mut_ptr()
         .offset((*host).commandCount as isize)
@@ -5953,10 +5984,10 @@ unsafe fn enet_protocol_send_acknowledgements(mut host: *mut ENetHost, mut peer:
     (*host).commandCount = command.offset_from(((*host).commands).as_mut_ptr()) as c_long as size_t;
     (*host).bufferCount = buffer.offset_from(((*host).buffers).as_mut_ptr()) as c_long as size_t;
 }
-unsafe fn enet_protocol_check_timeouts(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
-    mut event: *mut ENetEvent,
+unsafe fn enet_protocol_check_timeouts<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
+    mut event: *mut ENetEvent<S>,
 ) -> c_int {
     let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
     let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
@@ -6035,9 +6066,9 @@ unsafe fn enet_protocol_check_timeouts(
     }
     return 0 as c_int;
 }
-unsafe fn enet_protocol_check_outgoing_commands(
-    mut host: *mut ENetHost,
-    mut peer: *mut ENetPeer,
+unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut peer: *mut ENetPeer<S>,
     mut sentUnreliableCommands: *mut ENetList,
 ) -> c_int {
     let mut command: *mut ENetProtocol = &mut *((*host).commands)
@@ -6300,9 +6331,9 @@ unsafe fn enet_protocol_check_outgoing_commands(
     }
     return canPing;
 }
-unsafe fn enet_protocol_send_outgoing_commands(
-    mut host: *mut ENetHost,
-    mut event: *mut ENetEvent,
+unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
     mut checkForTimeouts: c_int,
 ) -> c_int {
     let mut headerData: [enet_uint8; 8] = [0; 8];
@@ -6319,9 +6350,9 @@ unsafe fn enet_protocol_send_outgoing_commands(
     let mut sendPass: c_int = 0 as c_int;
     let mut continueSending: c_int = 0 as c_int;
     while sendPass <= continueSending {
-        let mut currentPeer: *mut ENetPeer = (*host).peers;
+        let mut currentPeer: *mut ENetPeer<S> = (*host).peers;
         while currentPeer
-            < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer
+            < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
         {
             if !((*currentPeer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
                 || (*currentPeer).state as c_uint == ENET_PEER_STATE_ZOMBIE as c_int as c_uint
@@ -6530,23 +6561,29 @@ unsafe fn enet_protocol_send_outgoing_commands(
     }
     return 0 as c_int;
 }
-pub unsafe fn enet_host_flush(mut host: *mut ENetHost) {
+pub unsafe fn enet_host_flush<S: Socket>(mut host: *mut ENetHost<S>) {
     (*host).serviceTime = enet_time_get();
-    enet_protocol_send_outgoing_commands(host, 0 as *mut ENetEvent, 0 as c_int);
+    enet_protocol_send_outgoing_commands(host, 0 as *mut ENetEvent<S>, 0 as c_int);
 }
-pub unsafe fn enet_host_check_events(mut host: *mut ENetHost, mut event: *mut ENetEvent) -> c_int {
+pub unsafe fn enet_host_check_events<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
+) -> c_int {
     if event.is_null() {
         return -(1 as c_int);
     }
     (*event).type_0 = ENET_EVENT_TYPE_NONE;
-    (*event).peer = 0 as *mut ENetPeer;
+    (*event).peer = 0 as *mut ENetPeer<S>;
     (*event).packet = 0 as *mut ENetPacket;
     return enet_protocol_dispatch_incoming_commands(host, event);
 }
-pub unsafe fn enet_host_service(mut host: *mut ENetHost, mut event: *mut ENetEvent) -> c_int {
+pub unsafe fn enet_host_service<S: Socket>(
+    mut host: *mut ENetHost<S>,
+    mut event: *mut ENetEvent<S>,
+) -> c_int {
     if !event.is_null() {
         (*event).type_0 = ENET_EVENT_TYPE_NONE;
-        (*event).peer = 0 as *mut ENetPeer;
+        (*event).peer = 0 as *mut ENetPeer<S>;
         (*event).packet = 0 as *mut ENetPacket;
         match enet_protocol_dispatch_incoming_commands(host, event) {
             1 => return 1 as c_int,
@@ -6598,292 +6635,4 @@ pub unsafe fn enet_time_get() -> enet_uint32 {
         .expect("Time went backwards")
         .as_millis()
         % u32::MAX as u128) as enet_uint32
-}
-pub unsafe fn enet_address_set_host_ip(
-    mut address: *mut ENetAddress,
-    mut name: *const c_char,
-) -> c_int {
-    if inet_pton(
-        2 as c_int,
-        name,
-        &mut (*address).host as *mut enet_uint32 as *mut c_void,
-    ) == 0
-    {
-        return -(1 as c_int);
-    }
-    return 0 as c_int;
-}
-pub unsafe fn enet_socket_bind(mut socket_0: ENetSocket, mut address: *const ENetAddress) -> c_int {
-    let mut sin: sockaddr_in = sockaddr_in {
-        sin_family: 0,
-        sin_port: 0,
-        sin_addr: in_addr { s_addr: 0 },
-        sin_zero: [0; 8],
-    };
-    _enet_memset(
-        &mut sin as *mut sockaddr_in as *mut c_void,
-        0 as c_int,
-        ::core::mem::size_of::<sockaddr_in>() as c_ulong,
-    );
-    sin.sin_family = 2 as c_int as sa_family_t;
-    if !address.is_null() {
-        sin.sin_port = htons((*address).port);
-        sin.sin_addr.s_addr = (*address).host;
-    } else {
-        sin.sin_port = 0 as c_int as in_port_t;
-        sin.sin_addr.s_addr = 0 as c_int as in_addr_t;
-    }
-    return bind(
-        socket_0,
-        &mut sin as *mut sockaddr_in as *mut sockaddr,
-        ::core::mem::size_of::<sockaddr_in>() as c_ulong as socklen_t,
-    );
-}
-pub unsafe fn enet_socket_get_address(
-    mut socket_0: ENetSocket,
-    mut address: *mut ENetAddress,
-) -> c_int {
-    let mut sin: sockaddr_in = sockaddr_in {
-        sin_family: 0,
-        sin_port: 0,
-        sin_addr: in_addr { s_addr: 0 },
-        sin_zero: [0; 8],
-    };
-    let mut sinLength: socklen_t = ::core::mem::size_of::<sockaddr_in>() as c_ulong as socklen_t;
-    if getsockname(
-        socket_0,
-        &mut sin as *mut sockaddr_in as *mut sockaddr,
-        &mut sinLength,
-    ) == -(1 as c_int)
-    {
-        return -(1 as c_int);
-    }
-    (*address).host = sin.sin_addr.s_addr;
-    (*address).port = ntohs(sin.sin_port);
-    return 0 as c_int;
-}
-pub unsafe fn enet_socket_create(mut type_0: ENetSocketType) -> ENetSocket {
-    return socket(
-        2 as c_int,
-        if type_0 as c_uint == ENET_SOCKET_TYPE_DATAGRAM as c_int as c_uint {
-            SOCK_DGRAM as c_int
-        } else {
-            SOCK_STREAM as c_int
-        },
-        0 as c_int,
-    );
-}
-pub unsafe fn enet_socket_set_option(
-    mut socket_0: ENetSocket,
-    mut option: ENetSocketOption,
-    mut value: c_int,
-) -> c_int {
-    let mut result: c_int = -(1 as c_int);
-    match option as c_uint {
-        1 => {
-            result = fcntl(
-                socket_0,
-                4 as c_int,
-                (if value != 0 {
-                    0o4000 as c_int
-                } else {
-                    0 as c_int
-                }) | fcntl(socket_0, 3 as c_int) & !(0o4000 as c_int),
-            );
-        }
-        2 => {
-            result = setsockopt(
-                socket_0,
-                1 as c_int,
-                6 as c_int,
-                &mut value as *mut c_int as *mut c_char as *const c_void,
-                ::core::mem::size_of::<c_int>() as c_ulong as socklen_t,
-            );
-        }
-        5 => {
-            result = setsockopt(
-                socket_0,
-                1 as c_int,
-                2 as c_int,
-                &mut value as *mut c_int as *mut c_char as *const c_void,
-                ::core::mem::size_of::<c_int>() as c_ulong as socklen_t,
-            );
-        }
-        3 => {
-            result = setsockopt(
-                socket_0,
-                1 as c_int,
-                8 as c_int,
-                &mut value as *mut c_int as *mut c_char as *const c_void,
-                ::core::mem::size_of::<c_int>() as c_ulong as socklen_t,
-            );
-        }
-        4 => {
-            result = setsockopt(
-                socket_0,
-                1 as c_int,
-                7 as c_int,
-                &mut value as *mut c_int as *mut c_char as *const c_void,
-                ::core::mem::size_of::<c_int>() as c_ulong as socklen_t,
-            );
-        }
-        6 => {
-            let mut timeVal: timeval = timeval {
-                tv_sec: 0,
-                tv_usec: 0,
-            };
-            timeVal.tv_sec = (value / 1000 as c_int) as __time_t;
-            timeVal.tv_usec = (value % 1000 as c_int * 1000 as c_int) as __suseconds_t;
-            result = setsockopt(
-                socket_0,
-                1 as c_int,
-                20 as c_int,
-                &mut timeVal as *mut timeval as *mut c_char as *const c_void,
-                ::core::mem::size_of::<timeval>() as c_ulong as socklen_t,
-            );
-        }
-        7 => {
-            let mut timeVal_0: timeval = timeval {
-                tv_sec: 0,
-                tv_usec: 0,
-            };
-            timeVal_0.tv_sec = (value / 1000 as c_int) as __time_t;
-            timeVal_0.tv_usec = (value % 1000 as c_int * 1000 as c_int) as __suseconds_t;
-            result = setsockopt(
-                socket_0,
-                1 as c_int,
-                21 as c_int,
-                &mut timeVal_0 as *mut timeval as *mut c_char as *const c_void,
-                ::core::mem::size_of::<timeval>() as c_ulong as socklen_t,
-            );
-        }
-        9 => {
-            result = setsockopt(
-                socket_0,
-                IPPROTO_TCP as c_int,
-                1 as c_int,
-                &mut value as *mut c_int as *mut c_char as *const c_void,
-                ::core::mem::size_of::<c_int>() as c_ulong as socklen_t,
-            );
-        }
-        10 => {
-            result = setsockopt(
-                socket_0,
-                IPPROTO_IP as c_int,
-                2 as c_int,
-                &mut value as *mut c_int as *mut c_char as *const c_void,
-                ::core::mem::size_of::<c_int>() as c_ulong as socklen_t,
-            );
-        }
-        _ => {}
-    }
-    return if result == -(1 as c_int) {
-        -(1 as c_int)
-    } else {
-        0 as c_int
-    };
-}
-pub unsafe fn enet_socket_destroy(mut socket_0: ENetSocket) {
-    if socket_0 != -(1 as c_int) {
-        close(socket_0);
-    }
-}
-pub unsafe fn enet_socket_send(
-    mut socket_0: ENetSocket,
-    mut address: *const ENetAddress,
-    mut buffers: *const ENetBuffer,
-    mut bufferCount: size_t,
-) -> c_int {
-    let mut msgHdr: msghdr = msghdr {
-        msg_name: 0 as *mut c_void,
-        msg_namelen: 0,
-        msg_iov: 0 as *mut iovec,
-        msg_iovlen: 0,
-        msg_control: 0 as *mut c_void,
-        msg_controllen: 0,
-        msg_flags: 0,
-    };
-    let mut sin: sockaddr_in = sockaddr_in {
-        sin_family: 0,
-        sin_port: 0,
-        sin_addr: in_addr { s_addr: 0 },
-        sin_zero: [0; 8],
-    };
-    let mut sentLength: c_int = 0;
-    _enet_memset(
-        &mut msgHdr as *mut msghdr as *mut c_void,
-        0 as c_int,
-        ::core::mem::size_of::<msghdr>() as c_ulong,
-    );
-    if !address.is_null() {
-        _enet_memset(
-            &mut sin as *mut sockaddr_in as *mut c_void,
-            0 as c_int,
-            ::core::mem::size_of::<sockaddr_in>() as c_ulong,
-        );
-        sin.sin_family = 2 as c_int as sa_family_t;
-        sin.sin_port = htons((*address).port);
-        sin.sin_addr.s_addr = (*address).host;
-        msgHdr.msg_name = &mut sin as *mut sockaddr_in as *mut c_void;
-        msgHdr.msg_namelen = ::core::mem::size_of::<sockaddr_in>() as c_ulong as socklen_t;
-    }
-    msgHdr.msg_iov = buffers as *mut iovec;
-    msgHdr.msg_iovlen = bufferCount;
-    sentLength = sendmsg(socket_0, &mut msgHdr, MSG_NOSIGNAL as c_int) as c_int;
-    if sentLength == -(1 as c_int) {
-        if *__errno_location() == 11 as c_int {
-            return 0 as c_int;
-        }
-        return -(1 as c_int);
-    }
-    return sentLength;
-}
-pub unsafe fn enet_socket_receive(
-    mut socket_0: ENetSocket,
-    mut address: *mut ENetAddress,
-    mut buffers: *mut ENetBuffer,
-    mut bufferCount: size_t,
-) -> c_int {
-    let mut msgHdr: msghdr = msghdr {
-        msg_name: 0 as *mut c_void,
-        msg_namelen: 0,
-        msg_iov: 0 as *mut iovec,
-        msg_iovlen: 0,
-        msg_control: 0 as *mut c_void,
-        msg_controllen: 0,
-        msg_flags: 0,
-    };
-    let mut sin: sockaddr_in = sockaddr_in {
-        sin_family: 0,
-        sin_port: 0,
-        sin_addr: in_addr { s_addr: 0 },
-        sin_zero: [0; 8],
-    };
-    let mut recvLength: c_int = 0;
-    _enet_memset(
-        &mut msgHdr as *mut msghdr as *mut c_void,
-        0 as c_int,
-        ::core::mem::size_of::<msghdr>() as c_ulong,
-    );
-    if !address.is_null() {
-        msgHdr.msg_name = &mut sin as *mut sockaddr_in as *mut c_void;
-        msgHdr.msg_namelen = ::core::mem::size_of::<sockaddr_in>() as c_ulong as socklen_t;
-    }
-    msgHdr.msg_iov = buffers as *mut iovec;
-    msgHdr.msg_iovlen = bufferCount;
-    recvLength = recvmsg(socket_0, &mut msgHdr, MSG_NOSIGNAL as c_int) as c_int;
-    if recvLength == -(1 as c_int) {
-        if *__errno_location() == 11 as c_int {
-            return 0 as c_int;
-        }
-        return -(1 as c_int);
-    }
-    if msgHdr.msg_flags & MSG_TRUNC as c_int != 0 {
-        return -(2 as c_int);
-    }
-    if !address.is_null() {
-        (*address).host = sin.sin_addr.s_addr;
-        (*address).port = ntohs(sin.sin_port);
-    }
-    return recvLength;
 }
