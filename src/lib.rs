@@ -24,380 +24,380 @@ pub use address::*;
 pub use error::*;
 pub use event::*;
 pub use host::*;
-pub use os::*;
+pub(crate) use os::*;
 pub use packet::*;
 pub use socket::*;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct ENetBuffer {
-    pub data: *mut c_void,
-    pub dataLength: size_t,
+pub(crate) struct ENetBuffer {
+    pub(crate) data: *mut c_void,
+    pub(crate) dataLength: size_t,
 }
-pub type enet_uint8 = c_uchar;
-pub type enet_uint16 = c_ushort;
-pub type enet_uint32 = c_uint;
-pub type C2RustUnnamed_1 = c_uint;
-pub const ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT: C2RustUnnamed_1 = 1048576;
-pub const ENET_PROTOCOL_MAXIMUM_PEER_ID: C2RustUnnamed_1 = 4095;
-pub const ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT: C2RustUnnamed_1 = 255;
-pub const ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT: C2RustUnnamed_1 = 1;
-pub const ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE: C2RustUnnamed_1 = 65536;
-pub const ENET_PROTOCOL_MINIMUM_WINDOW_SIZE: C2RustUnnamed_1 = 4096;
-pub const ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS: C2RustUnnamed_1 = 32;
-pub const ENET_PROTOCOL_MAXIMUM_MTU: C2RustUnnamed_1 = 4096;
-pub const ENET_PROTOCOL_MINIMUM_MTU: C2RustUnnamed_1 = 576;
-pub type _ENetProtocolCommand = c_uint;
-pub const ENET_PROTOCOL_COMMAND_MASK: _ENetProtocolCommand = 15;
-pub const ENET_PROTOCOL_COMMAND_COUNT: _ENetProtocolCommand = 13;
-pub const ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT: _ENetProtocolCommand = 12;
-pub const ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE: _ENetProtocolCommand = 11;
-pub const ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT: _ENetProtocolCommand = 10;
-pub const ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED: _ENetProtocolCommand = 9;
-pub const ENET_PROTOCOL_COMMAND_SEND_FRAGMENT: _ENetProtocolCommand = 8;
-pub const ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE: _ENetProtocolCommand = 7;
-pub const ENET_PROTOCOL_COMMAND_SEND_RELIABLE: _ENetProtocolCommand = 6;
-pub const ENET_PROTOCOL_COMMAND_PING: _ENetProtocolCommand = 5;
-pub const ENET_PROTOCOL_COMMAND_DISCONNECT: _ENetProtocolCommand = 4;
-pub const ENET_PROTOCOL_COMMAND_VERIFY_CONNECT: _ENetProtocolCommand = 3;
-pub const ENET_PROTOCOL_COMMAND_CONNECT: _ENetProtocolCommand = 2;
-pub const ENET_PROTOCOL_COMMAND_ACKNOWLEDGE: _ENetProtocolCommand = 1;
-pub const ENET_PROTOCOL_COMMAND_NONE: _ENetProtocolCommand = 0;
-pub type ENetProtocolCommand = _ENetProtocolCommand;
-pub type _ENetProtocolFlag = c_uint;
-pub const ENET_PROTOCOL_HEADER_SESSION_SHIFT: _ENetProtocolFlag = 12;
-pub const ENET_PROTOCOL_HEADER_SESSION_MASK: _ENetProtocolFlag = 12288;
-pub const ENET_PROTOCOL_HEADER_FLAG_MASK: _ENetProtocolFlag = 49152;
-pub const ENET_PROTOCOL_HEADER_FLAG_SENT_TIME: _ENetProtocolFlag = 32768;
-pub const ENET_PROTOCOL_HEADER_FLAG_COMPRESSED: _ENetProtocolFlag = 16384;
-pub const ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED: _ENetProtocolFlag = 64;
-pub const ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE: _ENetProtocolFlag = 128;
+pub(crate) type enet_uint8 = c_uchar;
+pub(crate) type enet_uint16 = c_ushort;
+pub(crate) type enet_uint32 = c_uint;
+pub(crate) type C2RustUnnamed_1 = c_uint;
+pub(crate) const ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT: C2RustUnnamed_1 = 1048576;
+pub(crate) const ENET_PROTOCOL_MAXIMUM_PEER_ID: C2RustUnnamed_1 = 4095;
+pub(crate) const ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT: C2RustUnnamed_1 = 255;
+pub(crate) const ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT: C2RustUnnamed_1 = 1;
+pub(crate) const ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE: C2RustUnnamed_1 = 65536;
+pub(crate) const ENET_PROTOCOL_MINIMUM_WINDOW_SIZE: C2RustUnnamed_1 = 4096;
+pub(crate) const ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS: C2RustUnnamed_1 = 32;
+pub(crate) const ENET_PROTOCOL_MAXIMUM_MTU: C2RustUnnamed_1 = 4096;
+pub(crate) const ENET_PROTOCOL_MINIMUM_MTU: C2RustUnnamed_1 = 576;
+pub(crate) type _ENetProtocolCommand = c_uint;
+pub(crate) const ENET_PROTOCOL_COMMAND_MASK: _ENetProtocolCommand = 15;
+pub(crate) const ENET_PROTOCOL_COMMAND_COUNT: _ENetProtocolCommand = 13;
+pub(crate) const ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT: _ENetProtocolCommand = 12;
+pub(crate) const ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE: _ENetProtocolCommand = 11;
+pub(crate) const ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT: _ENetProtocolCommand = 10;
+pub(crate) const ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED: _ENetProtocolCommand = 9;
+pub(crate) const ENET_PROTOCOL_COMMAND_SEND_FRAGMENT: _ENetProtocolCommand = 8;
+pub(crate) const ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE: _ENetProtocolCommand = 7;
+pub(crate) const ENET_PROTOCOL_COMMAND_SEND_RELIABLE: _ENetProtocolCommand = 6;
+pub(crate) const ENET_PROTOCOL_COMMAND_PING: _ENetProtocolCommand = 5;
+pub(crate) const ENET_PROTOCOL_COMMAND_DISCONNECT: _ENetProtocolCommand = 4;
+pub(crate) const ENET_PROTOCOL_COMMAND_VERIFY_CONNECT: _ENetProtocolCommand = 3;
+pub(crate) const ENET_PROTOCOL_COMMAND_CONNECT: _ENetProtocolCommand = 2;
+pub(crate) const ENET_PROTOCOL_COMMAND_ACKNOWLEDGE: _ENetProtocolCommand = 1;
+pub(crate) const ENET_PROTOCOL_COMMAND_NONE: _ENetProtocolCommand = 0;
+pub(crate) type ENetProtocolCommand = _ENetProtocolCommand;
+pub(crate) type _ENetProtocolFlag = c_uint;
+pub(crate) const ENET_PROTOCOL_HEADER_SESSION_SHIFT: _ENetProtocolFlag = 12;
+pub(crate) const ENET_PROTOCOL_HEADER_SESSION_MASK: _ENetProtocolFlag = 12288;
+pub(crate) const ENET_PROTOCOL_HEADER_FLAG_MASK: _ENetProtocolFlag = 49152;
+pub(crate) const ENET_PROTOCOL_HEADER_FLAG_SENT_TIME: _ENetProtocolFlag = 32768;
+pub(crate) const ENET_PROTOCOL_HEADER_FLAG_COMPRESSED: _ENetProtocolFlag = 16384;
+pub(crate) const ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED: _ENetProtocolFlag = 64;
+pub(crate) const ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE: _ENetProtocolFlag = 128;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolHeader {
-    pub peerID: enet_uint16,
-    pub sentTime: enet_uint16,
+pub(crate) struct _ENetProtocolHeader {
+    pub(crate) peerID: enet_uint16,
+    pub(crate) sentTime: enet_uint16,
 }
-pub type ENetProtocolHeader = _ENetProtocolHeader;
+pub(crate) type ENetProtocolHeader = _ENetProtocolHeader;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolCommandHeader {
-    pub command: enet_uint8,
-    pub channelID: enet_uint8,
-    pub reliableSequenceNumber: enet_uint16,
+pub(crate) struct _ENetProtocolCommandHeader {
+    pub(crate) command: enet_uint8,
+    pub(crate) channelID: enet_uint8,
+    pub(crate) reliableSequenceNumber: enet_uint16,
 }
-pub type ENetProtocolCommandHeader = _ENetProtocolCommandHeader;
+pub(crate) type ENetProtocolCommandHeader = _ENetProtocolCommandHeader;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolAcknowledge {
-    pub header: ENetProtocolCommandHeader,
-    pub receivedReliableSequenceNumber: enet_uint16,
-    pub receivedSentTime: enet_uint16,
+pub(crate) struct _ENetProtocolAcknowledge {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) receivedReliableSequenceNumber: enet_uint16,
+    pub(crate) receivedSentTime: enet_uint16,
 }
-pub type ENetProtocolAcknowledge = _ENetProtocolAcknowledge;
+pub(crate) type ENetProtocolAcknowledge = _ENetProtocolAcknowledge;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolConnect {
-    pub header: ENetProtocolCommandHeader,
-    pub outgoingPeerID: enet_uint16,
-    pub incomingSessionID: enet_uint8,
-    pub outgoingSessionID: enet_uint8,
-    pub mtu: enet_uint32,
-    pub windowSize: enet_uint32,
-    pub channelCount: enet_uint32,
-    pub incomingBandwidth: enet_uint32,
-    pub outgoingBandwidth: enet_uint32,
-    pub packetThrottleInterval: enet_uint32,
-    pub packetThrottleAcceleration: enet_uint32,
-    pub packetThrottleDeceleration: enet_uint32,
-    pub connectID: enet_uint32,
-    pub data: enet_uint32,
+pub(crate) struct _ENetProtocolConnect {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) outgoingPeerID: enet_uint16,
+    pub(crate) incomingSessionID: enet_uint8,
+    pub(crate) outgoingSessionID: enet_uint8,
+    pub(crate) mtu: enet_uint32,
+    pub(crate) windowSize: enet_uint32,
+    pub(crate) channelCount: enet_uint32,
+    pub(crate) incomingBandwidth: enet_uint32,
+    pub(crate) outgoingBandwidth: enet_uint32,
+    pub(crate) packetThrottleInterval: enet_uint32,
+    pub(crate) packetThrottleAcceleration: enet_uint32,
+    pub(crate) packetThrottleDeceleration: enet_uint32,
+    pub(crate) connectID: enet_uint32,
+    pub(crate) data: enet_uint32,
 }
-pub type ENetProtocolConnect = _ENetProtocolConnect;
+pub(crate) type ENetProtocolConnect = _ENetProtocolConnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolVerifyConnect {
-    pub header: ENetProtocolCommandHeader,
-    pub outgoingPeerID: enet_uint16,
-    pub incomingSessionID: enet_uint8,
-    pub outgoingSessionID: enet_uint8,
-    pub mtu: enet_uint32,
-    pub windowSize: enet_uint32,
-    pub channelCount: enet_uint32,
-    pub incomingBandwidth: enet_uint32,
-    pub outgoingBandwidth: enet_uint32,
-    pub packetThrottleInterval: enet_uint32,
-    pub packetThrottleAcceleration: enet_uint32,
-    pub packetThrottleDeceleration: enet_uint32,
-    pub connectID: enet_uint32,
+pub(crate) struct _ENetProtocolVerifyConnect {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) outgoingPeerID: enet_uint16,
+    pub(crate) incomingSessionID: enet_uint8,
+    pub(crate) outgoingSessionID: enet_uint8,
+    pub(crate) mtu: enet_uint32,
+    pub(crate) windowSize: enet_uint32,
+    pub(crate) channelCount: enet_uint32,
+    pub(crate) incomingBandwidth: enet_uint32,
+    pub(crate) outgoingBandwidth: enet_uint32,
+    pub(crate) packetThrottleInterval: enet_uint32,
+    pub(crate) packetThrottleAcceleration: enet_uint32,
+    pub(crate) packetThrottleDeceleration: enet_uint32,
+    pub(crate) connectID: enet_uint32,
 }
-pub type ENetProtocolVerifyConnect = _ENetProtocolVerifyConnect;
+pub(crate) type ENetProtocolVerifyConnect = _ENetProtocolVerifyConnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolBandwidthLimit {
-    pub header: ENetProtocolCommandHeader,
-    pub incomingBandwidth: enet_uint32,
-    pub outgoingBandwidth: enet_uint32,
+pub(crate) struct _ENetProtocolBandwidthLimit {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) incomingBandwidth: enet_uint32,
+    pub(crate) outgoingBandwidth: enet_uint32,
 }
-pub type ENetProtocolBandwidthLimit = _ENetProtocolBandwidthLimit;
+pub(crate) type ENetProtocolBandwidthLimit = _ENetProtocolBandwidthLimit;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolThrottleConfigure {
-    pub header: ENetProtocolCommandHeader,
-    pub packetThrottleInterval: enet_uint32,
-    pub packetThrottleAcceleration: enet_uint32,
-    pub packetThrottleDeceleration: enet_uint32,
+pub(crate) struct _ENetProtocolThrottleConfigure {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) packetThrottleInterval: enet_uint32,
+    pub(crate) packetThrottleAcceleration: enet_uint32,
+    pub(crate) packetThrottleDeceleration: enet_uint32,
 }
-pub type ENetProtocolThrottleConfigure = _ENetProtocolThrottleConfigure;
+pub(crate) type ENetProtocolThrottleConfigure = _ENetProtocolThrottleConfigure;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolDisconnect {
-    pub header: ENetProtocolCommandHeader,
-    pub data: enet_uint32,
+pub(crate) struct _ENetProtocolDisconnect {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) data: enet_uint32,
 }
-pub type ENetProtocolDisconnect = _ENetProtocolDisconnect;
+pub(crate) type ENetProtocolDisconnect = _ENetProtocolDisconnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolPing {
-    pub header: ENetProtocolCommandHeader,
+pub(crate) struct _ENetProtocolPing {
+    pub(crate) header: ENetProtocolCommandHeader,
 }
-pub type ENetProtocolPing = _ENetProtocolPing;
+pub(crate) type ENetProtocolPing = _ENetProtocolPing;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolSendReliable {
-    pub header: ENetProtocolCommandHeader,
-    pub dataLength: enet_uint16,
+pub(crate) struct _ENetProtocolSendReliable {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) dataLength: enet_uint16,
 }
-pub type ENetProtocolSendReliable = _ENetProtocolSendReliable;
+pub(crate) type ENetProtocolSendReliable = _ENetProtocolSendReliable;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolSendUnreliable {
-    pub header: ENetProtocolCommandHeader,
-    pub unreliableSequenceNumber: enet_uint16,
-    pub dataLength: enet_uint16,
+pub(crate) struct _ENetProtocolSendUnreliable {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) unreliableSequenceNumber: enet_uint16,
+    pub(crate) dataLength: enet_uint16,
 }
-pub type ENetProtocolSendUnreliable = _ENetProtocolSendUnreliable;
+pub(crate) type ENetProtocolSendUnreliable = _ENetProtocolSendUnreliable;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolSendUnsequenced {
-    pub header: ENetProtocolCommandHeader,
-    pub unsequencedGroup: enet_uint16,
-    pub dataLength: enet_uint16,
+pub(crate) struct _ENetProtocolSendUnsequenced {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) unsequencedGroup: enet_uint16,
+    pub(crate) dataLength: enet_uint16,
 }
-pub type ENetProtocolSendUnsequenced = _ENetProtocolSendUnsequenced;
+pub(crate) type ENetProtocolSendUnsequenced = _ENetProtocolSendUnsequenced;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub struct _ENetProtocolSendFragment {
-    pub header: ENetProtocolCommandHeader,
-    pub startSequenceNumber: enet_uint16,
-    pub dataLength: enet_uint16,
-    pub fragmentCount: enet_uint32,
-    pub fragmentNumber: enet_uint32,
-    pub totalLength: enet_uint32,
-    pub fragmentOffset: enet_uint32,
+pub(crate) struct _ENetProtocolSendFragment {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) startSequenceNumber: enet_uint16,
+    pub(crate) dataLength: enet_uint16,
+    pub(crate) fragmentCount: enet_uint32,
+    pub(crate) fragmentNumber: enet_uint32,
+    pub(crate) totalLength: enet_uint32,
+    pub(crate) fragmentOffset: enet_uint32,
 }
-pub type ENetProtocolSendFragment = _ENetProtocolSendFragment;
+pub(crate) type ENetProtocolSendFragment = _ENetProtocolSendFragment;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub union _ENetProtocol {
-    pub header: ENetProtocolCommandHeader,
-    pub acknowledge: ENetProtocolAcknowledge,
-    pub connect: ENetProtocolConnect,
-    pub verifyConnect: ENetProtocolVerifyConnect,
-    pub disconnect: ENetProtocolDisconnect,
-    pub ping: ENetProtocolPing,
-    pub sendReliable: ENetProtocolSendReliable,
-    pub sendUnreliable: ENetProtocolSendUnreliable,
-    pub sendUnsequenced: ENetProtocolSendUnsequenced,
-    pub sendFragment: ENetProtocolSendFragment,
-    pub bandwidthLimit: ENetProtocolBandwidthLimit,
-    pub throttleConfigure: ENetProtocolThrottleConfigure,
+pub(crate) union _ENetProtocol {
+    pub(crate) header: ENetProtocolCommandHeader,
+    pub(crate) acknowledge: ENetProtocolAcknowledge,
+    pub(crate) connect: ENetProtocolConnect,
+    pub(crate) verifyConnect: ENetProtocolVerifyConnect,
+    pub(crate) disconnect: ENetProtocolDisconnect,
+    pub(crate) ping: ENetProtocolPing,
+    pub(crate) sendReliable: ENetProtocolSendReliable,
+    pub(crate) sendUnreliable: ENetProtocolSendUnreliable,
+    pub(crate) sendUnsequenced: ENetProtocolSendUnsequenced,
+    pub(crate) sendFragment: ENetProtocolSendFragment,
+    pub(crate) bandwidthLimit: ENetProtocolBandwidthLimit,
+    pub(crate) throttleConfigure: ENetProtocolThrottleConfigure,
 }
-pub type ENetProtocol = _ENetProtocol;
+pub(crate) type ENetProtocol = _ENetProtocol;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetListNode {
-    pub next: *mut _ENetListNode,
-    pub previous: *mut _ENetListNode,
+pub(crate) struct _ENetListNode {
+    pub(crate) next: *mut _ENetListNode,
+    pub(crate) previous: *mut _ENetListNode,
 }
-pub type ENetListNode = _ENetListNode;
-pub type ENetListIterator = *mut ENetListNode;
+pub(crate) type ENetListNode = _ENetListNode;
+pub(crate) type ENetListIterator = *mut ENetListNode;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetList {
-    pub sentinel: ENetListNode,
+pub(crate) struct _ENetList {
+    pub(crate) sentinel: ENetListNode,
 }
-pub type ENetList = _ENetList;
+pub(crate) type ENetList = _ENetList;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetCallbacks {
-    pub malloc: Option<unsafe extern "C" fn(size_t) -> *mut c_void>,
-    pub free: Option<unsafe extern "C" fn(*mut c_void) -> ()>,
-    pub no_memory: Option<unsafe extern "C" fn() -> ()>,
+pub(crate) struct _ENetCallbacks {
+    pub(crate) malloc: Option<unsafe extern "C" fn(size_t) -> *mut c_void>,
+    pub(crate) free: Option<unsafe extern "C" fn(*mut c_void) -> ()>,
+    pub(crate) no_memory: Option<unsafe extern "C" fn() -> ()>,
 }
-pub type ENetCallbacks = _ENetCallbacks;
-pub type ENetVersion = enet_uint32;
-pub struct _ENetHost<S: Socket> {
-    pub socket: MaybeUninit<S>,
-    pub incomingBandwidth: enet_uint32,
-    pub outgoingBandwidth: enet_uint32,
-    pub bandwidthThrottleEpoch: enet_uint32,
-    pub mtu: enet_uint32,
-    pub randomSeed: enet_uint32,
-    pub recalculateBandwidthLimits: c_int,
-    pub peers: *mut ENetPeer<S>,
-    pub peerCount: size_t,
-    pub channelLimit: size_t,
-    pub serviceTime: enet_uint32,
-    pub dispatchQueue: ENetList,
-    pub totalQueued: enet_uint32,
-    pub packetSize: size_t,
-    pub headerFlags: enet_uint16,
-    pub commands: [ENetProtocol; 32],
-    pub commandCount: size_t,
-    pub buffers: [ENetBuffer; 65],
-    pub bufferCount: size_t,
-    pub checksum: ENetChecksumCallback,
-    pub compressor: ENetCompressor,
-    pub packetData: [[enet_uint8; 4096]; 2],
-    pub receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
-    pub receivedData: *mut enet_uint8,
-    pub receivedDataLength: size_t,
-    pub totalSentData: enet_uint32,
-    pub totalSentPackets: enet_uint32,
-    pub totalReceivedData: enet_uint32,
-    pub totalReceivedPackets: enet_uint32,
-    pub intercept: ENetInterceptCallback<S>,
-    pub connectedPeers: size_t,
-    pub bandwidthLimitedPeers: size_t,
-    pub duplicatePeers: size_t,
-    pub maximumPacketSize: size_t,
-    pub maximumWaitingData: size_t,
+pub(crate) type ENetCallbacks = _ENetCallbacks;
+pub(crate) type ENetVersion = enet_uint32;
+pub(crate) struct _ENetHost<S: Socket> {
+    pub(crate) socket: MaybeUninit<S>,
+    pub(crate) incomingBandwidth: enet_uint32,
+    pub(crate) outgoingBandwidth: enet_uint32,
+    pub(crate) bandwidthThrottleEpoch: enet_uint32,
+    pub(crate) mtu: enet_uint32,
+    pub(crate) randomSeed: enet_uint32,
+    pub(crate) recalculateBandwidthLimits: c_int,
+    pub(crate) peers: *mut ENetPeer<S>,
+    pub(crate) peerCount: size_t,
+    pub(crate) channelLimit: size_t,
+    pub(crate) serviceTime: enet_uint32,
+    pub(crate) dispatchQueue: ENetList,
+    pub(crate) totalQueued: enet_uint32,
+    pub(crate) packetSize: size_t,
+    pub(crate) headerFlags: enet_uint16,
+    pub(crate) commands: [ENetProtocol; 32],
+    pub(crate) commandCount: size_t,
+    pub(crate) buffers: [ENetBuffer; 65],
+    pub(crate) bufferCount: size_t,
+    pub(crate) checksum: ENetChecksumCallback,
+    pub(crate) compressor: ENetCompressor,
+    pub(crate) packetData: [[enet_uint8; 4096]; 2],
+    pub(crate) receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
+    pub(crate) receivedData: *mut enet_uint8,
+    pub(crate) receivedDataLength: size_t,
+    pub(crate) totalSentData: enet_uint32,
+    pub(crate) totalSentPackets: enet_uint32,
+    pub(crate) totalReceivedData: enet_uint32,
+    pub(crate) totalReceivedPackets: enet_uint32,
+    pub(crate) intercept: ENetInterceptCallback<S>,
+    pub(crate) connectedPeers: size_t,
+    pub(crate) bandwidthLimitedPeers: size_t,
+    pub(crate) duplicatePeers: size_t,
+    pub(crate) maximumPacketSize: size_t,
+    pub(crate) maximumWaitingData: size_t,
 }
-pub type ENetInterceptCallback<S> =
+pub(crate) type ENetInterceptCallback<S> =
     Option<unsafe extern "C" fn(*mut _ENetHost<S>, *mut _ENetEvent<S>) -> c_int>;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetEvent<S: Socket> {
-    pub type_0: ENetEventType,
-    pub peer: *mut ENetPeer<S>,
-    pub channelID: enet_uint8,
-    pub data: enet_uint32,
-    pub packet: *mut ENetPacket,
+pub(crate) struct _ENetEvent<S: Socket> {
+    pub(crate) type_0: ENetEventType,
+    pub(crate) peer: *mut ENetPeer<S>,
+    pub(crate) channelID: enet_uint8,
+    pub(crate) data: enet_uint32,
+    pub(crate) packet: *mut ENetPacket,
 }
-pub type ENetPacket = _ENetPacket;
+pub(crate) type ENetPacket = _ENetPacket;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetPacket {
-    pub referenceCount: size_t,
-    pub flags: enet_uint32,
-    pub data: *mut enet_uint8,
-    pub dataLength: size_t,
-    pub freeCallback: ENetPacketFreeCallback,
-    pub userData: *mut c_void,
+pub(crate) struct _ENetPacket {
+    pub(crate) referenceCount: size_t,
+    pub(crate) flags: enet_uint32,
+    pub(crate) data: *mut enet_uint8,
+    pub(crate) dataLength: size_t,
+    pub(crate) freeCallback: ENetPacketFreeCallback,
+    pub(crate) userData: *mut c_void,
 }
-pub type ENetPacketFreeCallback = Option<unsafe extern "C" fn(*mut _ENetPacket) -> ()>;
-pub type ENetPeer<S> = _ENetPeer<S>;
+pub(crate) type ENetPacketFreeCallback = Option<unsafe extern "C" fn(*mut _ENetPacket) -> ()>;
+pub(crate) type ENetPeer<S> = _ENetPeer<S>;
 #[repr(C)]
-pub struct _ENetPeer<S: Socket> {
-    pub dispatchList: ENetListNode,
-    pub host: *mut _ENetHost<S>,
-    pub outgoingPeerID: enet_uint16,
-    pub incomingPeerID: enet_uint16,
-    pub connectID: enet_uint32,
-    pub outgoingSessionID: enet_uint8,
-    pub incomingSessionID: enet_uint8,
-    pub address: MaybeUninit<Option<S::PeerAddress>>,
-    pub data: *mut c_void,
-    pub state: ENetPeerState,
-    pub channels: *mut ENetChannel,
-    pub channelCount: size_t,
-    pub incomingBandwidth: enet_uint32,
-    pub outgoingBandwidth: enet_uint32,
-    pub incomingBandwidthThrottleEpoch: enet_uint32,
-    pub outgoingBandwidthThrottleEpoch: enet_uint32,
-    pub incomingDataTotal: enet_uint32,
-    pub outgoingDataTotal: enet_uint32,
-    pub lastSendTime: enet_uint32,
-    pub lastReceiveTime: enet_uint32,
-    pub nextTimeout: enet_uint32,
-    pub earliestTimeout: enet_uint32,
-    pub packetLossEpoch: enet_uint32,
-    pub packetsSent: enet_uint32,
-    pub packetsLost: enet_uint32,
-    pub packetLoss: enet_uint32,
-    pub packetLossVariance: enet_uint32,
-    pub packetThrottle: enet_uint32,
-    pub packetThrottleLimit: enet_uint32,
-    pub packetThrottleCounter: enet_uint32,
-    pub packetThrottleEpoch: enet_uint32,
-    pub packetThrottleAcceleration: enet_uint32,
-    pub packetThrottleDeceleration: enet_uint32,
-    pub packetThrottleInterval: enet_uint32,
-    pub pingInterval: enet_uint32,
-    pub timeoutLimit: enet_uint32,
-    pub timeoutMinimum: enet_uint32,
-    pub timeoutMaximum: enet_uint32,
-    pub lastRoundTripTime: enet_uint32,
-    pub lowestRoundTripTime: enet_uint32,
-    pub lastRoundTripTimeVariance: enet_uint32,
-    pub highestRoundTripTimeVariance: enet_uint32,
-    pub roundTripTime: enet_uint32,
-    pub roundTripTimeVariance: enet_uint32,
-    pub mtu: enet_uint32,
-    pub windowSize: enet_uint32,
-    pub reliableDataInTransit: enet_uint32,
-    pub outgoingReliableSequenceNumber: enet_uint16,
-    pub acknowledgements: ENetList,
-    pub sentReliableCommands: ENetList,
-    pub outgoingSendReliableCommands: ENetList,
-    pub outgoingCommands: ENetList,
-    pub dispatchedCommands: ENetList,
-    pub flags: enet_uint16,
-    pub reserved: enet_uint16,
-    pub incomingUnsequencedGroup: enet_uint16,
-    pub outgoingUnsequencedGroup: enet_uint16,
-    pub unsequencedWindow: [enet_uint32; 32],
-    pub eventData: enet_uint32,
-    pub totalWaitingData: size_t,
+pub(crate) struct _ENetPeer<S: Socket> {
+    pub(crate) dispatchList: ENetListNode,
+    pub(crate) host: *mut _ENetHost<S>,
+    pub(crate) outgoingPeerID: enet_uint16,
+    pub(crate) incomingPeerID: enet_uint16,
+    pub(crate) connectID: enet_uint32,
+    pub(crate) outgoingSessionID: enet_uint8,
+    pub(crate) incomingSessionID: enet_uint8,
+    pub(crate) address: MaybeUninit<Option<S::PeerAddress>>,
+    pub(crate) data: *mut c_void,
+    pub(crate) state: ENetPeerState,
+    pub(crate) channels: *mut ENetChannel,
+    pub(crate) channelCount: size_t,
+    pub(crate) incomingBandwidth: enet_uint32,
+    pub(crate) outgoingBandwidth: enet_uint32,
+    pub(crate) incomingBandwidthThrottleEpoch: enet_uint32,
+    pub(crate) outgoingBandwidthThrottleEpoch: enet_uint32,
+    pub(crate) incomingDataTotal: enet_uint32,
+    pub(crate) outgoingDataTotal: enet_uint32,
+    pub(crate) lastSendTime: enet_uint32,
+    pub(crate) lastReceiveTime: enet_uint32,
+    pub(crate) nextTimeout: enet_uint32,
+    pub(crate) earliestTimeout: enet_uint32,
+    pub(crate) packetLossEpoch: enet_uint32,
+    pub(crate) packetsSent: enet_uint32,
+    pub(crate) packetsLost: enet_uint32,
+    pub(crate) packetLoss: enet_uint32,
+    pub(crate) packetLossVariance: enet_uint32,
+    pub(crate) packetThrottle: enet_uint32,
+    pub(crate) packetThrottleLimit: enet_uint32,
+    pub(crate) packetThrottleCounter: enet_uint32,
+    pub(crate) packetThrottleEpoch: enet_uint32,
+    pub(crate) packetThrottleAcceleration: enet_uint32,
+    pub(crate) packetThrottleDeceleration: enet_uint32,
+    pub(crate) packetThrottleInterval: enet_uint32,
+    pub(crate) pingInterval: enet_uint32,
+    pub(crate) timeoutLimit: enet_uint32,
+    pub(crate) timeoutMinimum: enet_uint32,
+    pub(crate) timeoutMaximum: enet_uint32,
+    pub(crate) lastRoundTripTime: enet_uint32,
+    pub(crate) lowestRoundTripTime: enet_uint32,
+    pub(crate) lastRoundTripTimeVariance: enet_uint32,
+    pub(crate) highestRoundTripTimeVariance: enet_uint32,
+    pub(crate) roundTripTime: enet_uint32,
+    pub(crate) roundTripTimeVariance: enet_uint32,
+    pub(crate) mtu: enet_uint32,
+    pub(crate) windowSize: enet_uint32,
+    pub(crate) reliableDataInTransit: enet_uint32,
+    pub(crate) outgoingReliableSequenceNumber: enet_uint16,
+    pub(crate) acknowledgements: ENetList,
+    pub(crate) sentReliableCommands: ENetList,
+    pub(crate) outgoingSendReliableCommands: ENetList,
+    pub(crate) outgoingCommands: ENetList,
+    pub(crate) dispatchedCommands: ENetList,
+    pub(crate) flags: enet_uint16,
+    pub(crate) reserved: enet_uint16,
+    pub(crate) incomingUnsequencedGroup: enet_uint16,
+    pub(crate) outgoingUnsequencedGroup: enet_uint16,
+    pub(crate) unsequencedWindow: [enet_uint32; 32],
+    pub(crate) eventData: enet_uint32,
+    pub(crate) totalWaitingData: size_t,
 }
-pub type ENetChannel = _ENetChannel;
+pub(crate) type ENetChannel = _ENetChannel;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetChannel {
-    pub outgoingReliableSequenceNumber: enet_uint16,
-    pub outgoingUnreliableSequenceNumber: enet_uint16,
-    pub usedReliableWindows: enet_uint16,
-    pub reliableWindows: [enet_uint16; 16],
-    pub incomingReliableSequenceNumber: enet_uint16,
-    pub incomingUnreliableSequenceNumber: enet_uint16,
-    pub incomingReliableCommands: ENetList,
-    pub incomingUnreliableCommands: ENetList,
+pub(crate) struct _ENetChannel {
+    pub(crate) outgoingReliableSequenceNumber: enet_uint16,
+    pub(crate) outgoingUnreliableSequenceNumber: enet_uint16,
+    pub(crate) usedReliableWindows: enet_uint16,
+    pub(crate) reliableWindows: [enet_uint16; 16],
+    pub(crate) incomingReliableSequenceNumber: enet_uint16,
+    pub(crate) incomingUnreliableSequenceNumber: enet_uint16,
+    pub(crate) incomingReliableCommands: ENetList,
+    pub(crate) incomingUnreliableCommands: ENetList,
 }
-pub type ENetPeerState = _ENetPeerState;
-pub type _ENetPeerState = c_uint;
-pub const ENET_PEER_STATE_ZOMBIE: _ENetPeerState = 9;
-pub const ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT: _ENetPeerState = 8;
-pub const ENET_PEER_STATE_DISCONNECTING: _ENetPeerState = 7;
-pub const ENET_PEER_STATE_DISCONNECT_LATER: _ENetPeerState = 6;
-pub const ENET_PEER_STATE_CONNECTED: _ENetPeerState = 5;
-pub const ENET_PEER_STATE_CONNECTION_SUCCEEDED: _ENetPeerState = 4;
-pub const ENET_PEER_STATE_CONNECTION_PENDING: _ENetPeerState = 3;
-pub const ENET_PEER_STATE_ACKNOWLEDGING_CONNECT: _ENetPeerState = 2;
-pub const ENET_PEER_STATE_CONNECTING: _ENetPeerState = 1;
-pub const ENET_PEER_STATE_DISCONNECTED: _ENetPeerState = 0;
-pub type ENetEventType = _ENetEventType;
-pub type _ENetEventType = c_uint;
-pub const ENET_EVENT_TYPE_RECEIVE: _ENetEventType = 3;
-pub const ENET_EVENT_TYPE_DISCONNECT: _ENetEventType = 2;
-pub const ENET_EVENT_TYPE_CONNECT: _ENetEventType = 1;
-pub const ENET_EVENT_TYPE_NONE: _ENetEventType = 0;
-pub type ENetCompressor = _ENetCompressor;
+pub(crate) type ENetPeerState = _ENetPeerState;
+pub(crate) type _ENetPeerState = c_uint;
+pub(crate) const ENET_PEER_STATE_ZOMBIE: _ENetPeerState = 9;
+pub(crate) const ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT: _ENetPeerState = 8;
+pub(crate) const ENET_PEER_STATE_DISCONNECTING: _ENetPeerState = 7;
+pub(crate) const ENET_PEER_STATE_DISCONNECT_LATER: _ENetPeerState = 6;
+pub(crate) const ENET_PEER_STATE_CONNECTED: _ENetPeerState = 5;
+pub(crate) const ENET_PEER_STATE_CONNECTION_SUCCEEDED: _ENetPeerState = 4;
+pub(crate) const ENET_PEER_STATE_CONNECTION_PENDING: _ENetPeerState = 3;
+pub(crate) const ENET_PEER_STATE_ACKNOWLEDGING_CONNECT: _ENetPeerState = 2;
+pub(crate) const ENET_PEER_STATE_CONNECTING: _ENetPeerState = 1;
+pub(crate) const ENET_PEER_STATE_DISCONNECTED: _ENetPeerState = 0;
+pub(crate) type ENetEventType = _ENetEventType;
+pub(crate) type _ENetEventType = c_uint;
+pub(crate) const ENET_EVENT_TYPE_RECEIVE: _ENetEventType = 3;
+pub(crate) const ENET_EVENT_TYPE_DISCONNECT: _ENetEventType = 2;
+pub(crate) const ENET_EVENT_TYPE_CONNECT: _ENetEventType = 1;
+pub(crate) const ENET_EVENT_TYPE_NONE: _ENetEventType = 0;
+pub(crate) type ENetCompressor = _ENetCompressor;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetCompressor {
-    pub context: *mut c_void,
-    pub compress: Option<
+pub(crate) struct _ENetCompressor {
+    pub(crate) context: *mut c_void,
+    pub(crate) compress: Option<
         unsafe extern "C" fn(
             *mut c_void,
             *const ENetBuffer,
@@ -407,7 +407,7 @@ pub struct _ENetCompressor {
             size_t,
         ) -> size_t,
     >,
-    pub decompress: Option<
+    pub(crate) decompress: Option<
         unsafe extern "C" fn(
             *mut c_void,
             *const enet_uint8,
@@ -416,135 +416,135 @@ pub struct _ENetCompressor {
             size_t,
         ) -> size_t,
     >,
-    pub destroy: Option<unsafe extern "C" fn(*mut c_void) -> ()>,
+    pub(crate) destroy: Option<unsafe extern "C" fn(*mut c_void) -> ()>,
 }
-pub type ENetChecksumCallback =
+pub(crate) type ENetChecksumCallback =
     Option<unsafe extern "C" fn(*const ENetBuffer, size_t) -> enet_uint32>;
-pub type _ENetSocketType = c_uint;
-pub const ENET_SOCKET_TYPE_DATAGRAM: _ENetSocketType = 2;
-pub const ENET_SOCKET_TYPE_STREAM: _ENetSocketType = 1;
-pub type ENetSocketType = _ENetSocketType;
-pub type _ENetSocketOption = c_uint;
-pub const ENET_SOCKOPT_TTL: _ENetSocketOption = 10;
-pub const ENET_SOCKOPT_NODELAY: _ENetSocketOption = 9;
-pub const ENET_SOCKOPT_ERROR: _ENetSocketOption = 8;
-pub const ENET_SOCKOPT_SNDTIMEO: _ENetSocketOption = 7;
-pub const ENET_SOCKOPT_RCVTIMEO: _ENetSocketOption = 6;
-pub const ENET_SOCKOPT_REUSEADDR: _ENetSocketOption = 5;
-pub const ENET_SOCKOPT_SNDBUF: _ENetSocketOption = 4;
-pub const ENET_SOCKOPT_RCVBUF: _ENetSocketOption = 3;
-pub const ENET_SOCKOPT_BROADCAST: _ENetSocketOption = 2;
-pub const ENET_SOCKOPT_NONBLOCK: _ENetSocketOption = 1;
-pub type ENetSocketOption = _ENetSocketOption;
-pub type _ENetSocketShutdown = c_uint;
-pub const ENET_SOCKET_SHUTDOWN_READ_WRITE: _ENetSocketShutdown = 2;
-pub const ENET_SOCKET_SHUTDOWN_WRITE: _ENetSocketShutdown = 1;
-pub const ENET_SOCKET_SHUTDOWN_READ: _ENetSocketShutdown = 0;
-pub type ENetSocketShutdown = _ENetSocketShutdown;
-pub type _ENetPacketFlag = c_uint;
-pub const ENET_PACKET_FLAG_SENT: _ENetPacketFlag = 256;
-pub const ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT: _ENetPacketFlag = 8;
-pub const ENET_PACKET_FLAG_NO_ALLOCATE: _ENetPacketFlag = 4;
-pub const ENET_PACKET_FLAG_UNSEQUENCED: _ENetPacketFlag = 2;
-pub const ENET_PACKET_FLAG_RELIABLE: _ENetPacketFlag = 1;
+pub(crate) type _ENetSocketType = c_uint;
+pub(crate) const ENET_SOCKET_TYPE_DATAGRAM: _ENetSocketType = 2;
+pub(crate) const ENET_SOCKET_TYPE_STREAM: _ENetSocketType = 1;
+pub(crate) type ENetSocketType = _ENetSocketType;
+pub(crate) type _ENetSocketOption = c_uint;
+pub(crate) const ENET_SOCKOPT_TTL: _ENetSocketOption = 10;
+pub(crate) const ENET_SOCKOPT_NODELAY: _ENetSocketOption = 9;
+pub(crate) const ENET_SOCKOPT_ERROR: _ENetSocketOption = 8;
+pub(crate) const ENET_SOCKOPT_SNDTIMEO: _ENetSocketOption = 7;
+pub(crate) const ENET_SOCKOPT_RCVTIMEO: _ENetSocketOption = 6;
+pub(crate) const ENET_SOCKOPT_REUSEADDR: _ENetSocketOption = 5;
+pub(crate) const ENET_SOCKOPT_SNDBUF: _ENetSocketOption = 4;
+pub(crate) const ENET_SOCKOPT_RCVBUF: _ENetSocketOption = 3;
+pub(crate) const ENET_SOCKOPT_BROADCAST: _ENetSocketOption = 2;
+pub(crate) const ENET_SOCKOPT_NONBLOCK: _ENetSocketOption = 1;
+pub(crate) type ENetSocketOption = _ENetSocketOption;
+pub(crate) type _ENetSocketShutdown = c_uint;
+pub(crate) const ENET_SOCKET_SHUTDOWN_READ_WRITE: _ENetSocketShutdown = 2;
+pub(crate) const ENET_SOCKET_SHUTDOWN_WRITE: _ENetSocketShutdown = 1;
+pub(crate) const ENET_SOCKET_SHUTDOWN_READ: _ENetSocketShutdown = 0;
+pub(crate) type ENetSocketShutdown = _ENetSocketShutdown;
+pub(crate) type _ENetPacketFlag = c_uint;
+pub(crate) const ENET_PACKET_FLAG_SENT: _ENetPacketFlag = 256;
+pub(crate) const ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT: _ENetPacketFlag = 8;
+pub(crate) const ENET_PACKET_FLAG_NO_ALLOCATE: _ENetPacketFlag = 4;
+pub(crate) const ENET_PACKET_FLAG_UNSEQUENCED: _ENetPacketFlag = 2;
+pub(crate) const ENET_PACKET_FLAG_RELIABLE: _ENetPacketFlag = 1;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetAcknowledgement {
-    pub acknowledgementList: ENetListNode,
-    pub sentTime: enet_uint32,
-    pub command: ENetProtocol,
+pub(crate) struct _ENetAcknowledgement {
+    pub(crate) acknowledgementList: ENetListNode,
+    pub(crate) sentTime: enet_uint32,
+    pub(crate) command: ENetProtocol,
 }
-pub type ENetAcknowledgement = _ENetAcknowledgement;
+pub(crate) type ENetAcknowledgement = _ENetAcknowledgement;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetOutgoingCommand {
-    pub outgoingCommandList: ENetListNode,
-    pub reliableSequenceNumber: enet_uint16,
-    pub unreliableSequenceNumber: enet_uint16,
-    pub sentTime: enet_uint32,
-    pub roundTripTimeout: enet_uint32,
-    pub queueTime: enet_uint32,
-    pub fragmentOffset: enet_uint32,
-    pub fragmentLength: enet_uint16,
-    pub sendAttempts: enet_uint16,
-    pub command: ENetProtocol,
-    pub packet: *mut ENetPacket,
+pub(crate) struct _ENetOutgoingCommand {
+    pub(crate) outgoingCommandList: ENetListNode,
+    pub(crate) reliableSequenceNumber: enet_uint16,
+    pub(crate) unreliableSequenceNumber: enet_uint16,
+    pub(crate) sentTime: enet_uint32,
+    pub(crate) roundTripTimeout: enet_uint32,
+    pub(crate) queueTime: enet_uint32,
+    pub(crate) fragmentOffset: enet_uint32,
+    pub(crate) fragmentLength: enet_uint16,
+    pub(crate) sendAttempts: enet_uint16,
+    pub(crate) command: ENetProtocol,
+    pub(crate) packet: *mut ENetPacket,
 }
-pub type ENetOutgoingCommand = _ENetOutgoingCommand;
+pub(crate) type ENetOutgoingCommand = _ENetOutgoingCommand;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetIncomingCommand {
-    pub incomingCommandList: ENetListNode,
-    pub reliableSequenceNumber: enet_uint16,
-    pub unreliableSequenceNumber: enet_uint16,
-    pub command: ENetProtocol,
-    pub fragmentCount: enet_uint32,
-    pub fragmentsRemaining: enet_uint32,
-    pub fragments: *mut enet_uint32,
-    pub packet: *mut ENetPacket,
+pub(crate) struct _ENetIncomingCommand {
+    pub(crate) incomingCommandList: ENetListNode,
+    pub(crate) reliableSequenceNumber: enet_uint16,
+    pub(crate) unreliableSequenceNumber: enet_uint16,
+    pub(crate) command: ENetProtocol,
+    pub(crate) fragmentCount: enet_uint32,
+    pub(crate) fragmentsRemaining: enet_uint32,
+    pub(crate) fragments: *mut enet_uint32,
+    pub(crate) packet: *mut ENetPacket,
 }
-pub type ENetIncomingCommand = _ENetIncomingCommand;
-pub type C2RustUnnamed_2 = c_uint;
-pub const ENET_PEER_FREE_RELIABLE_WINDOWS: C2RustUnnamed_2 = 8;
-pub const ENET_PEER_RELIABLE_WINDOW_SIZE: C2RustUnnamed_2 = 4096;
-pub const ENET_PEER_RELIABLE_WINDOWS: C2RustUnnamed_2 = 16;
-pub const ENET_PEER_FREE_UNSEQUENCED_WINDOWS: C2RustUnnamed_2 = 32;
-pub const ENET_PEER_UNSEQUENCED_WINDOW_SIZE: C2RustUnnamed_2 = 1024;
-pub const ENET_PEER_UNSEQUENCED_WINDOWS: C2RustUnnamed_2 = 64;
-pub const ENET_PEER_PING_INTERVAL: C2RustUnnamed_2 = 500;
-pub const ENET_PEER_TIMEOUT_MAXIMUM: C2RustUnnamed_2 = 30000;
-pub const ENET_PEER_TIMEOUT_MINIMUM: C2RustUnnamed_2 = 5000;
-pub const ENET_PEER_TIMEOUT_LIMIT: C2RustUnnamed_2 = 32;
-pub const ENET_PEER_WINDOW_SIZE_SCALE: C2RustUnnamed_2 = 65536;
-pub const ENET_PEER_PACKET_LOSS_INTERVAL: C2RustUnnamed_2 = 10000;
-pub const ENET_PEER_PACKET_LOSS_SCALE: C2RustUnnamed_2 = 65536;
-pub const ENET_PEER_PACKET_THROTTLE_INTERVAL: C2RustUnnamed_2 = 5000;
-pub const ENET_PEER_PACKET_THROTTLE_DECELERATION: C2RustUnnamed_2 = 2;
-pub const ENET_PEER_PACKET_THROTTLE_ACCELERATION: C2RustUnnamed_2 = 2;
-pub const ENET_PEER_PACKET_THROTTLE_COUNTER: C2RustUnnamed_2 = 7;
-pub const ENET_PEER_PACKET_THROTTLE_SCALE: C2RustUnnamed_2 = 32;
-pub const ENET_PEER_DEFAULT_PACKET_THROTTLE: C2RustUnnamed_2 = 32;
-pub const ENET_PEER_DEFAULT_ROUND_TRIP_TIME: C2RustUnnamed_2 = 500;
-pub const ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA: C2RustUnnamed_2 = 33554432;
-pub const ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE: C2RustUnnamed_2 = 33554432;
-pub const ENET_HOST_DEFAULT_MTU: C2RustUnnamed_2 = 1392;
-pub const ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL: C2RustUnnamed_2 = 1000;
-pub const ENET_HOST_SEND_BUFFER_SIZE: C2RustUnnamed_2 = 262144;
-pub const ENET_HOST_RECEIVE_BUFFER_SIZE: C2RustUnnamed_2 = 262144;
-pub type _ENetPeerFlag = c_uint;
-pub const ENET_PEER_FLAG_CONTINUE_SENDING: _ENetPeerFlag = 2;
-pub const ENET_PEER_FLAG_NEEDS_DISPATCH: _ENetPeerFlag = 1;
-pub type ENetHost<S> = _ENetHost<S>;
-pub type ENetEvent<S> = _ENetEvent<S>;
-pub type ENetRangeCoder = _ENetRangeCoder;
+pub(crate) type ENetIncomingCommand = _ENetIncomingCommand;
+pub(crate) type C2RustUnnamed_2 = c_uint;
+pub(crate) const ENET_PEER_FREE_RELIABLE_WINDOWS: C2RustUnnamed_2 = 8;
+pub(crate) const ENET_PEER_RELIABLE_WINDOW_SIZE: C2RustUnnamed_2 = 4096;
+pub(crate) const ENET_PEER_RELIABLE_WINDOWS: C2RustUnnamed_2 = 16;
+pub(crate) const ENET_PEER_FREE_UNSEQUENCED_WINDOWS: C2RustUnnamed_2 = 32;
+pub(crate) const ENET_PEER_UNSEQUENCED_WINDOW_SIZE: C2RustUnnamed_2 = 1024;
+pub(crate) const ENET_PEER_UNSEQUENCED_WINDOWS: C2RustUnnamed_2 = 64;
+pub(crate) const ENET_PEER_PING_INTERVAL: C2RustUnnamed_2 = 500;
+pub(crate) const ENET_PEER_TIMEOUT_MAXIMUM: C2RustUnnamed_2 = 30000;
+pub(crate) const ENET_PEER_TIMEOUT_MINIMUM: C2RustUnnamed_2 = 5000;
+pub(crate) const ENET_PEER_TIMEOUT_LIMIT: C2RustUnnamed_2 = 32;
+pub(crate) const ENET_PEER_WINDOW_SIZE_SCALE: C2RustUnnamed_2 = 65536;
+pub(crate) const ENET_PEER_PACKET_LOSS_INTERVAL: C2RustUnnamed_2 = 10000;
+pub(crate) const ENET_PEER_PACKET_LOSS_SCALE: C2RustUnnamed_2 = 65536;
+pub(crate) const ENET_PEER_PACKET_THROTTLE_INTERVAL: C2RustUnnamed_2 = 5000;
+pub(crate) const ENET_PEER_PACKET_THROTTLE_DECELERATION: C2RustUnnamed_2 = 2;
+pub(crate) const ENET_PEER_PACKET_THROTTLE_ACCELERATION: C2RustUnnamed_2 = 2;
+pub(crate) const ENET_PEER_PACKET_THROTTLE_COUNTER: C2RustUnnamed_2 = 7;
+pub(crate) const ENET_PEER_PACKET_THROTTLE_SCALE: C2RustUnnamed_2 = 32;
+pub(crate) const ENET_PEER_DEFAULT_PACKET_THROTTLE: C2RustUnnamed_2 = 32;
+pub(crate) const ENET_PEER_DEFAULT_ROUND_TRIP_TIME: C2RustUnnamed_2 = 500;
+pub(crate) const ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA: C2RustUnnamed_2 = 33554432;
+pub(crate) const ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE: C2RustUnnamed_2 = 33554432;
+pub(crate) const ENET_HOST_DEFAULT_MTU: C2RustUnnamed_2 = 1392;
+pub(crate) const ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL: C2RustUnnamed_2 = 1000;
+pub(crate) const ENET_HOST_SEND_BUFFER_SIZE: C2RustUnnamed_2 = 262144;
+pub(crate) const ENET_HOST_RECEIVE_BUFFER_SIZE: C2RustUnnamed_2 = 262144;
+pub(crate) type _ENetPeerFlag = c_uint;
+pub(crate) const ENET_PEER_FLAG_CONTINUE_SENDING: _ENetPeerFlag = 2;
+pub(crate) const ENET_PEER_FLAG_NEEDS_DISPATCH: _ENetPeerFlag = 1;
+pub(crate) type ENetHost<S> = _ENetHost<S>;
+pub(crate) type ENetEvent<S> = _ENetEvent<S>;
+pub(crate) type ENetRangeCoder = _ENetRangeCoder;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetRangeCoder {
-    pub symbols: [ENetSymbol; 4096],
+pub(crate) struct _ENetRangeCoder {
+    pub(crate) symbols: [ENetSymbol; 4096],
 }
-pub type ENetSymbol = _ENetSymbol;
+pub(crate) type ENetSymbol = _ENetSymbol;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct _ENetSymbol {
-    pub value: enet_uint8,
-    pub count: enet_uint8,
-    pub under: enet_uint16,
-    pub left: enet_uint16,
-    pub right: enet_uint16,
-    pub symbols: enet_uint16,
-    pub escapes: enet_uint16,
-    pub total: enet_uint16,
-    pub parent: enet_uint16,
+pub(crate) struct _ENetSymbol {
+    pub(crate) value: enet_uint8,
+    pub(crate) count: enet_uint8,
+    pub(crate) under: enet_uint16,
+    pub(crate) left: enet_uint16,
+    pub(crate) right: enet_uint16,
+    pub(crate) symbols: enet_uint16,
+    pub(crate) escapes: enet_uint16,
+    pub(crate) total: enet_uint16,
+    pub(crate) parent: enet_uint16,
 }
-pub const ENET_CONTEXT_SYMBOL_MINIMUM: C2RustUnnamed_3 = 1;
-pub const ENET_CONTEXT_ESCAPE_MINIMUM: C2RustUnnamed_3 = 1;
-pub const ENET_SUBCONTEXT_ORDER: C2RustUnnamed_3 = 2;
-pub const ENET_RANGE_CODER_BOTTOM: C2RustUnnamed_3 = 65536;
-pub const ENET_SUBCONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 2;
-pub const ENET_SUBCONTEXT_ESCAPE_DELTA: C2RustUnnamed_3 = 5;
-pub const ENET_CONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 3;
-pub const ENET_RANGE_CODER_TOP: C2RustUnnamed_3 = 16777216;
-pub type C2RustUnnamed_3 = c_uint;
+pub(crate) const ENET_CONTEXT_SYMBOL_MINIMUM: C2RustUnnamed_3 = 1;
+pub(crate) const ENET_CONTEXT_ESCAPE_MINIMUM: C2RustUnnamed_3 = 1;
+pub(crate) const ENET_SUBCONTEXT_ORDER: C2RustUnnamed_3 = 2;
+pub(crate) const ENET_RANGE_CODER_BOTTOM: C2RustUnnamed_3 = 65536;
+pub(crate) const ENET_SUBCONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 2;
+pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: C2RustUnnamed_3 = 5;
+pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 3;
+pub(crate) const ENET_RANGE_CODER_TOP: C2RustUnnamed_3 = 16777216;
+pub(crate) type C2RustUnnamed_3 = c_uint;
 static mut callbacks: ENetCallbacks = unsafe {
     {
         let mut init = _ENetCallbacks {
@@ -558,7 +558,7 @@ static mut callbacks: ENetCallbacks = unsafe {
         init
     }
 };
-pub unsafe fn enet_initialize_with_callbacks(
+pub(crate) unsafe fn enet_initialize_with_callbacks(
     mut version: ENetVersion,
     mut inits: *const ENetCallbacks,
 ) -> c_int {
@@ -577,11 +577,11 @@ pub unsafe fn enet_initialize_with_callbacks(
     }
     return 0;
 }
-pub unsafe fn enet_linked_version() -> ENetVersion {
+pub(crate) unsafe fn enet_linked_version() -> ENetVersion {
     return ((1 as c_int) << 16 as c_int | (3 as c_int) << 8 as c_int | 17 as c_int) as ENetVersion;
 }
 #[no_mangle]
-pub unsafe extern "C" fn enet_malloc(mut size: size_t) -> *mut c_void {
+pub(crate) unsafe extern "C" fn enet_malloc(mut size: size_t) -> *mut c_void {
     let mut memory: *mut c_void = (callbacks.malloc).expect("non-null function pointer")(size);
     if memory.is_null() {
         (callbacks.no_memory).expect("non-null function pointer")();
@@ -589,11 +589,11 @@ pub unsafe extern "C" fn enet_malloc(mut size: size_t) -> *mut c_void {
     return memory;
 }
 #[no_mangle]
-pub unsafe extern "C" fn enet_free(mut memory: *mut c_void) {
+pub(crate) unsafe extern "C" fn enet_free(mut memory: *mut c_void) {
     (callbacks.free).expect("non-null function pointer")(memory);
 }
 #[no_mangle]
-pub unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
+pub(crate) unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
     let mut rangeCoder: *mut ENetRangeCoder =
         enet_malloc(::core::mem::size_of::<ENetRangeCoder>() as size_t) as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
@@ -602,7 +602,7 @@ pub unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
     return rangeCoder as *mut c_void;
 }
 #[no_mangle]
-pub unsafe extern "C" fn enet_range_coder_destroy(mut context: *mut c_void) {
+pub(crate) unsafe extern "C" fn enet_range_coder_destroy(mut context: *mut c_void) {
     let mut rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
         return;
@@ -629,7 +629,7 @@ unsafe extern "C" fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> enet_ui
     return total;
 }
 #[no_mangle]
-pub unsafe extern "C" fn enet_range_coder_compress(
+pub(crate) unsafe extern "C" fn enet_range_coder_compress(
     mut context: *mut c_void,
     mut inBuffers: *const ENetBuffer,
     mut inBufferCount: size_t,
@@ -1072,7 +1072,7 @@ pub unsafe extern "C" fn enet_range_coder_compress(
     return outData.offset_from(outStart) as c_long as size_t;
 }
 #[no_mangle]
-pub unsafe extern "C" fn enet_range_coder_decompress(
+pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
     mut context: *mut c_void,
     mut inData: *const enet_uint8,
     mut inLimit: size_t,
@@ -1670,7 +1670,7 @@ pub unsafe extern "C" fn enet_range_coder_decompress(
     }
     return outData.offset_from(outStart) as c_long as size_t;
 }
-pub unsafe fn enet_host_compress_with_range_coder<S: Socket>(mut host: *mut ENetHost<S>) -> c_int {
+pub(crate) unsafe fn enet_host_compress_with_range_coder<S: Socket>(mut host: *mut ENetHost<S>) -> c_int {
     let mut compressor: ENetCompressor = ENetCompressor {
         context: 0 as *mut c_void,
         compress: None,
@@ -1711,7 +1711,7 @@ pub unsafe fn enet_host_compress_with_range_coder<S: Socket>(mut host: *mut ENet
     enet_host_compress(host, &mut compressor);
     return 0 as c_int;
 }
-pub unsafe fn enet_host_create<S: Socket>(
+pub(crate) unsafe fn enet_host_create<S: Socket>(
     mut address: S::BindAddress,
     mut peerCount: size_t,
     mut channelLimit: size_t,
@@ -1818,7 +1818,7 @@ pub unsafe fn enet_host_create<S: Socket>(
     }
     return host;
 }
-pub unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
+pub(crate) unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
     let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
     if host.is_null() {
         return;
@@ -1839,7 +1839,7 @@ pub unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
     enet_free((*host).peers as *mut c_void);
     enet_free(host as *mut c_void);
 }
-pub unsafe fn enet_host_random<S: Socket>(mut host: *mut ENetHost<S>) -> enet_uint32 {
+pub(crate) unsafe fn enet_host_random<S: Socket>(mut host: *mut ENetHost<S>) -> enet_uint32 {
     (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(0x6d2b79f5 as c_uint)
         as enet_uint32 as enet_uint32;
     let mut n: enet_uint32 = (*host).randomSeed;
@@ -1847,7 +1847,7 @@ pub unsafe fn enet_host_random<S: Socket>(mut host: *mut ENetHost<S>) -> enet_ui
     n ^= n.wrapping_add((n ^ n >> 7 as c_int).wrapping_mul(n | 61 as c_uint));
     return n ^ n >> 14 as c_int;
 }
-pub unsafe fn enet_host_connect<S: Socket>(
+pub(crate) unsafe fn enet_host_connect<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut address: S::PeerAddress,
     mut channelCount: size_t,
@@ -1945,7 +1945,7 @@ pub unsafe fn enet_host_connect<S: Socket>(
     );
     return currentPeer;
 }
-pub unsafe fn enet_host_broadcast<S: Socket>(
+pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut channelID: enet_uint8,
     mut packet: *mut ENetPacket,
@@ -1963,7 +1963,7 @@ pub unsafe fn enet_host_broadcast<S: Socket>(
         enet_packet_destroy(packet);
     }
 }
-pub unsafe fn enet_host_compress<S: Socket>(
+pub(crate) unsafe fn enet_host_compress<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut compressor: *const ENetCompressor,
 ) {
@@ -1977,7 +1977,7 @@ pub unsafe fn enet_host_compress<S: Socket>(
         (*host).compressor.context = 0 as *mut c_void;
     };
 }
-pub unsafe fn enet_host_channel_limit<S: Socket>(
+pub(crate) unsafe fn enet_host_channel_limit<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut channelLimit: size_t,
 ) {
@@ -1988,7 +1988,7 @@ pub unsafe fn enet_host_channel_limit<S: Socket>(
     }
     (*host).channelLimit = channelLimit;
 }
-pub unsafe fn enet_host_bandwidth_limit<S: Socket>(
+pub(crate) unsafe fn enet_host_bandwidth_limit<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut incomingBandwidth: enet_uint32,
     mut outgoingBandwidth: enet_uint32,
@@ -1997,7 +1997,7 @@ pub unsafe fn enet_host_bandwidth_limit<S: Socket>(
     (*host).outgoingBandwidth = outgoingBandwidth;
     (*host).recalculateBandwidthLimits = 1 as c_int;
 }
-pub unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENetHost<S>) {
+pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENetHost<S>) {
     let mut timeCurrent: enet_uint32 = enet_time_get();
     let mut elapsedTime: enet_uint32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
     let mut peersRemaining: enet_uint32 = (*host).connectedPeers as enet_uint32;
@@ -2175,11 +2175,11 @@ pub unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENetHost<S>
         }
     }
 }
-pub unsafe fn enet_list_clear(mut list: *mut ENetList) {
+pub(crate) unsafe fn enet_list_clear(mut list: *mut ENetList) {
     (*list).sentinel.next = &mut (*list).sentinel;
     (*list).sentinel.previous = &mut (*list).sentinel;
 }
-pub unsafe fn enet_list_insert(
+pub(crate) unsafe fn enet_list_insert(
     mut position: ENetListIterator,
     mut data: *mut c_void,
 ) -> ENetListIterator {
@@ -2190,12 +2190,12 @@ pub unsafe fn enet_list_insert(
     (*position).previous = result;
     return result;
 }
-pub unsafe fn enet_list_remove(mut position: ENetListIterator) -> *mut c_void {
+pub(crate) unsafe fn enet_list_remove(mut position: ENetListIterator) -> *mut c_void {
     (*(*position).previous).next = (*position).next;
     (*(*position).next).previous = (*position).previous;
     return position as *mut c_void;
 }
-pub unsafe fn enet_list_move(
+pub(crate) unsafe fn enet_list_move(
     mut position: ENetListIterator,
     mut dataFirst: *mut c_void,
     mut dataLast: *mut c_void,
@@ -2210,7 +2210,7 @@ pub unsafe fn enet_list_move(
     (*position).previous = last;
     return first;
 }
-pub unsafe fn enet_list_size(mut list: *mut ENetList) -> size_t {
+pub(crate) unsafe fn enet_list_size(mut list: *mut ENetList) -> size_t {
     let mut size: size_t = 0 as c_int as size_t;
     let mut position: ENetListIterator = 0 as *mut ENetListNode;
     position = (*list).sentinel.next;
@@ -2220,7 +2220,7 @@ pub unsafe fn enet_list_size(mut list: *mut ENetList) -> size_t {
     }
     return size;
 }
-pub unsafe fn enet_packet_create(
+pub(crate) unsafe fn enet_packet_create(
     mut data: *const c_void,
     mut dataLength: size_t,
     mut flags: enet_uint32,
@@ -2251,7 +2251,7 @@ pub unsafe fn enet_packet_create(
     (*packet).userData = 0 as *mut c_void;
     return packet;
 }
-pub unsafe fn enet_packet_destroy(mut packet: *mut ENetPacket) {
+pub(crate) unsafe fn enet_packet_destroy(mut packet: *mut ENetPacket) {
     if packet.is_null() {
         return;
     }
@@ -2266,7 +2266,7 @@ pub unsafe fn enet_packet_destroy(mut packet: *mut ENetPacket) {
     }
     enet_free(packet as *mut c_void);
 }
-pub unsafe fn enet_packet_resize(mut packet: *mut ENetPacket, mut dataLength: size_t) -> c_int {
+pub(crate) unsafe fn enet_packet_resize(mut packet: *mut ENetPacket, mut dataLength: size_t) -> c_int {
     let mut newData: *mut enet_uint8 = 0 as *mut enet_uint8;
     if dataLength <= (*packet).dataLength
         || (*packet).flags & ENET_PACKET_FLAG_NO_ALLOCATE as c_int as c_uint != 0
@@ -2547,7 +2547,7 @@ static mut crcTable: [enet_uint32; 256] = [
     0x2d02ef8d as c_int as enet_uint32,
 ];
 #[no_mangle]
-pub unsafe extern "C" fn enet_crc32(
+pub(crate) unsafe extern "C" fn enet_crc32(
     mut buffers: *const ENetBuffer,
     mut bufferCount: size_t,
 ) -> enet_uint32 {
@@ -2571,7 +2571,7 @@ pub unsafe extern "C" fn enet_crc32(
     }
     return htonl(!crc);
 }
-pub unsafe fn enet_peer_throttle_configure<S: Socket>(
+pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut interval: enet_uint32,
     mut acceleration: enet_uint32,
@@ -2602,7 +2602,7 @@ pub unsafe fn enet_peer_throttle_configure<S: Socket>(
         0 as c_int as enet_uint16,
     );
 }
-pub unsafe fn enet_peer_throttle<S: Socket>(
+pub(crate) unsafe fn enet_peer_throttle<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut rtt: enet_uint32,
 ) -> c_int {
@@ -2634,7 +2634,7 @@ pub unsafe fn enet_peer_throttle<S: Socket>(
     }
     return 0 as c_int;
 }
-pub unsafe fn enet_peer_send<S: Socket>(
+pub(crate) unsafe fn enet_peer_send<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut channelID: enet_uint8,
     mut packet: *mut ENetPacket,
@@ -2776,7 +2776,7 @@ pub unsafe fn enet_peer_send<S: Socket>(
     }
     return 0 as c_int;
 }
-pub unsafe fn enet_peer_receive<S: Socket>(
+pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut channelID: *mut enet_uint8,
 ) -> *mut ENetPacket {
@@ -2853,7 +2853,7 @@ unsafe fn enet_peer_reset_incoming_commands(mut queue: *mut ENetList) {
         0 as *mut ENetIncomingCommand,
     );
 }
-pub unsafe fn enet_peer_reset_queues<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(mut peer: *mut ENetPeer<S>) {
     let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
     if (*peer).flags as c_int & ENET_PEER_FLAG_NEEDS_DISPATCH as c_int != 0 {
         enet_list_remove(&mut (*peer).dispatchList);
@@ -2883,7 +2883,7 @@ pub unsafe fn enet_peer_reset_queues<S: Socket>(mut peer: *mut ENetPeer<S>) {
     (*peer).channels = 0 as *mut ENetChannel;
     (*peer).channelCount = 0 as c_int as size_t;
 }
-pub unsafe fn enet_peer_on_connect<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_on_connect<S: Socket>(mut peer: *mut ENetPeer<S>) {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
         && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -2894,7 +2894,7 @@ pub unsafe fn enet_peer_on_connect<S: Socket>(mut peer: *mut ENetPeer<S>) {
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_add(1);
     }
 }
-pub unsafe fn enet_peer_on_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_on_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>) {
     if (*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -2905,7 +2905,7 @@ pub unsafe fn enet_peer_on_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>) {
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_sub(1);
     }
 }
-pub unsafe fn enet_peer_reset<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_reset<S: Socket>(mut peer: *mut ENetPeer<S>) {
     enet_peer_on_disconnect(peer);
     (*peer).outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as enet_uint16;
     (*peer).connectID = 0 as c_int as enet_uint32;
@@ -2960,7 +2960,7 @@ pub unsafe fn enet_peer_reset<S: Socket>(mut peer: *mut ENetPeer<S>) {
     );
     enet_peer_reset_queues(peer);
 }
-pub unsafe fn enet_peer_ping<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_ping<S: Socket>(mut peer: *mut ENetPeer<S>) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -2983,7 +2983,7 @@ pub unsafe fn enet_peer_ping<S: Socket>(mut peer: *mut ENetPeer<S>) {
         0 as c_int as enet_uint16,
     );
 }
-pub unsafe fn enet_peer_ping_interval<S: Socket>(
+pub(crate) unsafe fn enet_peer_ping_interval<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut pingInterval: enet_uint32,
 ) {
@@ -2993,7 +2993,7 @@ pub unsafe fn enet_peer_ping_interval<S: Socket>(
         ENET_PEER_PING_INTERVAL as c_int as c_uint
     };
 }
-pub unsafe fn enet_peer_timeout<S: Socket>(
+pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut timeoutLimit: enet_uint32,
     mut timeoutMinimum: enet_uint32,
@@ -3015,7 +3015,7 @@ pub unsafe fn enet_peer_timeout<S: Socket>(
         ENET_PEER_TIMEOUT_MAXIMUM as c_int as c_uint
     };
 }
-pub unsafe fn enet_peer_disconnect_now<S: Socket>(
+pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut data: enet_uint32,
 ) {
@@ -3049,7 +3049,7 @@ pub unsafe fn enet_peer_disconnect_now<S: Socket>(
     }
     enet_peer_reset(peer);
 }
-pub unsafe fn enet_peer_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>, mut data: enet_uint32) {
+pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>, mut data: enet_uint32) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3096,7 +3096,7 @@ pub unsafe fn enet_peer_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>, mut da
         enet_peer_reset(peer);
     };
 }
-pub unsafe fn enet_peer_has_outgoing_commands<S: Socket>(mut peer: *mut ENetPeer<S>) -> c_int {
+pub(crate) unsafe fn enet_peer_has_outgoing_commands<S: Socket>(mut peer: *mut ENetPeer<S>) -> c_int {
     if (*peer).outgoingCommands.sentinel.next
         == &mut (*peer).outgoingCommands.sentinel as *mut ENetListNode
         && (*peer).outgoingSendReliableCommands.sentinel.next
@@ -3108,7 +3108,7 @@ pub unsafe fn enet_peer_has_outgoing_commands<S: Socket>(mut peer: *mut ENetPeer
     }
     return 1 as c_int;
 }
-pub unsafe fn enet_peer_disconnect_later<S: Socket>(
+pub(crate) unsafe fn enet_peer_disconnect_later<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut data: enet_uint32,
 ) {
@@ -3122,7 +3122,7 @@ pub unsafe fn enet_peer_disconnect_later<S: Socket>(
         enet_peer_disconnect(peer, data);
     };
 }
-pub unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
+pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut sentTime: enet_uint16,
@@ -3168,7 +3168,7 @@ pub unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
     );
     return acknowledgement;
 }
-pub unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
+pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut outgoingCommand: *mut ENetOutgoingCommand,
 ) {
@@ -3247,7 +3247,7 @@ pub unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
         );
     };
 }
-pub unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
+pub(crate) unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut packet: *mut ENetPacket,
@@ -3270,7 +3270,7 @@ pub unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
     enet_peer_setup_outgoing_command(peer, outgoingCommand);
     return outgoingCommand;
 }
-pub unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
+pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut channel: *mut ENetChannel,
     mut queuedCommand: *mut ENetIncomingCommand,
@@ -3392,7 +3392,7 @@ pub unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
         queuedCommand,
     );
 }
-pub unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
+pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut channel: *mut ENetChannel,
     mut queuedCommand: *mut ENetIncomingCommand,
@@ -3441,7 +3441,7 @@ pub unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
         enet_peer_dispatch_incoming_unreliable_commands(peer, channel, queuedCommand);
     }
 }
-pub unsafe fn enet_peer_queue_incoming_command<S: Socket>(
+pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     mut peer: *mut ENetPeer<S>,
     mut command: *const ENetProtocol,
     mut data: *const c_void,
@@ -4333,7 +4333,7 @@ static mut commandSizes: [size_t; 13] = [
     ::core::mem::size_of::<ENetProtocolThrottleConfigure>() as size_t,
     ::core::mem::size_of::<ENetProtocolSendFragment>() as size_t,
 ];
-pub unsafe fn enet_protocol_command_size(mut commandNumber: enet_uint8) -> size_t {
+pub(crate) unsafe fn enet_protocol_command_size(mut commandNumber: enet_uint8) -> size_t {
     return commandSizes[(commandNumber as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int) as usize];
 }
 unsafe fn enet_protocol_change_state<S: Socket>(
@@ -6603,11 +6603,11 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
     }
     return 0 as c_int;
 }
-pub unsafe fn enet_host_flush<S: Socket>(mut host: *mut ENetHost<S>) {
+pub(crate) unsafe fn enet_host_flush<S: Socket>(mut host: *mut ENetHost<S>) {
     (*host).serviceTime = enet_time_get();
     enet_protocol_send_outgoing_commands(host, 0 as *mut ENetEvent<S>, 0 as c_int);
 }
-pub unsafe fn enet_host_check_events<S: Socket>(
+pub(crate) unsafe fn enet_host_check_events<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut event: *mut ENetEvent<S>,
 ) -> c_int {
@@ -6619,7 +6619,7 @@ pub unsafe fn enet_host_check_events<S: Socket>(
     (*event).packet = 0 as *mut ENetPacket;
     return enet_protocol_dispatch_incoming_commands(host, event);
 }
-pub unsafe fn enet_host_service<S: Socket>(
+pub(crate) unsafe fn enet_host_service<S: Socket>(
     mut host: *mut ENetHost<S>,
     mut event: *mut ENetEvent<S>,
 ) -> c_int {
@@ -6668,10 +6668,10 @@ pub unsafe fn enet_host_service<S: Socket>(
     }
     return 0 as c_int;
 }
-pub unsafe fn enet_host_random_seed() -> enet_uint32 {
+pub(crate) unsafe fn enet_host_random_seed() -> enet_uint32 {
     enet_time_get()
 }
-pub unsafe fn enet_time_get() -> enet_uint32 {
+pub(crate) unsafe fn enet_time_get() -> enet_uint32 {
     (SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")

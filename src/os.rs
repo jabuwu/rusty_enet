@@ -6,31 +6,31 @@ use std::{
 };
 
 #[repr(u8)]
-pub enum c_void {
+pub(crate) enum c_void {
     __variant1,
     __variant2,
 }
 
-pub type c_char = std::ffi::c_char;
-pub type c_uchar = u8;
-pub type c_short = i16;
-pub type c_ushort = u16;
-pub type c_int = i32;
-pub type c_uint = u32;
-pub type c_long = i64;
-pub type c_ulong = u64;
+pub(crate) type c_char = std::ffi::c_char;
+pub(crate) type c_uchar = u8;
+pub(crate) type c_short = i16;
+pub(crate) type c_ushort = u16;
+pub(crate) type c_int = i32;
+pub(crate) type c_uint = u32;
+pub(crate) type c_long = i64;
+pub(crate) type c_ulong = u64;
 
-pub type size_t = usize;
-pub type __uint16_t = c_ushort;
-pub type __uint32_t = c_uint;
-pub type __time_t = c_long;
-pub type __suseconds_t = c_long;
-pub type __ssize_t = c_long;
-pub type __socklen_t = c_uint;
-pub type ssize_t = __ssize_t;
-pub type time_t = __time_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
+pub(crate) type size_t = usize;
+pub(crate) type __uint16_t = c_ushort;
+pub(crate) type __uint32_t = c_uint;
+pub(crate) type __time_t = c_long;
+pub(crate) type __suseconds_t = c_long;
+pub(crate) type __ssize_t = c_long;
+pub(crate) type __socklen_t = c_uint;
+pub(crate) type ssize_t = __ssize_t;
+pub(crate) type time_t = __time_t;
+pub(crate) type uint16_t = __uint16_t;
+pub(crate) type uint32_t = __uint32_t;
 
 pub(crate) fn ntohl(__netlong: uint32_t) -> uint32_t {
     uint32_t::from_be(__netlong)
