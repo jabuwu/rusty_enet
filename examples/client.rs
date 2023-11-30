@@ -1,10 +1,13 @@
-use std::{ffi::{CString, CStr}, mem::zeroed, time::Duration};
+use std::{
+    ffi::{CStr, CString},
+    mem::zeroed,
+    time::Duration,
+};
 
-use libc::c_void;
 use rusty_enet::{
     enet_address_set_host_ip, enet_host_connect, enet_host_create, enet_host_service,
     enet_packet_create, enet_peer_send, ENetAddress, ENET_EVENT_TYPE_CONNECT,
-    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE, ENET_PACKET_FLAG_RELIABLE,
+    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE, ENET_PACKET_FLAG_RELIABLE, c_void,
 };
 
 fn make_address(ip: &str, port: u16) -> ENetAddress {
