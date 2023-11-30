@@ -543,12 +543,12 @@ pub type C2RustUnnamed_3 = c_uint;
 static mut callbacks: ENetCallbacks = unsafe {
     {
         let mut init = _ENetCallbacks {
-            malloc: Some(malloc as unsafe extern "C" fn(c_ulong) -> *mut c_void),
-            free: Some(free as unsafe extern "C" fn(*mut c_void) -> ()),
+            malloc: Some(_enet_malloc as unsafe extern "C" fn(c_ulong) -> *mut c_void),
+            free: Some(_enet_free as unsafe extern "C" fn(*mut c_void) -> ()),
             no_memory: ::core::mem::transmute::<
                 Option<unsafe extern "C" fn() -> !>,
                 Option<unsafe extern "C" fn() -> ()>,
-            >(Some(abort as unsafe extern "C" fn() -> !)),
+            >(Some(_enet_abort as unsafe extern "C" fn() -> !)),
         };
         init
     }
@@ -1672,7 +1672,7 @@ pub unsafe fn enet_host_compress_with_range_coder(mut host: *mut ENetHost) -> c_
         decompress: None,
         destroy: None,
     };
-    memset(
+    _enet_memset(
         &mut compressor as *mut ENetCompressor as *mut c_void,
         0 as c_int,
         ::core::mem::size_of::<ENetCompressor>() as c_ulong,
@@ -1722,7 +1722,7 @@ pub unsafe fn enet_host_create(
     if host.is_null() {
         return 0 as *mut ENetHost;
     }
-    memset(
+    _enet_memset(
         host as *mut c_void,
         0 as c_int,
         ::core::mem::size_of::<ENetHost>() as c_ulong,
@@ -1734,7 +1734,7 @@ pub unsafe fn enet_host_create(
         enet_free(host as *mut c_void);
         return 0 as *mut ENetHost;
     }
-    memset(
+    _enet_memset(
         (*host).peers as *mut c_void,
         0 as c_int,
         peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer>() as c_ulong),
@@ -1914,7 +1914,7 @@ pub unsafe fn enet_host_connect(
         enet_list_clear(&mut (*channel).incomingReliableCommands);
         enet_list_clear(&mut (*channel).incomingUnreliableCommands);
         (*channel).usedReliableWindows = 0 as c_int as enet_uint16;
-        memset(
+        _enet_memset(
             ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
             0 as c_int,
             ::core::mem::size_of::<[enet_uint16; 16]>() as c_ulong,
@@ -2236,7 +2236,7 @@ pub unsafe fn enet_packet_create(
             return 0 as *mut ENetPacket;
         }
         if !data.is_null() {
-            memcpy((*packet).data as *mut c_void, data, dataLength);
+            _enet_memcpy((*packet).data as *mut c_void, data, dataLength);
         }
     }
     (*packet).referenceCount = 0 as c_int as size_t;
@@ -2273,7 +2273,7 @@ pub unsafe fn enet_packet_resize(mut packet: *mut ENetPacket, mut dataLength: si
     if newData.is_null() {
         return -(1 as c_int);
     }
-    memcpy(
+    _enet_memcpy(
         newData as *mut c_void,
         (*packet).data as *const c_void,
         (*packet).dataLength,
@@ -2945,7 +2945,7 @@ pub unsafe fn enet_peer_reset(mut peer: *mut ENetPeer) {
     (*peer).eventData = 0 as c_int as enet_uint32;
     (*peer).totalWaitingData = 0 as c_int as size_t;
     (*peer).flags = 0 as c_int as enet_uint16;
-    memset(
+    _enet_memset(
         ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
         0 as c_int,
         ::core::mem::size_of::<[enet_uint32; 32]>() as c_ulong,
@@ -3693,7 +3693,7 @@ pub unsafe fn enet_peer_queue_incoming_command(
                                                 enet_free(incomingCommand as *mut c_void);
                                                 current_block = 15492018734234176694;
                                             } else {
-                                                memset(
+                                                _enet_memset(
                                                     (*incomingCommand).fragments as *mut c_void,
                                                     0 as c_int,
                                                     (fragmentCount
@@ -3954,7 +3954,7 @@ pub unsafe fn enet_peer_queue_incoming_command(
                                                 enet_free(incomingCommand as *mut c_void);
                                                 current_block = 15492018734234176694;
                                             } else {
-                                                memset(
+                                                _enet_memset(
                                                     (*incomingCommand).fragments as *mut c_void,
                                                     0 as c_int,
                                                     (fragmentCount
@@ -4215,7 +4215,7 @@ pub unsafe fn enet_peer_queue_incoming_command(
                                                 enet_free(incomingCommand as *mut c_void);
                                                 current_block = 15492018734234176694;
                                             } else {
-                                                memset(
+                                                _enet_memset(
                                                     (*incomingCommand).fragments as *mut c_void,
                                                     0 as c_int,
                                                     (fragmentCount
@@ -4698,7 +4698,7 @@ unsafe fn enet_protocol_handle_connect(
         enet_list_clear(&mut (*channel).incomingReliableCommands);
         enet_list_clear(&mut (*channel).incomingUnreliableCommands);
         (*channel).usedReliableWindows = 0 as c_int as enet_uint16;
-        memset(
+        _enet_memset(
             ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
             0 as c_int,
             ::core::mem::size_of::<[enet_uint16; 16]>() as c_ulong,
@@ -4865,7 +4865,7 @@ unsafe fn enet_protocol_handle_send_unsequenced(
     unsequencedGroup &= 0xffff as c_int as c_uint;
     if unsequencedGroup.wrapping_sub(index) != (*peer).incomingUnsequencedGroup as c_uint {
         (*peer).incomingUnsequencedGroup = unsequencedGroup.wrapping_sub(index) as enet_uint16;
-        memset(
+        _enet_memset(
             ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
             0 as c_int,
             ::core::mem::size_of::<[enet_uint32; 32]>() as c_ulong,
@@ -5071,7 +5071,7 @@ unsafe fn enet_protocol_handle_send_fragment(
                 .wrapping_sub(fragmentOffset as c_ulong)
                 as enet_uint32;
         }
-        memcpy(
+        _enet_memcpy(
             ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
             (command as *mut enet_uint8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong as isize)
@@ -5239,7 +5239,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment(
                 .wrapping_sub(fragmentOffset as c_ulong)
                 as enet_uint32;
         }
-        memcpy(
+        _enet_memcpy(
             ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
             (command as *mut enet_uint8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong as isize)
@@ -5626,7 +5626,7 @@ unsafe fn enet_protocol_handle_incoming_commands(
         {
             return 0 as c_int;
         }
-        memcpy(
+        _enet_memcpy(
             ((*host).packetData[1 as c_int as usize]).as_mut_ptr() as *mut c_void,
             header as *const c_void,
             headerSize,
@@ -6620,7 +6620,7 @@ pub unsafe fn enet_socket_bind(mut socket_0: ENetSocket, mut address: *const ENe
         sin_addr: in_addr { s_addr: 0 },
         sin_zero: [0; 8],
     };
-    memset(
+    _enet_memset(
         &mut sin as *mut sockaddr_in as *mut c_void,
         0 as c_int,
         ::core::mem::size_of::<sockaddr_in>() as c_ulong,
@@ -6810,13 +6810,13 @@ pub unsafe fn enet_socket_send(
         sin_zero: [0; 8],
     };
     let mut sentLength: c_int = 0;
-    memset(
+    _enet_memset(
         &mut msgHdr as *mut msghdr as *mut c_void,
         0 as c_int,
         ::core::mem::size_of::<msghdr>() as c_ulong,
     );
     if !address.is_null() {
-        memset(
+        _enet_memset(
             &mut sin as *mut sockaddr_in as *mut c_void,
             0 as c_int,
             ::core::mem::size_of::<sockaddr_in>() as c_ulong,
@@ -6860,7 +6860,7 @@ pub unsafe fn enet_socket_receive(
         sin_zero: [0; 8],
     };
     let mut recvLength: c_int = 0;
-    memset(
+    _enet_memset(
         &mut msgHdr as *mut msghdr as *mut c_void,
         0 as c_int,
         ::core::mem::size_of::<msghdr>() as c_ulong,

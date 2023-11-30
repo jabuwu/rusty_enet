@@ -1,8 +1,12 @@
+use std::{
+    alloc::Layout,
+    collections::HashMap,
+    ptr::copy_nonoverlapping,
+    sync::{Arc, Mutex, Once},
+};
+
+// socket related imports
 extern "C" {
-    pub fn malloc(_: c_ulong) -> *mut c_void;
-    pub fn free(__ptr: *mut c_void);
-    pub fn abort() -> !;
-    pub fn gettimeofday(__tv: *mut timeval, __tz: *mut c_void) -> c_int;
     pub fn socket(__domain: c_int, __type: c_int, __protocol: c_int) -> c_int;
     pub fn bind(__fd: c_int, __addr: *const sockaddr, __len: socklen_t) -> c_int;
     pub fn getsockname(__fd: c_int, __addr: *mut sockaddr, __len: *mut socklen_t) -> c_int;
@@ -15,18 +19,15 @@ extern "C" {
         __optval: *const c_void,
         __optlen: socklen_t,
     ) -> c_int;
-    pub fn ntohl(__netlong: uint32_t) -> uint32_t;
-    pub fn ntohs(__netshort: uint16_t) -> uint16_t;
-    pub fn htonl(__hostlong: uint32_t) -> uint32_t;
-    pub fn htons(__hostshort: uint16_t) -> uint16_t;
     pub fn inet_pton(__af: c_int, __cp: *const c_char, __buf: *mut c_void) -> c_int;
     pub fn close(__fd: c_int) -> c_int;
-    pub fn memcpy(_: *mut c_void, _: *const c_void, _: c_ulong) -> *mut c_void;
-    pub fn memset(_: *mut c_void, _: c_int, _: c_ulong) -> *mut c_void;
     pub fn freeaddrinfo(__ai: *mut addrinfo);
-    pub fn __errno_location() -> *mut c_int;
-    pub fn time(__timer: *mut time_t) -> time_t;
     pub fn fcntl(__fd: c_int, __cmd: c_int, _: ...) -> c_int;
+    pub fn __errno_location() -> *mut c_int;
+}
+extern "C" {
+    pub fn time(__timer: *mut time_t) -> time_t;
+    pub fn gettimeofday(__tv: *mut timeval, __tz: *mut c_void) -> c_int;
 }
 pub type c_void = libc::c_void;
 pub type c_char = libc::c_char;
@@ -178,4 +179,91 @@ pub struct addrinfo {
     pub ai_addr: *mut sockaddr,
     pub ai_canonname: *mut c_char,
     pub ai_next: *mut addrinfo,
+}
+
+pub(crate) fn ntohl(__netlong: uint32_t) -> uint32_t {
+    uint32_t::from_be(__netlong)
+}
+pub(crate) fn ntohs(__netshort: uint16_t) -> uint16_t {
+    uint16_t::from_be(__netshort)
+}
+pub(crate) fn htonl(__hostlong: uint32_t) -> uint32_t {
+    __hostlong.to_be()
+}
+pub(crate) fn htons(__hostshort: uint16_t) -> uint16_t {
+    __hostshort.to_be()
+}
+
+#[derive(Default)]
+struct Allocator {
+    allocations: HashMap<*const c_void, Layout>,
+}
+
+impl Allocator {
+    fn singleton() -> Arc<Mutex<Allocator>> {
+        static START: Once = Once::new();
+        static mut INSTANCE: Option<Arc<Mutex<Allocator>>> = None;
+        START.call_once(|| unsafe {
+            INSTANCE = Some(Arc::new(Mutex::new(Allocator::default())));
+        });
+        unsafe {
+            let singleton = INSTANCE.as_ref().unwrap();
+            singleton.clone()
+        }
+    }
+
+    fn malloc(&mut self, size: usize) -> *mut c_void {
+        if size > 0 {
+            let layout = std::alloc::Layout::array::<u8>(size)
+                .unwrap()
+                .align_to(8)
+                .unwrap();
+            let ptr = unsafe { std::alloc::alloc(layout) };
+            self.allocations.insert(ptr as *const c_void, layout);
+            ptr.cast::<c_void>()
+        } else {
+            std::ptr::null_mut()
+        }
+    }
+
+    unsafe fn free(&mut self, ptr: *const c_void) {
+        if !ptr.is_null() {
+            let layout = self.allocations.remove(&ptr).unwrap();
+            unsafe { std::alloc::dealloc(ptr as *mut u8, layout) };
+        }
+    }
+}
+
+pub(crate) unsafe extern "C" fn _enet_malloc(size: c_ulong) -> *mut c_void {
+    let singleton = Allocator::singleton();
+    let mut allocator = singleton.lock().unwrap();
+    allocator.malloc(size as usize)
+}
+
+pub(crate) unsafe extern "C" fn _enet_free(ptr: *mut c_void) {
+    if !ptr.is_null() && ptr as usize != 1 {
+        let singleton = Allocator::singleton();
+        let mut allocator = singleton.lock().unwrap();
+        allocator.free(ptr);
+    }
+}
+
+pub(crate) unsafe extern "C" fn _enet_abort() -> ! {
+    std::process::abort()
+}
+
+pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: c_int, n: c_ulong) -> *mut c_void {
+    for offset in 0..n {
+        (*(s.cast::<u8>()).add(offset as usize)) = c as u8;
+    }
+    s
+}
+
+pub(crate) unsafe extern "C" fn _enet_memcpy(
+    destination: *mut c_void,
+    source: *const c_void,
+    num: c_ulong,
+) -> *mut c_void {
+    copy_nonoverlapping(source, destination, num as usize);
+    destination
 }
