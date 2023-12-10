@@ -1,7 +1,7 @@
 use crate::{enet_crc32, os::c_void, ENetBuffer};
 
 /// ENet implementation of CRC32 checksum, for use with
-/// [`HostSettings::checksum_fn`](`crate::HostSettings::checksum_fn`).
+/// [`HostSettings::checksum_fn`](`crate::HostSettings::checksum`).
 pub fn crc32(in_buffers: Vec<&[u8]>) -> u32 {
     let mut buffers = vec![];
     for in_buffer in in_buffers {
