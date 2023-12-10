@@ -4,32 +4,35 @@ use std::{
     time::Duration,
 };
 
-use rusty_enet::{Event, Host, Packet};
+use rusty_enet as enet;
 
 fn main() {
-    let mut network = Host::<UdpSocket>::create(
-        SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0)),
-        1,
-        2,
-        0,
-        0,
+    let socket =
+        UdpSocket::bind(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0))).unwrap();
+    let mut host = enet::Host::<UdpSocket>::create(
+        socket,
+        enet::HostSettings {
+            peer_limit: 1,
+            channel_limit: 2,
+            ..Default::default()
+        },
     )
     .unwrap();
     let address = SocketAddr::from_str("127.0.0.1:6060").unwrap();
-    let peer = network.connect(address, 2, 0).unwrap();
-    _ = network.set_ping_interval(peer, 100);
+    let peer = host.connect(address, 2, 0).unwrap();
+    peer.set_ping_interval(100);
     loop {
-        while let Some(event) = network.service().unwrap() {
+        while let Some(event) = host.service().unwrap() {
             match event {
-                Event::Connect { .. } => {
+                enet::Event::Connect { peer, .. } => {
                     println!("Connected");
-                    let packet = Packet::reliable("hello world".as_bytes());
-                    _ = network.send(peer, 0, packet);
+                    let packet = enet::Packet::reliable("hello world".as_bytes());
+                    _ = peer.send(0, packet);
                 }
-                Event::Disconnect { .. } => {
+                enet::Event::Disconnect { .. } => {
                     println!("Disconnected");
                 }
-                Event::Receive { packet, .. } => {
+                enet::Event::Receive { packet, .. } => {
                     if let Ok(message) = str::from_utf8(packet.data()) {
                         println!("Received packet: {:?}", message);
                     }

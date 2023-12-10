@@ -4,29 +4,38 @@ use std::{
     time::Duration,
 };
 
-use rusty_enet::{Event, Host};
+use rusty_enet as enet;
 
 fn main() {
-    let address = SocketAddr::from_str("127.0.0.1:6060").unwrap();
-    let mut network = Host::<UdpSocket>::create(address, 32, 2, 0, 0).unwrap();
+    let socket = UdpSocket::bind(SocketAddr::from_str("127.0.0.1:6060").unwrap()).unwrap();
+    let mut host = enet::Host::create(
+        socket,
+        enet::HostSettings {
+            peer_limit: 32,
+            channel_limit: 2,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
     loop {
-        while let Some(event) = network.service().unwrap() {
+        while let Some(event) = host.service().unwrap() {
             match event {
-                Event::Connect { peer, .. } => {
-                    println!("Peer {} connected", peer.0);
+                enet::Event::Connect { peer, .. } => {
+                    println!("Peer {} connected", peer.id().0);
                 }
-                Event::Disconnect { peer, .. } => {
-                    println!("Peer {} disconnected", peer.0);
+                enet::Event::Disconnect { peer, .. } => {
+                    println!("Peer {} disconnected", peer.id().0);
                 }
-                Event::Receive {
+                enet::Event::Receive {
                     peer,
                     channel_id,
                     packet,
                 } => {
                     if let Ok(message) = str::from_utf8(packet.data()) {
                         println!("Received packet: {:?}", message);
-                        _ = network.send(peer, channel_id, packet);
                     }
+                    _ = peer.send(channel_id, packet);
                 }
             }
         }

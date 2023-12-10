@@ -1,10 +1,42 @@
 use core::slice;
 
 use crate::{
-    c_void, ENetPacket, _ENetPacketFlag, enet_packet_create, enet_packet_destroy, size_t,
-    ENET_PACKET_FLAG_RELIABLE, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
+    c_void, enet_packet_create, enet_packet_destroy, size_t, ENetPacket, ENET_PACKET_FLAG_RELIABLE,
+    ENET_PACKET_FLAG_SENT, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
 };
 
+/// Types of packets supported by ENet, used with [`Packet::new`].
+///
+/// See [`Sequencing`](`crate#sequencing`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PacketKind {
+    /// An unreliable packet, with optional sequencing. A sequenced unreliable packet will cause
+    /// unsequenced packets to simply be discarded if they were to be dispatched out of order.
+    ///
+    /// Note that packets of this kind will be sent reliably if they are too large to fit within the
+    /// maximum transmission unit (MTU). To avoid this behavior, use
+    /// [`PacketKind::AlwaysUnreliable`] instead.
+    Unreliable {
+        /// Should the packets be sequenced? Packets received out of order will be discarded.
+        sequenced: bool,
+    },
+    /// An unreliable packet, with optional sequencing. Guaranteed to be unreliable, see
+    /// [`PacketKind::Unreliable`].
+    AlwaysUnreliable {
+        /// Should the packets be sequenced? Packets received out of order will be discarded.
+        sequenced: bool,
+    },
+    /// An reliable packet, with enforced sequencing.
+    ///
+    /// See [`Reliability`](`crate#reliability`).
+    Reliable,
+}
+
+/// An ENet data packet that may be sent to or received from a peer.
+///
+/// See [`Fragmentation and Reassembly`](`crate#fragmentation-and-reassembly`).
+///
+/// For more information on the kinds of ENet packets, see [`PacketKind`].
 #[derive(Debug)]
 pub struct Packet {
     pub(crate) packet: *mut ENetPacket,
@@ -14,9 +46,31 @@ unsafe impl Send for Packet {}
 unsafe impl Sync for Packet {}
 
 impl Packet {
-    pub(crate) fn new(data: &[u8], flags: _ENetPacketFlag) -> Self {
+    /// Create a new packet manually from its data and kind.
+    ///
+    /// Some convenience methods exist that can be used instead:
+    /// - [`Packet::unreliable`]
+    /// - [`Packet::unreliable_unsequenced`]
+    /// - [`Packet::always_unreliable`]
+    /// - [`Packet::always_unreliable_unsequenced`]
+    /// - [`Packet::reliable`]
+    pub fn new(data: &[u8], flags: PacketKind) -> Self {
         let packet = unsafe {
-            enet_packet_create(data.as_ptr() as *const c_void, data.len() as size_t, flags)
+            enet_packet_create(
+                data.as_ptr() as *const c_void,
+                data.len() as size_t,
+                match flags {
+                    PacketKind::Unreliable { sequenced: true } => 0,
+                    PacketKind::Unreliable { sequenced: false } => ENET_PACKET_FLAG_UNSEQUENCED,
+                    PacketKind::AlwaysUnreliable { sequenced: true } => {
+                        ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT
+                    }
+                    PacketKind::AlwaysUnreliable { sequenced: false } => {
+                        ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT | ENET_PACKET_FLAG_UNSEQUENCED
+                    }
+                    PacketKind::Reliable => ENET_PACKET_FLAG_RELIABLE,
+                },
+            )
         };
         unsafe {
             (*packet).referenceCount += 1;
@@ -24,23 +78,51 @@ impl Packet {
         Self { packet }
     }
 
+    /// Create a new unreliable packet with
+    /// [`PacketKind::Unreliable { sequenced: true }`](`PacketKind::Unreliable`)
     pub fn unreliable(data: &[u8]) -> Self {
-        Self::new(data, 0)
+        Self::new(data, PacketKind::Unreliable { sequenced: true })
     }
 
+    /// Create a new unreliable packet with
+    /// [`PacketKind::Unreliable { sequenced: false }`](`PacketKind::Unreliable`)
     pub fn unreliable_unsequenced(data: &[u8]) -> Self {
-        Self::new(
-            data,
-            ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_UNSEQUENCED,
-        )
+        Self::new(data, PacketKind::Unreliable { sequenced: false })
     }
 
-    pub fn unreliable_fragment(data: &[u8]) -> Self {
-        Self::new(data, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT)
+    /// Create a new always unreliable packet with
+    /// [`PacketKind::AlwaysUnreliable { sequenced: true }`](`PacketKind::AlwaysUnreliable`)
+    pub fn always_unreliable(data: &[u8]) -> Self {
+        Self::new(data, PacketKind::AlwaysUnreliable { sequenced: true })
     }
 
+    /// Create a new always unreliable packet with
+    /// [`PacketKind::AlwaysUnreliable { sequenced: false }`](`PacketKind::AlwaysUnreliable`)
+    pub fn always_unreliable_unsequenced(data: &[u8]) -> Self {
+        Self::new(data, PacketKind::AlwaysUnreliable { sequenced: false })
+    }
+
+    /// Create a new unreliable packet with [`PacketKind::Reliable`]
     pub fn reliable(data: &[u8]) -> Self {
-        Self::new(data, ENET_PACKET_FLAG_RELIABLE)
+        Self::new(data, PacketKind::Reliable)
+    }
+
+    /// Get this packet's [`PacketKind`].
+    pub fn kind(&self) -> PacketKind {
+        let flags = unsafe { (*self.packet).flags | !ENET_PACKET_FLAG_SENT };
+        let sequenced = !(flags & ENET_PACKET_FLAG_UNSEQUENCED != 0);
+        if flags & ENET_PACKET_FLAG_RELIABLE != 0 {
+            PacketKind::Reliable
+        } else if flags & ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT != 0 {
+            PacketKind::AlwaysUnreliable { sequenced }
+        } else {
+            PacketKind::Unreliable { sequenced }
+        }
+    }
+
+    /// Get the byte array contained in this packet.
+    pub fn data(&self) -> &[u8] {
+        unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).dataLength as usize) }
     }
 
     pub(crate) fn new_from_ptr(packet: *mut ENetPacket) -> Self {
@@ -48,10 +130,6 @@ impl Packet {
             (*packet).referenceCount += 1;
         }
         Self { packet }
-    }
-
-    pub fn data(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).dataLength as usize) }
     }
 }
 

@@ -1,8 +1,18 @@
 use std::net::SocketAddr;
 
+/// An address type, for use with the [`Socket`](`crate::Socket`) trait.
 pub trait Address: Clone {
+    /// Are the two addresses the same host?
+    ///
+    /// For IP based addresses, this checks if the IP of two addresses are the same.
     fn same_host(&self, other: &Self) -> bool;
+    /// Are the two addresses exactly the same?
+    ///
+    /// For IP based addresses, this checks if the IP and port of two addresses are the same.
     fn same(&self, other: &Self) -> bool;
+    /// Is this a broadcast address?
+    ///
+    /// For IP based addresses, checks if this is the IPv4 broadcast address.
     fn is_broadcast(&self) -> bool;
 }
 
