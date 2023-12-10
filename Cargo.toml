@@ -6,3 +6,9 @@ edition = "2021"
 [dependencies]
 thiserror = "1.0.50"
 wasm-timer = "0.2.5"
+
+[workspace]
+resolver = "2"
+members = [
+    "ci"
+]

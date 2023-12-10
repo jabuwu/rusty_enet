@@ -114,9 +114,27 @@
     non_snake_case,
     non_upper_case_globals,
     unused_assignments,
-    unused_mut
+    unused_mut,
+    clippy::zero_ptr,
+    clippy::needless_return,
+    clippy::unnecessary_cast,
+    clippy::toplevel_ref_arg,
+    clippy::ptr_offset_with_cast,
+    clippy::nonminimal_bool,
+    clippy::single_match,
+    clippy::unnecessary_mut_passed,
+    clippy::comparison_chain,
+    clippy::unnecessary_literal_unwrap,
+    clippy::let_and_return,
+    clippy::type_complexity,
+    clippy::new_without_default,
+    clippy::precedence,
+    clippy::collapsible_if,
+    clippy::collapsible_else_if
 )]
 #![warn(missing_docs)]
+// https://github.com/rust-lang/rust-clippy/issues/11382
+#![allow(clippy::arc_with_non_send_sync)]
 
 use std::{mem::MaybeUninit, time::Duration};
 
