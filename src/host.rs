@@ -2,14 +2,13 @@ use std::mem::zeroed;
 
 use crate::{
     enet_host_bandwidth_limit, enet_host_broadcast, enet_host_channel_limit,
-    enet_host_check_events, enet_host_connect, enet_host_create, enet_host_flush,
-    enet_host_service, ENetEvent, ENetHost, ENetPeer, Error, Event, Packet, Peer, PeerID,
-    PeerState, Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT,
-    ENET_EVENT_TYPE_RECEIVE, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT,
+    enet_host_check_events, enet_host_compress, enet_host_connect, enet_host_create,
+    enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetEvent, ENetHost,
+    ENetPeer, Error, Event, Packet, Peer, PeerID, PeerState, Socket, ENET_EVENT_TYPE_CONNECT,
+    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT,
 };
 
 /// Settings for a newly created host, passed into [`Host::create`].
-#[derive(Debug, Clone, Copy)]
 pub struct HostSettings {
     /// The maximum number of peers that should be allocated for the host.
     pub peer_limit: usize,
@@ -25,6 +24,8 @@ pub struct HostSettings {
     ///
     /// See [`Host::set_bandwidth_limit`] for more info.
     pub outgoing_bandwidth_limit: Option<u32>,
+    /// The compressor to use when sending and receiving packets, or [`None`] for no comrpession.
+    pub compressor: Option<Box<dyn Compressor>>,
 }
 
 impl Default for HostSettings {
@@ -34,6 +35,7 @@ impl Default for HostSettings {
             channel_limit: ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as usize,
             incoming_bandwidth_limit: None,
             outgoing_bandwidth_limit: None,
+            compressor: None,
         }
     }
 }
@@ -78,6 +80,9 @@ impl<S: Socket> Host<S> {
             let mut peers = vec![];
             for peer_index in 0..(*host).peerCount {
                 peers.push(Peer((*host).peers.add(peer_index)));
+            }
+            if let Some(compressor) = settings.compressor {
+                enet_host_compress(host, Some(compressor));
             }
             if !host.is_null() {
                 Ok(Self { host, peers })

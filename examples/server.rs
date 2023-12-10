@@ -13,6 +13,7 @@ fn main() {
         enet::HostSettings {
             peer_limit: 32,
             channel_limit: 2,
+            compressor: Some(Box::new(enet::RangeCoder::new())),
             ..Default::default()
         },
     )

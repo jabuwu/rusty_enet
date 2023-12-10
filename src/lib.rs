@@ -123,6 +123,7 @@ use std::mem::MaybeUninit;
 use wasm_timer::{SystemTime, UNIX_EPOCH};
 
 mod address;
+mod compressor;
 mod error;
 mod event;
 mod host;
@@ -133,6 +134,7 @@ mod socket;
 mod version;
 
 pub use address::*;
+pub use compressor::*;
 pub use error::*;
 pub use event::*;
 pub use host::*;
@@ -370,7 +372,7 @@ pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) buffers: [ENetBuffer; 65],
     pub(crate) bufferCount: size_t,
     pub(crate) checksum: ENetChecksumCallback,
-    pub(crate) compressor: ENetCompressor,
+    pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
     pub(crate) packetData: [[enet_uint8; 4096]; 2],
     pub(crate) receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
     pub(crate) receivedData: *mut enet_uint8,
@@ -504,32 +506,6 @@ pub(crate) const ENET_EVENT_TYPE_RECEIVE: _ENetEventType = 3;
 pub(crate) const ENET_EVENT_TYPE_DISCONNECT: _ENetEventType = 2;
 pub(crate) const ENET_EVENT_TYPE_CONNECT: _ENetEventType = 1;
 pub(crate) const ENET_EVENT_TYPE_NONE: _ENetEventType = 0;
-pub(crate) type ENetCompressor = _ENetCompressor;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub(crate) struct _ENetCompressor {
-    pub(crate) context: *mut c_void,
-    pub(crate) compress: Option<
-        unsafe extern "C" fn(
-            *mut c_void,
-            *const ENetBuffer,
-            size_t,
-            size_t,
-            *mut enet_uint8,
-            size_t,
-        ) -> size_t,
-    >,
-    pub(crate) decompress: Option<
-        unsafe extern "C" fn(
-            *mut c_void,
-            *const enet_uint8,
-            size_t,
-            *mut enet_uint8,
-            size_t,
-        ) -> size_t,
-    >,
-    pub(crate) destroy: Option<unsafe extern "C" fn(*mut c_void) -> ()>,
-}
 pub(crate) type ENetChecksumCallback =
     Option<unsafe extern "C" fn(*const ENetBuffer, size_t) -> enet_uint32>;
 pub(crate) type _ENetSocketType = c_uint;
@@ -1755,49 +1731,6 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
     }
     return outData.offset_from(outStart) as c_long as size_t;
 }
-pub(crate) unsafe fn enet_host_compress_with_range_coder<S: Socket>(
-    mut host: *mut ENetHost<S>,
-) -> c_int {
-    let mut compressor: ENetCompressor = ENetCompressor {
-        context: 0 as *mut c_void,
-        compress: None,
-        decompress: None,
-        destroy: None,
-    };
-    _enet_memset(
-        &mut compressor as *mut ENetCompressor as *mut c_void,
-        0 as c_int,
-        ::core::mem::size_of::<ENetCompressor>() as size_t,
-    );
-    compressor.context = enet_range_coder_create();
-    if (compressor.context).is_null() {
-        return -(1 as c_int);
-    }
-    compressor.compress = Some(
-        enet_range_coder_compress
-            as unsafe extern "C" fn(
-                *mut c_void,
-                *const ENetBuffer,
-                size_t,
-                size_t,
-                *mut enet_uint8,
-                size_t,
-            ) -> size_t,
-    );
-    compressor.decompress = Some(
-        enet_range_coder_decompress
-            as unsafe extern "C" fn(
-                *mut c_void,
-                *const enet_uint8,
-                size_t,
-                *mut enet_uint8,
-                size_t,
-            ) -> size_t,
-    );
-    compressor.destroy = Some(enet_range_coder_destroy as unsafe extern "C" fn(*mut c_void) -> ());
-    enet_host_compress(host, &mut compressor);
-    return 0 as c_int;
-}
 pub(crate) unsafe fn enet_host_create<S: Socket>(
     mut socket: S,
     mut peerCount: size_t,
@@ -1868,10 +1801,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).duplicatePeers = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as size_t;
     (*host).maximumPacketSize = ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE as c_int as size_t;
     (*host).maximumWaitingData = ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA as c_int as size_t;
-    (*host).compressor.context = 0 as *mut c_void;
-    (*host).compressor.compress = None;
-    (*host).compressor.decompress = None;
-    (*host).compressor.destroy = None;
+    (*host).compressor.write(None);
     (*host).intercept = None;
     enet_list_clear(&mut (*host).dispatchQueue);
     currentPeer = (*host).peers;
@@ -1907,10 +1837,7 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
         (*currentPeer).address.assume_init_drop();
         currentPeer = currentPeer.offset(1);
     }
-    if !((*host).compressor.context).is_null() && ((*host).compressor.destroy).is_some() {
-        (Some(((*host).compressor.destroy).expect("non-null function pointer")))
-            .expect("non-null function pointer")((*host).compressor.context);
-    }
+    (*host).compressor.assume_init_drop();
     (*host).receivedAddress.assume_init_drop();
     enet_free((*host).peers as *mut c_void);
     enet_free(host as *mut c_void);
@@ -2041,17 +1968,9 @@ pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
 }
 pub(crate) unsafe fn enet_host_compress<S: Socket>(
     mut host: *mut ENetHost<S>,
-    mut compressor: *const ENetCompressor,
+    compressor: Option<Box<dyn Compressor>>,
 ) {
-    if !((*host).compressor.context).is_null() && ((*host).compressor.destroy).is_some() {
-        (Some(((*host).compressor.destroy).expect("non-null function pointer")))
-            .expect("non-null function pointer")((*host).compressor.context);
-    }
-    if !compressor.is_null() {
-        (*host).compressor = *compressor;
-    } else {
-        (*host).compressor.context = 0 as *mut c_void;
-    };
+    *(*host).compressor.assume_init_mut() = compressor;
 }
 pub(crate) unsafe fn enet_host_channel_limit<S: Socket>(
     mut host: *mut ENetHost<S>,
@@ -5737,18 +5656,20 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
     }
     if flags as c_int & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED as c_int != 0 {
         let mut originalSize: size_t = 0;
-        if ((*host).compressor.context).is_null() || ((*host).compressor.decompress).is_none() {
+        let Some(compressor) = (*host).compressor.assume_init_mut() else {
             return 0 as c_int;
-        }
-        originalSize = ((*host).compressor.decompress).expect("non-null function pointer")(
-            (*host).compressor.context,
+        };
+        let in_data = std::slice::from_raw_parts(
             ((*host).receivedData).offset(headerSize as isize),
             ((*host).receivedDataLength).wrapping_sub(headerSize),
+        );
+        let out = std::slice::from_raw_parts_mut(
             ((*host).packetData[1 as c_int as usize])
                 .as_mut_ptr()
                 .offset(headerSize as isize),
             (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize),
         );
+        originalSize = compressor.decompress(in_data, out);
         if originalSize <= 0 as c_int as size_t
             || originalSize
                 > (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize)
@@ -6583,23 +6504,28 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             (*((*host).buffers).as_mut_ptr()).dataLength = 2 as size_t;
                         }
                         shouldCompress = 0 as c_int as size_t;
-                        if !((*host).compressor.context).is_null()
-                            && ((*host).compressor.compress).is_some()
-                        {
+                        if let Some(compressor) = (*host).compressor.assume_init_mut() {
                             let mut originalSize: size_t =
                                 ((*host).packetSize).wrapping_sub(::core::mem::size_of::<
                                     ENetProtocolHeader,
                                 >(
                                 )
                                     as size_t);
-                            let mut compressedSize: size_t = ((*host).compressor.compress)
-                                .expect("non-null function pointer")(
-                                (*host).compressor.context,
-                                &mut *((*host).buffers).as_mut_ptr().offset(1 as c_int as isize),
-                                ((*host).bufferCount).wrapping_sub(1 as c_int as size_t),
+                            let mut inBuffers = vec![];
+                            for i in 0..((*host).bufferCount).wrapping_sub(1) {
+                                let buffer = ((*host).buffers).as_mut_ptr().add(1 + i);
+                                inBuffers.push(std::slice::from_raw_parts(
+                                    (*buffer).data as *mut u8,
+                                    (*buffer).dataLength,
+                                ));
+                            }
+                            let mut compressedSize: size_t = compressor.compress(
+                                inBuffers,
                                 originalSize,
-                                ((*host).packetData[1 as c_int as usize]).as_mut_ptr(),
-                                originalSize,
+                                std::slice::from_raw_parts_mut(
+                                    ((*host).packetData[1 as c_int as usize]).as_mut_ptr(),
+                                    originalSize,
+                                ),
                             );
                             if compressedSize > 0 as c_int as size_t
                                 && compressedSize < originalSize

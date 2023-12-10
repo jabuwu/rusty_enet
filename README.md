@@ -16,5 +16,4 @@ This Rust port allows using ENet with more than just UDP sockets. Most noteably,
 
 These features were transpiled, but aren't accessible or configurable in the provided Rust API, yet.
 
-- Compression
 - Checksums
