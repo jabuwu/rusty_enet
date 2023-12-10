@@ -118,11 +118,13 @@ impl<S: Socket> Peer<S> {
     /// acknowledged for a certain maximum time period, the peer will be disconnected regardless of
     /// the current timeout limit value.
     ///
-    /// - `limit` - the timeout limit; defaults to `ENET_PEER_TIMEOUT_LIMIT` if 0
-    /// - `minimum` - the timeout minimum; defaults to `ENET_PEER_TIMEOUT_MINIMUM` if 0
-    /// - `maximum` - the timeout maximum; defaults to `ENET_PEER_TIMEOUT_MAXIMUM`` if 0
+    /// - `limit` - the timeout limit; defaults to
+    /// [`ENET_PEER_TIMEOUT_LIMIT`](`crate::consts::ENET_PEER_TIMEOUT_LIMIT`) if 0
+    /// - `minimum` - the timeout minimum; defaults to
+    /// [`ENET_PEER_TIMEOUT_MINIMUM`](`crate::consts::ENET_PEER_TIMEOUT_MINIMUM`) if 0
+    /// - `maximum` - the timeout maximum; defaults to
+    /// [`ENET_PEER_TIMEOUT_MAXIMUM`](`crate::consts::ENET_PEER_TIMEOUT_MAXIMUM`) if 0
     pub fn set_timeout(&mut self, limit: u32, minimum: u32, maximum: u32) {
-        // TODO: remove the ENET_PEER_ constant references in the docs above
         unsafe { enet_peer_timeout(self.0, limit, minimum, maximum) }
     }
 
@@ -134,7 +136,6 @@ impl<S: Socket> Peer<S> {
     ///
     /// See [`Peer::ping`].
     pub fn set_ping_interval(&mut self, ping_interval: u32) {
-        // TODO: remove the ENET_PEER_ constant references in the docs above
         unsafe { enet_peer_ping_interval(self.0, ping_interval) }
     }
 
@@ -148,24 +149,27 @@ impl<S: Socket> Peer<S> {
     /// round trip time happens to be significantly less than the mean round trip time measured over
     /// the interval, then the throttle probability is increased to allow more traffic by an amount
     /// specified in the acceleration parameter, which is a ratio to the
-    /// `ENET_PEER_PACKET_THROTTLE_SCALE` constant. If a measured round trip time happens to be
-    /// significantly greater than the mean round trip time measured over the interval, then the
-    /// throttle probability is decreased to limit traffic by an amount specified in the
-    /// deceleration parameter, which is a ratio to the `ENET_PEER_PACKET_THROTTLE_SCALE` constant.
-    /// When the throttle has a value of `ENET_PEER_PACKET_THROTTLE_SCALE`, no unreliable packets
-    /// are dropped by ENet, and so 100% of all unreliable packets will be sent. When the throttle
-    /// has a value of 0, all unreliable packets are dropped by ENet, and so 0% of all unreliable
-    /// packets will be sent. Intermediate values for the throttle represent intermediate
-    /// probabilities between 0% and 100% of unreliable packets being sent. The bandwidth limits of
-    /// the local and foreign hosts are taken into account to determine a sensible limit for the
-    /// throttle probability above which it should not raise even in the best of conditions.
+    /// [`ENET_PEER_PACKET_THROTTLE_SCALE`](`crate::consts::ENET_PEER_PACKET_THROTTLE_SCALE`)
+    /// constant. If a measured round trip time happens to be significantly greater than the mean
+    /// round trip time measured over the interval, then the throttle probability is decreased to
+    /// limit traffic by an amount specified in the deceleration parameter, which is a ratio to the
+    /// [`ENET_PEER_PACKET_THROTTLE_SCALE`](`crate::consts::ENET_PEER_PACKET_THROTTLE_SCALE`) When
+    /// the throttle has a value of
+    /// [`ENET_PEER_PACKET_THROTTLE_SCALE`](`crate::consts::ENET_PEER_PACKET_THROTTLE_SCALE`) When
+    /// no unreliable packets are dropped by ENet, and so 100% of all unreliable packets will be
+    /// sent. When the throttle has a value of 0, all unreliable packets are dropped by ENet, and so
+    /// 0% of all unreliable packets will be sent. Intermediate values for the throttle represent
+    /// intermediate probabilities between 0% and 100% of unreliable packets being sent. The
+    /// bandwidth limits of the local and foreign hosts are taken into account to determine a
+    /// sensible limit for the throttle probability above which it should not raise even in the best
+    /// of conditions.
     ///
     /// - `interval` - interval, in milliseconds, over which to measure lowest mean RTT; the default
-    /// value is `ENET_PEER_PACKET_THROTTLE_INTERVAL`
+    /// value is
+    /// [`ENET_PEER_PACKET_THROTTLE_INTERVAL`](`crate::consts::ENET_PEER_PACKET_THROTTLE_INTERVAL`)
     /// - `acceleration` - rate at which to increase the throttle probability as mean RTT declines
     /// - `deceleration` - rate at which to decrease the throttle probability as mean RTT increases
     pub fn set_throttle(&mut self, interval: u32, acceleration: u32, deceleration: u32) {
-        // TODO: remove the ENET_PEER_ constant references in the docs above
         unsafe { enet_peer_throttle_configure(self.0, interval, acceleration, deceleration) }
     }
 
@@ -229,9 +233,8 @@ impl<S: Socket> Peer<S> {
     }
 
     /// Mean packet loss of reliable packets as a ratio with respect to the constant
-    /// `ENET_PEER_PACKET_LOSS_SCALE`.
+    /// [`ENET_PEER_PACKET_LOSS_SCALE`](crate::consts::ENET_PEER_PACKET_LOSS_SCALE).
     pub fn packet_loss(&self) -> u32 {
-        // TODO: remove the ENET_PEER_ constant references in the docs above
         unsafe { (*self.0).packetLoss }
     }
 

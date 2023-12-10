@@ -142,6 +142,11 @@ pub use peer::*;
 pub use socket::*;
 pub use version::*;
 
+/// Constants provided by ENet.
+#[allow(missing_docs)]
+pub mod consts;
+use consts::*;
+
 /// A [`Result`](`core::result::Result`) type alias with this crate's [`Error`] type.
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -154,16 +159,6 @@ pub(crate) struct ENetBuffer {
 pub(crate) type enet_uint8 = c_uchar;
 pub(crate) type enet_uint16 = c_ushort;
 pub(crate) type enet_uint32 = c_uint;
-pub(crate) type C2RustUnnamed_1 = c_uint;
-pub(crate) const ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT: C2RustUnnamed_1 = 1048576;
-pub(crate) const ENET_PROTOCOL_MAXIMUM_PEER_ID: C2RustUnnamed_1 = 4095;
-pub(crate) const ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT: C2RustUnnamed_1 = 255;
-pub(crate) const ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT: C2RustUnnamed_1 = 1;
-pub(crate) const ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE: C2RustUnnamed_1 = 65536;
-pub(crate) const ENET_PROTOCOL_MINIMUM_WINDOW_SIZE: C2RustUnnamed_1 = 4096;
-pub(crate) const ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS: C2RustUnnamed_1 = 32;
-pub(crate) const ENET_PROTOCOL_MAXIMUM_MTU: C2RustUnnamed_1 = 4096;
-pub(crate) const ENET_PROTOCOL_MINIMUM_MTU: C2RustUnnamed_1 = 576;
 pub(crate) type _ENetProtocolCommand = c_uint;
 pub(crate) const ENET_PROTOCOL_COMMAND_MASK: _ENetProtocolCommand = 15;
 pub(crate) const ENET_PROTOCOL_COMMAND_COUNT: _ENetProtocolCommand = 13;
@@ -601,33 +596,6 @@ pub(crate) struct _ENetIncomingCommand {
     pub(crate) packet: *mut ENetPacket,
 }
 pub(crate) type ENetIncomingCommand = _ENetIncomingCommand;
-pub(crate) type C2RustUnnamed_2 = c_uint;
-pub(crate) const ENET_PEER_FREE_RELIABLE_WINDOWS: C2RustUnnamed_2 = 8;
-pub(crate) const ENET_PEER_RELIABLE_WINDOW_SIZE: C2RustUnnamed_2 = 4096;
-pub(crate) const ENET_PEER_RELIABLE_WINDOWS: C2RustUnnamed_2 = 16;
-pub(crate) const ENET_PEER_FREE_UNSEQUENCED_WINDOWS: C2RustUnnamed_2 = 32;
-pub(crate) const ENET_PEER_UNSEQUENCED_WINDOW_SIZE: C2RustUnnamed_2 = 1024;
-pub(crate) const ENET_PEER_UNSEQUENCED_WINDOWS: C2RustUnnamed_2 = 64;
-pub(crate) const ENET_PEER_PING_INTERVAL: C2RustUnnamed_2 = 500;
-pub(crate) const ENET_PEER_TIMEOUT_MAXIMUM: C2RustUnnamed_2 = 30000;
-pub(crate) const ENET_PEER_TIMEOUT_MINIMUM: C2RustUnnamed_2 = 5000;
-pub(crate) const ENET_PEER_TIMEOUT_LIMIT: C2RustUnnamed_2 = 32;
-pub(crate) const ENET_PEER_WINDOW_SIZE_SCALE: C2RustUnnamed_2 = 65536;
-pub(crate) const ENET_PEER_PACKET_LOSS_INTERVAL: C2RustUnnamed_2 = 10000;
-pub(crate) const ENET_PEER_PACKET_LOSS_SCALE: C2RustUnnamed_2 = 65536;
-pub(crate) const ENET_PEER_PACKET_THROTTLE_INTERVAL: C2RustUnnamed_2 = 5000;
-pub(crate) const ENET_PEER_PACKET_THROTTLE_DECELERATION: C2RustUnnamed_2 = 2;
-pub(crate) const ENET_PEER_PACKET_THROTTLE_ACCELERATION: C2RustUnnamed_2 = 2;
-pub(crate) const ENET_PEER_PACKET_THROTTLE_COUNTER: C2RustUnnamed_2 = 7;
-pub(crate) const ENET_PEER_PACKET_THROTTLE_SCALE: C2RustUnnamed_2 = 32;
-pub(crate) const ENET_PEER_DEFAULT_PACKET_THROTTLE: C2RustUnnamed_2 = 32;
-pub(crate) const ENET_PEER_DEFAULT_ROUND_TRIP_TIME: C2RustUnnamed_2 = 500;
-pub(crate) const ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA: C2RustUnnamed_2 = 33554432;
-pub(crate) const ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE: C2RustUnnamed_2 = 33554432;
-pub(crate) const ENET_HOST_DEFAULT_MTU: C2RustUnnamed_2 = 1392;
-pub(crate) const ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL: C2RustUnnamed_2 = 1000;
-pub(crate) const ENET_HOST_SEND_BUFFER_SIZE: C2RustUnnamed_2 = 262144;
-pub(crate) const ENET_HOST_RECEIVE_BUFFER_SIZE: C2RustUnnamed_2 = 262144;
 pub(crate) type _ENetPeerFlag = c_uint;
 pub(crate) const ENET_PEER_FLAG_CONTINUE_SENDING: _ENetPeerFlag = 2;
 pub(crate) const ENET_PEER_FLAG_NEEDS_DISPATCH: _ENetPeerFlag = 1;
