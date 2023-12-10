@@ -118,9 +118,7 @@
 )]
 #![warn(missing_docs)]
 
-use std::mem::MaybeUninit;
-
-use wasm_timer::{SystemTime, UNIX_EPOCH};
+use std::{mem::MaybeUninit, time::Duration};
 
 mod address;
 mod compressor;
@@ -374,6 +372,7 @@ pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) buffers: [ENetBuffer; 65],
     pub(crate) bufferCount: size_t,
     pub(crate) checksum: MaybeUninit<Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>>,
+    pub(crate) time: MaybeUninit<Option<Box<dyn Fn() -> Duration>>>,
     pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
     pub(crate) packetData: [[enet_uint8; 4096]; 2],
     pub(crate) receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
@@ -1777,8 +1776,8 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
         channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
     }
     (*host).randomSeed = host as size_t as enet_uint32;
-    (*host).randomSeed =
-        ((*host).randomSeed as c_uint).wrapping_add(enet_time_get()) as enet_uint32 as enet_uint32;
+    (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(enet_time_get(host))
+        as enet_uint32 as enet_uint32;
     (*host).randomSeed = (*host).randomSeed << 16 as c_int | (*host).randomSeed >> 16 as c_int;
     (*host).channelLimit = channelLimit;
     (*host).incomingBandwidth = incomingBandwidth;
@@ -1790,6 +1789,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).commandCount = 0 as c_int as size_t;
     (*host).bufferCount = 0 as c_int as size_t;
     (*host).checksum.write(None);
+    (*host).time.write(None);
     (*host).receivedAddress.write(None);
     (*host).receivedData = 0 as *mut enet_uint8;
     (*host).receivedDataLength = 0 as c_int as size_t;
@@ -1840,6 +1840,7 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
         currentPeer = currentPeer.offset(1);
     }
     (*host).checksum.assume_init_drop();
+    (*host).time.assume_init_drop();
     (*host).compressor.assume_init_drop();
     (*host).receivedAddress.assume_init_drop();
     enet_free((*host).peers as *mut c_void);
@@ -1996,7 +1997,7 @@ pub(crate) unsafe fn enet_host_bandwidth_limit<S: Socket>(
     (*host).recalculateBandwidthLimits = 1 as c_int;
 }
 pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENetHost<S>) {
-    let mut timeCurrent: enet_uint32 = enet_time_get();
+    let mut timeCurrent: enet_uint32 = enet_time_get(host);
     let mut elapsedTime: enet_uint32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
     let mut peersRemaining: enet_uint32 = (*host).connectedPeers as enet_uint32;
     let mut dataTotal: enet_uint32 = !(0 as c_int) as enet_uint32;
@@ -6652,7 +6653,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
     return 0 as c_int;
 }
 pub(crate) unsafe fn enet_host_flush<S: Socket>(mut host: *mut ENetHost<S>) {
-    (*host).serviceTime = enet_time_get();
+    (*host).serviceTime = enet_time_get(host);
     enet_protocol_send_outgoing_commands(host, 0 as *mut ENetEvent<S>, 0 as c_int);
 }
 pub(crate) unsafe fn enet_host_check_events<S: Socket>(
@@ -6681,7 +6682,7 @@ pub(crate) unsafe fn enet_host_service<S: Socket>(
             _ => {}
         }
     }
-    (*host).serviceTime = enet_time_get();
+    (*host).serviceTime = enet_time_get(host);
     if (if ((*host).serviceTime).wrapping_sub((*host).bandwidthThrottleEpoch)
         >= 86400000 as c_int as c_uint
     {
@@ -6716,13 +6717,17 @@ pub(crate) unsafe fn enet_host_service<S: Socket>(
     }
     return 0 as c_int;
 }
-pub(crate) unsafe fn enet_host_random_seed() -> enet_uint32 {
-    enet_time_get()
+pub(crate) unsafe fn enet_host_random_seed<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
+    enet_time_get(host)
 }
-pub(crate) unsafe fn enet_time_get() -> enet_uint32 {
-    (SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_millis()
-        % u32::MAX as u128) as enet_uint32
+pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
+    let duration = if let Some(time) = (*host).time.assume_init_ref() {
+        time()
+    } else {
+        use wasm_timer::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+    };
+    (duration.as_millis() % u32::MAX as u128) as enet_uint32
 }

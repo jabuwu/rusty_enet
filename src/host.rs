@@ -1,4 +1,4 @@
-use std::mem::zeroed;
+use std::{mem::zeroed, time::Duration};
 
 use crate::{
     enet_host_bandwidth_limit, enet_host_broadcast, enet_host_channel_limit,
@@ -28,7 +28,10 @@ pub struct HostSettings {
     pub compressor: Option<Box<dyn Compressor>>,
     /// The checksum function to use when sending and receiving packets, or [`None`] for no
     /// checksum.
-    pub checksum_fn: Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>,
+    pub checksum: Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>,
+    /// A custom time function to use, or [`None`] to use the default one. Should return an
+    /// an accurate, incrementally increasing [`Duration`].
+    pub time: Option<Box<dyn Fn() -> Duration>>,
 }
 
 impl Default for HostSettings {
@@ -39,7 +42,8 @@ impl Default for HostSettings {
             incoming_bandwidth_limit: None,
             outgoing_bandwidth_limit: None,
             compressor: None,
-            checksum_fn: None,
+            checksum: None,
+            time: None,
         }
     }
 }
@@ -88,8 +92,11 @@ impl<S: Socket> Host<S> {
             if let Some(compressor) = settings.compressor {
                 enet_host_compress(host, Some(compressor));
             }
-            if let Some(checksum_fn) = settings.checksum_fn {
-                *(*host).checksum.assume_init_mut() = Some(checksum_fn);
+            if let Some(checksum) = settings.checksum {
+                *(*host).checksum.assume_init_mut() = Some(checksum);
+            }
+            if let Some(time) = settings.time {
+                *(*host).time.assume_init_mut() = Some(time);
             }
             if !host.is_null() {
                 Ok(Self { host, peers })
