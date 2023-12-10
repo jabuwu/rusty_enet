@@ -22,6 +22,7 @@ impl PeerID {
     pub const MAX: usize = ENET_PROTOCOL_MAXIMUM_PEER_ID as usize;
 }
 
+/// The state of a [`Peer`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum PeerState {
