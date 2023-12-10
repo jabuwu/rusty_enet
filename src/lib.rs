@@ -124,6 +124,7 @@ use wasm_timer::{SystemTime, UNIX_EPOCH};
 
 mod address;
 mod compressor;
+mod crc32;
 mod error;
 mod event;
 mod host;
@@ -135,6 +136,7 @@ mod version;
 
 pub use address::*;
 pub use compressor::*;
+pub use crc32::*;
 pub use error::*;
 pub use event::*;
 pub use host::*;
@@ -371,7 +373,7 @@ pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) commandCount: size_t,
     pub(crate) buffers: [ENetBuffer; 65],
     pub(crate) bufferCount: size_t,
-    pub(crate) checksum: ENetChecksumCallback,
+    pub(crate) checksum: MaybeUninit<Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>>,
     pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
     pub(crate) packetData: [[enet_uint8; 4096]; 2],
     pub(crate) receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
@@ -1787,7 +1789,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).peerCount = peerCount;
     (*host).commandCount = 0 as c_int as size_t;
     (*host).bufferCount = 0 as c_int as size_t;
-    (*host).checksum = None;
+    (*host).checksum.write(None);
     (*host).receivedAddress.write(None);
     (*host).receivedData = 0 as *mut enet_uint8;
     (*host).receivedDataLength = 0 as c_int as size_t;
@@ -1837,6 +1839,7 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
         (*currentPeer).address.assume_init_drop();
         currentPeer = currentPeer.offset(1);
     }
+    (*host).checksum.assume_init_drop();
     (*host).compressor.assume_init_drop();
     (*host).receivedAddress.assume_init_drop();
     enet_free((*host).peers as *mut c_void);
@@ -2656,7 +2659,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     fragmentLength = ((*peer).mtu as size_t)
         .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>() as size_t)
         .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>() as size_t);
-    if ((*(*peer).host).checksum).is_some() {
+    if ((*(*peer).host).checksum.assume_init_ref()).is_some() {
         fragmentLength = (fragmentLength as c_ulong)
             .wrapping_sub(::core::mem::size_of::<enet_uint32>() as c_ulong)
             as size_t as size_t;
@@ -5623,7 +5626,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
     } else {
         2 as size_t
     };
-    if ((*host).checksum).is_some() {
+    if ((*host).checksum.assume_init_ref()).is_some() {
         headerSize = (headerSize as c_ulong)
             .wrapping_add(::core::mem::size_of::<enet_uint32>() as c_ulong)
             as size_t as size_t;
@@ -5684,25 +5687,37 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         (*host).receivedData = ((*host).packetData[1 as c_int as usize]).as_mut_ptr();
         (*host).receivedDataLength = headerSize.wrapping_add(originalSize);
     }
-    if ((*host).checksum).is_some() {
-        let mut checksum: *mut enet_uint32 = &mut *((*host).receivedData).offset(
+    if let Some(checksum_fn) = (*host).checksum.assume_init_ref() {
+        let mut checksum_addr: *mut enet_uint8 = &mut *((*host).receivedData).offset(
             headerSize.wrapping_sub(::core::mem::size_of::<enet_uint32>() as size_t) as isize,
-        ) as *mut enet_uint8 as *mut enet_uint32;
-        let mut desiredChecksum: enet_uint32 = *checksum;
+        ) as *mut enet_uint8;
+        let mut desiredChecksum: enet_uint32 = 0;
+        _enet_memcpy(
+            &mut desiredChecksum as *mut enet_uint32 as *mut c_void,
+            checksum_addr as *const c_void,
+            ::core::mem::size_of::<enet_uint32>(),
+        );
         let mut buffer: ENetBuffer = ENetBuffer {
             data: 0 as *mut c_void,
             dataLength: 0,
         };
-        *checksum = if !peer.is_null() {
+        let checksum = if !peer.is_null() {
             (*peer).connectID
         } else {
             0 as c_int as c_uint
         };
+        _enet_memcpy(
+            checksum_addr as *mut c_void,
+            &checksum as *const enet_uint32 as *const c_void,
+            ::core::mem::size_of::<enet_uint32>(),
+        );
         buffer.data = (*host).receivedData as *mut c_void;
         buffer.dataLength = (*host).receivedDataLength;
-        if ((*host).checksum).expect("non-null function pointer")(&mut buffer, 1 as c_int as size_t)
-            != desiredChecksum
-        {
+        let inBuffers = vec![std::slice::from_raw_parts(
+            buffer.data as *mut u8,
+            buffer.dataLength,
+        )];
+        if checksum_fn(inBuffers) != desiredChecksum {
             return 0 as c_int;
         }
     }
@@ -6548,27 +6563,41 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             ((*currentPeer).outgoingPeerID as c_int | (*host).headerFlags as c_int)
                                 as uint16_t,
                         );
-                        if ((*host).checksum).is_some() {
-                            let mut checksum: *mut enet_uint32 = &mut *headerData
+                        if let Some(checksum_fn) = (*host).checksum.assume_init_ref() {
+                            let mut checksum_addr: *mut enet_uint8 = &mut *headerData
                                 .as_mut_ptr()
                                 .offset((*((*host).buffers).as_mut_ptr()).dataLength as isize)
-                                as *mut enet_uint8
-                                as *mut enet_uint32;
-                            *checksum = if ((*currentPeer).outgoingPeerID as c_int)
+                                as *mut enet_uint8;
+                            let mut checksum = if ((*currentPeer).outgoingPeerID as c_int)
                                 < ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int
                             {
                                 (*currentPeer).connectID
                             } else {
                                 0 as c_int as c_uint
                             };
+                            _enet_memcpy(
+                                checksum_addr as *mut c_void,
+                                &checksum as *const enet_uint32 as *const c_void,
+                                ::core::mem::size_of::<enet_uint32>(),
+                            );
                             let ref mut fresh35 = (*((*host).buffers).as_mut_ptr()).dataLength;
                             *fresh35 =
                                 (*fresh35 as c_ulong)
                                     .wrapping_add(::core::mem::size_of::<enet_uint32>() as c_ulong)
                                     as size_t as size_t;
-                            *checksum = ((*host).checksum).expect("non-null function pointer")(
-                                ((*host).buffers).as_mut_ptr(),
-                                (*host).bufferCount,
+                            let mut inBuffers = vec![];
+                            for i in 0..(*host).bufferCount {
+                                let buffer = ((*host).buffers).as_mut_ptr().add(i);
+                                inBuffers.push(std::slice::from_raw_parts(
+                                    (*buffer).data as *mut u8,
+                                    (*buffer).dataLength,
+                                ));
+                            }
+                            checksum = checksum_fn(inBuffers);
+                            _enet_memcpy(
+                                checksum_addr as *mut c_void,
+                                &checksum as *const enet_uint32 as *const c_void,
+                                ::core::mem::size_of::<enet_uint32>(),
                             );
                         }
                         if shouldCompress > 0 as c_int as size_t {

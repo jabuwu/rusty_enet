@@ -15,6 +15,7 @@ fn main() {
             peer_limit: 1,
             channel_limit: 2,
             compressor: Some(Box::new(enet::RangeCoder::new())),
+            checksum_fn: Some(Box::new(enet::crc32)),
             ..Default::default()
         },
     )

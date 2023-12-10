@@ -24,8 +24,11 @@ pub struct HostSettings {
     ///
     /// See [`Host::set_bandwidth_limit`] for more info.
     pub outgoing_bandwidth_limit: Option<u32>,
-    /// The compressor to use when sending and receiving packets, or [`None`] for no comrpession.
+    /// The compressor to use when sending and receiving packets, or [`None`] for no compression.
     pub compressor: Option<Box<dyn Compressor>>,
+    /// The checksum function to use when sending and receiving packets, or [`None`] for no
+    /// checksum.
+    pub checksum_fn: Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>,
 }
 
 impl Default for HostSettings {
@@ -36,6 +39,7 @@ impl Default for HostSettings {
             incoming_bandwidth_limit: None,
             outgoing_bandwidth_limit: None,
             compressor: None,
+            checksum_fn: None,
         }
     }
 }
@@ -83,6 +87,9 @@ impl<S: Socket> Host<S> {
             }
             if let Some(compressor) = settings.compressor {
                 enet_host_compress(host, Some(compressor));
+            }
+            if let Some(checksum_fn) = settings.checksum_fn {
+                *(*host).checksum.assume_init_mut() = Some(checksum_fn);
             }
             if !host.is_null() {
                 Ok(Self { host, peers })

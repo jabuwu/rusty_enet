@@ -11,9 +11,3 @@ From [ENet's website](http://sauerbraten.org/enet/):
 > ENet omits certain higher level networking features such as authentication, lobbying, server discovery, encryption, or other similar tasks that are particularly application specific so that the library remains flexible, portable, and easily embeddable.
 
 This Rust port allows using ENet with more than just UDP sockets. Most noteably, in WASM environments.
-
-## Work in progress features
-
-These features were transpiled, but aren't accessible or configurable in the provided Rust API, yet.
-
-- Checksums
