@@ -7,7 +7,7 @@ use std::{
 use rusty_enet as enet;
 
 fn main() {
-    let socket = UdpSocket::bind(SocketAddr::from_str("127.0.0.1:6060").unwrap()).unwrap();
+    let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:6060").unwrap()).unwrap();
     let mut host = enet::Host::create(
         socket,
         enet::HostSettings {
