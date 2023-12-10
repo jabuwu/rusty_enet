@@ -332,3 +332,9 @@ impl<S: Socket> Host<S> {
         }
     }
 }
+
+impl<S: Socket> Drop for Host<S> {
+    fn drop(&mut self) {
+        unsafe { enet_host_destroy(self.host) }
+    }
+}
