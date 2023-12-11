@@ -1,4 +1,4 @@
-use core::slice;
+use std::{fmt::Debug, slice};
 
 use crate::{
     c_void, enet_packet_create, enet_packet_destroy, size_t, ENetPacket, ENET_PACKET_FLAG_RELIABLE,
@@ -37,7 +37,6 @@ pub enum PacketKind {
 /// See [`Fragmentation and Reassembly`](`crate#fragmentation-and-reassembly`).
 ///
 /// For more information on the kinds of ENet packets, see [`PacketKind`].
-#[derive(Debug)]
 pub struct Packet {
     pub(crate) packet: *mut ENetPacket,
 }
@@ -152,5 +151,18 @@ impl Drop for Packet {
                 enet_packet_destroy(self.packet);
             }
         }
+    }
+}
+
+impl Debug for Packet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let packet = unsafe { &(*self.packet) };
+        f.debug_struct("Packet")
+            .field("data", &packet.data)
+            .field("dataLength", &packet.dataLength)
+            .field("userData", &packet.userData)
+            .field("flags", &packet.flags)
+            .field("kind", &self.kind())
+            .finish()
     }
 }

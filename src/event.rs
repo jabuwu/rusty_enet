@@ -54,6 +54,8 @@ impl<'a, S: Socket> Event<'a, S> {
 }
 
 /// An ENet event, like [`Event`], but without peer references.
+///
+/// Acquired with [`Event::no_ref`].
 #[derive(Debug, Clone)]
 pub enum EventNoRef {
     /// A new peer has connected.

@@ -33,6 +33,8 @@ pub struct HostSettings {
     /// A custom time function to use, or [`None`] to use the default one. Should return an
     /// an accurate, incrementally increasing [`Duration`].
     pub time: Option<Box<dyn Fn() -> Duration>>,
+    /// Seed the host with a specific random seed, or set to [`None`] to use a random seed.
+    pub seed: Option<u32>,
 }
 
 impl Default for HostSettings {
@@ -45,6 +47,7 @@ impl Default for HostSettings {
             compressor: None,
             checksum: None,
             time: None,
+            seed: None,
         }
     }
 }
@@ -85,6 +88,13 @@ impl<S: Socket> Host<S> {
                 settings.channel_limit,
                 settings.incoming_bandwidth_limit.unwrap_or(0),
                 settings.outgoing_bandwidth_limit.unwrap_or(0),
+                settings.time.unwrap_or(Box::new(|| {
+                    use wasm_timer::{SystemTime, UNIX_EPOCH};
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("Time went backwards")
+                })),
+                settings.seed,
             );
             let mut peers = vec![];
             for peer_index in 0..(*host).peerCount {
@@ -95,9 +105,6 @@ impl<S: Socket> Host<S> {
             }
             if let Some(checksum) = settings.checksum {
                 *(*host).checksum.assume_init_mut() = Some(checksum);
-            }
-            if let Some(time) = settings.time {
-                *(*host).time.assume_init_mut() = Some(time);
             }
             if !host.is_null() {
                 Ok(Self { host, peers })

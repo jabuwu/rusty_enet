@@ -167,6 +167,9 @@ pub use version::*;
 pub mod consts;
 use consts::*;
 
+#[cfg(test)]
+mod test;
+
 /// A [`Result`](`core::result::Result`) type alias with this crate's [`Error`] type.
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -390,7 +393,7 @@ pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) buffers: [ENetBuffer; 65],
     pub(crate) bufferCount: size_t,
     pub(crate) checksum: MaybeUninit<Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>>,
-    pub(crate) time: MaybeUninit<Option<Box<dyn Fn() -> Duration>>>,
+    pub(crate) time: MaybeUninit<Box<dyn Fn() -> Duration>>,
     pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
     pub(crate) packetData: [[enet_uint8; 4096]; 2],
     pub(crate) receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
@@ -1756,6 +1759,8 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     mut channelLimit: size_t,
     mut incomingBandwidth: enet_uint32,
     mut outgoingBandwidth: enet_uint32,
+    time: Box<dyn Fn() -> Duration>,
+    seed: Option<u32>,
 ) -> *mut ENetHost<S> {
     let mut host: *mut ENetHost<S> = 0 as *mut ENetHost<S>;
     let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
@@ -1793,10 +1798,15 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t {
         channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
     }
-    (*host).randomSeed = host as size_t as enet_uint32;
-    (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(enet_time_get(host))
-        as enet_uint32 as enet_uint32;
-    (*host).randomSeed = (*host).randomSeed << 16 as c_int | (*host).randomSeed >> 16 as c_int;
+    (*host).time.write(time);
+    if let Some(seed) = seed {
+        (*host).randomSeed = seed;
+    } else {
+        (*host).randomSeed = host as size_t as enet_uint32;
+        (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(enet_time_get(host))
+            as enet_uint32 as enet_uint32;
+        (*host).randomSeed = (*host).randomSeed << 16 as c_int | (*host).randomSeed >> 16 as c_int;
+    }
     (*host).channelLimit = channelLimit;
     (*host).incomingBandwidth = incomingBandwidth;
     (*host).outgoingBandwidth = outgoingBandwidth;
@@ -1807,7 +1817,6 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).commandCount = 0 as c_int as size_t;
     (*host).bufferCount = 0 as c_int as size_t;
     (*host).checksum.write(None);
-    (*host).time.write(None);
     (*host).receivedAddress.write(None);
     (*host).receivedData = 0 as *mut enet_uint8;
     (*host).receivedDataLength = 0 as c_int as size_t;
@@ -6739,13 +6748,5 @@ pub(crate) unsafe fn enet_host_random_seed<S: Socket>(host: *mut ENetHost<S>) ->
     enet_time_get(host)
 }
 pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
-    let duration = if let Some(time) = (*host).time.assume_init_ref() {
-        time()
-    } else {
-        use wasm_timer::{SystemTime, UNIX_EPOCH};
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards")
-    };
-    (duration.as_millis() % u32::MAX as u128) as enet_uint32
+    ((*host).time.assume_init_ref()().as_millis() % u32::MAX as u128) as enet_uint32
 }
