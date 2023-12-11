@@ -194,7 +194,7 @@ impl<S: Socket> Host<S> {
     /// # Panics
     ///
     /// Panics if the peer ID is outside the bounds of peers allocated for this host.
-    pub fn peer(&mut self, peer: PeerID) -> &Peer<S> {
+    pub fn peer(&self, peer: PeerID) -> &Peer<S> {
         self.peers
             .get(peer.0)
             .expect("Expected the peer id to be in bounds.")
@@ -210,7 +210,7 @@ impl<S: Socket> Host<S> {
     ///
     /// Returns [`Error::InvalidPeerID`] if the requested peer ID is outside the bounds of peers
     /// allocated for this host.
-    pub fn get_peer(&mut self, peer: PeerID) -> Result<&Peer<S>, Error> {
+    pub fn get_peer(&self, peer: PeerID) -> Result<&Peer<S>, Error> {
         self.peers.get(peer.0).ok_or(Error::InvalidPeerID)
     }
 

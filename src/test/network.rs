@@ -5,6 +5,9 @@ use std::{
     time::Duration,
 };
 
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha20Rng;
+
 use crate as enet;
 
 pub struct Socket {
@@ -80,72 +83,147 @@ impl enet::Address for usize {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Clone, Copy)]
+pub struct NetworkConditions {
+    round_trip_time: u32,
+    round_trip_time_variance: u32,
+    loss_chance: f32,
+}
+
+impl NetworkConditions {
+    pub fn perfect() -> Self {
+        Self {
+            round_trip_time: 0,
+            round_trip_time_variance: 0,
+            loss_chance: 0.,
+        }
+    }
+
+    pub fn good() -> Self {
+        Self {
+            round_trip_time: 50,
+            round_trip_time_variance: 30,
+            loss_chance: 0.05,
+        }
+    }
+
+    pub fn bad() -> Self {
+        Self {
+            round_trip_time: 300,
+            round_trip_time_variance: 100,
+            loss_chance: 0.2,
+        }
+    }
+
+    pub fn disconnected() -> Self {
+        Self {
+            round_trip_time: 0,
+            round_trip_time_variance: 0,
+            loss_chance: 1.,
+        }
+    }
+}
+
+pub struct NetworkEvent {
+    sent: bool,
+    send_time: u32,
+    from: usize,
+    to: usize,
+    data: Vec<u8>,
+}
+
 pub struct Network {
+    rng: ChaCha20Rng,
     sockets: Vec<Socket>,
+    events: Vec<NetworkEvent>,
     hosts: Vec<enet::Host<Socket>>,
+    conditions: HashMap<(usize, usize), NetworkConditions>,
     connections: HashMap<(usize, usize), enet::PeerID>,
     time: Arc<RwLock<u32>>,
 }
 
 impl Network {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            rng: ChaCha20Rng::seed_from_u64(0),
+            sockets: Default::default(),
+            events: Default::default(),
+            hosts: Default::default(),
+            conditions: Default::default(),
+            connections: Default::default(),
+            time: Default::default(),
+        }
     }
 
-    fn send_and_receive(&mut self) {
-        let mut events = vec![];
+    fn send_and_receive(&mut self, time: u32) {
         for (from, socket) in self.sockets.iter_mut().enumerate() {
-            while let Some(event) = socket.receive() {
-                events.push((from, event.0, event.1));
+            while let Some((to, data)) = socket.receive() {
+                if let Some(conditions) = self.conditions.get(&(to, from)).copied() {
+                    if self.rng.gen_bool(1. - conditions.loss_chance as f64) {
+                        self.events.push(NetworkEvent {
+                            sent: false,
+                            send_time: time
+                                + (conditions.round_trip_time as i32
+                                    + self.rng.gen_range(
+                                        -(conditions.round_trip_time_variance as i32)
+                                            ..=conditions.round_trip_time_variance as i32,
+                                    ))
+                                .max(0) as u32,
+                            from,
+                            to,
+                            data,
+                        });
+                    }
+                }
             }
         }
-        for (from, to, data) in events {
-            self.sockets[to].send(from, &data);
+        for event in self.events.iter_mut() {
+            if time >= event.send_time {
+                self.sockets[event.to].send(event.from, &event.data);
+                event.sent = true;
+            }
         }
+        self.events.retain(|event| !event.sent);
     }
 
-    pub fn update(&mut self, time: Duration) -> Vec<Event> {
-        macro_rules! send_and_receive {
-            () => {
-                let mut events = vec![];
-                for (from, socket) in self.sockets.iter_mut().enumerate() {
-                    while let Some(event) = socket.receive() {
-                        events.push((from, event.0, event.1));
-                    }
-                }
-                for (from, to, data) in events {
-                    self.sockets[to].send(from, &data);
-                }
-            };
-        }
+    /// Update n frames, where each frame is 1ms.
+    pub fn update(&mut self, frames: usize) -> Vec<Event> {
         let mut events = vec![];
-        for (host_index, host) in self.hosts.iter_mut().enumerate() {
-            send_and_receive!();
-            while let Some(event) = host.service().unwrap() {
-                let peer_index: usize;
-                match &event {
-                    enet::Event::Connect { peer, .. } => {
-                        peer_index = peer.address().unwrap();
-                        self.connections.insert((host_index, peer_index), peer.id());
-                    }
-                    enet::Event::Disconnect { peer, .. } => {
-                        peer_index = peer.address().unwrap();
-                        self.connections.remove(&(host_index, peer_index));
-                    }
-                    enet::Event::Receive { peer, .. } => {
-                        peer_index = peer.address().unwrap();
+        for _ in 0..frames {
+            let now = *self.time.write().unwrap();
+            for host_index in 0..self.hosts.len() {
+                loop {
+                    self.send_and_receive(now);
+                    let host = &mut self.hosts[host_index];
+                    if let Some(event) = host.service().unwrap() {
+                        let peer_index: usize;
+                        match &event {
+                            enet::Event::Connect { peer, .. } => {
+                                peer_index = peer.address().unwrap();
+                                self.connections.insert((host_index, peer_index), peer.id());
+                            }
+                            enet::Event::Disconnect { peer, .. } => {
+                                peer_index = peer.address().unwrap();
+                                self.conditions.remove(&(host_index, peer_index));
+                                self.connections.remove(&(host_index, peer_index));
+                            }
+                            enet::Event::Receive { peer, .. } => {
+                                peer_index = peer.address().unwrap();
+                            }
+                        }
+                        events.push(Event {
+                            from: peer_index,
+                            to: host_index,
+                            event: event.no_ref(),
+                        });
+                    } else {
+                        break;
                     }
                 }
-                events.push(Event {
-                    from: peer_index,
-                    to: host_index,
-                    event: event.no_ref(),
-                });
-                send_and_receive!();
             }
+            let mut time = self.time.write().unwrap();
+            *time = time.wrapping_add(1);
         }
-        *self.time.write().unwrap() += (time.as_millis() % u32::MAX as u128) as u32;
         events
     }
 
@@ -169,11 +247,28 @@ impl Network {
 
     pub fn connect(&mut self, from: usize, to: usize, channel_count: usize, data: u32) {
         self.hosts[from].connect(to, channel_count, data).unwrap();
+        self.conditions(from, to, NetworkConditions::perfect());
+    }
+
+    pub fn conditions(&mut self, host1: usize, host2: usize, conditions: NetworkConditions) {
+        self.conditions.insert((host1, host2), conditions);
+        self.conditions.insert((host2, host1), conditions);
     }
 
     pub fn disconnect(&mut self, from: usize, to: usize, data: u32) {
         let peer = self.resolve_peer(from, to);
         self.hosts[from].peer_mut(peer).disconnect(data)
+    }
+
+    pub fn disconnect_later(&mut self, from: usize, to: usize, data: u32) {
+        let peer = self.resolve_peer(from, to);
+        self.hosts[from].peer_mut(peer).disconnect_later(data)
+    }
+
+    pub fn disconnect_now(&mut self, from: usize, to: usize, data: u32) {
+        let peer = self.resolve_peer(from, to);
+        self.hosts[from].peer_mut(peer).disconnect_now(data);
+        self.conditions.remove(&(from, to));
     }
 
     pub fn send(&mut self, from: usize, to: usize, channel_id: u8, packet: enet::Packet) {
@@ -182,6 +277,11 @@ impl Network {
             .peer_mut(peer)
             .send(channel_id, packet)
             .unwrap();
+    }
+
+    pub fn round_trip_time(&self, from: usize, to: usize) -> Duration {
+        let peer = self.resolve_peer(from, to);
+        self.hosts[from].peer(peer).round_trip_time()
     }
 }
 
@@ -210,7 +310,7 @@ impl DerefMut for Host {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Event {
     from: usize,
     to: usize,
