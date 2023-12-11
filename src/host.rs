@@ -1,11 +1,12 @@
-use std::{mem::zeroed, time::Duration};
+use std::{fmt::Debug, mem::zeroed, time::Duration};
 
 use crate::{
     enet_host_bandwidth_limit, enet_host_broadcast, enet_host_channel_limit,
     enet_host_check_events, enet_host_compress, enet_host_connect, enet_host_create,
-    enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetEvent, ENetHost,
-    ENetPeer, Error, Event, Packet, Peer, PeerID, PeerState, Socket, ENET_EVENT_TYPE_CONNECT,
-    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT,
+    enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetBuffer, ENetEvent,
+    ENetHost, ENetList, ENetPeer, ENetProtocol, Error, Event, Packet, Peer, PeerID, PeerState,
+    Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
+    ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT,
 };
 
 /// Settings for a newly created host, passed into [`Host::create`].
@@ -123,7 +124,7 @@ impl<S: Socket> Host<S> {
         unsafe {
             let peer = enet_host_connect(self.host, address, channel_count, data);
             if !peer.is_null() {
-                Ok(self.peer_mut(self.peer_index(peer))?)
+                Ok(self.peer_mut(self.peer_index(peer)))
             } else {
                 Err(Error::FailedToConnect)
             }
@@ -183,12 +184,42 @@ impl<S: Socket> Host<S> {
     ///
     /// Acquires the peer object, even if the peer is not in a connected state. See [`Peer::state`].
     ///
+    /// # Panics
+    ///
+    /// Panics if the peer ID is outside the bounds of peers allocated for this host.
+    pub fn peer(&mut self, peer: PeerID) -> &Peer<S> {
+        self.peers
+            .get(peer.0)
+            .expect("Expected the peer id to be in bounds.")
+    }
+
+    /// Get a reference to a single peer.
+    ///
+    /// # Note
+    ///
+    /// Acquires the peer object, even if the peer is not in a connected state. See [`Peer::state`].
+    ///
     /// # Errors
     ///
     /// Returns [`Error::InvalidPeerID`] if the requested peer ID is outside the bounds of peers
     /// allocated for this host.
-    pub fn peer(&mut self, peer: PeerID) -> Result<&Peer<S>, Error> {
+    pub fn get_peer(&mut self, peer: PeerID) -> Result<&Peer<S>, Error> {
         self.peers.get(peer.0).ok_or(Error::InvalidPeerID)
+    }
+
+    /// Get a mutable reference to a single peer.
+    ///
+    /// # Note
+    ///
+    /// Acquires the peer object, even if the peer is not in a connected state. See [`Peer::state`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the peer ID is outside the bounds of peers allocated for this host.
+    pub fn peer_mut(&mut self, peer: PeerID) -> &mut Peer<S> {
+        self.peers
+            .get_mut(peer.0)
+            .expect("Expected the peer id to be in bounds.")
     }
 
     /// Get a mutable reference to a single peer.
@@ -201,7 +232,7 @@ impl<S: Socket> Host<S> {
     ///
     /// Returns [`Error::InvalidPeerID`] if the requested peer ID is outside the bounds of peers
     /// allocated for this host.
-    pub fn peer_mut(&mut self, peer: PeerID) -> Result<&mut Peer<S>, Error> {
+    pub fn get_peer_mut(&mut self, peer: PeerID) -> Result<&mut Peer<S>, Error> {
         self.peers.get_mut(peer.0).ok_or(Error::InvalidPeerID)
     }
 
@@ -321,15 +352,15 @@ impl<S: Socket> Host<S> {
     fn create_event<'a>(&'a mut self, event: &ENetEvent<S>) -> Event<'a, S> {
         match event.type_0 {
             ENET_EVENT_TYPE_CONNECT => Event::Connect {
-                peer: self.peer_mut(self.peer_index(event.peer)).unwrap(),
+                peer: self.peer_mut(self.peer_index(event.peer)),
                 data: event.data,
             },
             ENET_EVENT_TYPE_DISCONNECT => Event::Disconnect {
-                peer: self.peer_mut(self.peer_index(event.peer)).unwrap(),
+                peer: self.peer_mut(self.peer_index(event.peer)),
                 data: event.data,
             },
             ENET_EVENT_TYPE_RECEIVE => Event::Receive {
-                peer: self.peer_mut(self.peer_index(event.peer)).unwrap(),
+                peer: self.peer_mut(self.peer_index(event.peer)),
                 channel_id: event.channelID,
                 packet: Packet::new_from_ptr(event.packet),
             },
@@ -355,5 +386,54 @@ impl<S: Socket> Host<S> {
 impl<S: Socket> Drop for Host<S> {
     fn drop(&mut self) {
         unsafe { enet_host_destroy(self.host) }
+    }
+}
+
+impl<S: Socket> Debug for Host<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let host = unsafe { &(*self.host) };
+        f.debug_struct("Host")
+            .field("socket", &host.socket)
+            .field("incomingBandwidth", &host.incomingBandwidth)
+            .field("incomingBandwidth", &host.incomingBandwidth)
+            .field("outgoingBandwidth", &host.outgoingBandwidth)
+            .field("bandwidthThrottleEpoch", &host.bandwidthThrottleEpoch)
+            .field("mtu", &host.mtu)
+            .field("randomSeed", &host.randomSeed)
+            .field(
+                "recalculateBandwidthLimits",
+                &host.recalculateBandwidthLimits,
+            )
+            .field("peers", &host.peers)
+            .field("peerCount", &host.peerCount)
+            .field("channelLimit", &host.channelLimit)
+            .field("serviceTime", &host.serviceTime)
+            .field("dispatchQueue", &(&host.dispatchQueue as *const ENetList))
+            .field("totalQueued", &host.totalQueued)
+            .field("packetSize", &host.packetSize)
+            .field("headerFlags", &host.headerFlags)
+            .field("commands", &(&host.commands as *const [ENetProtocol; 32]))
+            .field("commandCount", &host.commandCount)
+            .field("buffers", &(&host.buffers as *const [ENetBuffer; 65]))
+            .field("bufferCount", &host.bufferCount)
+            .field("checksum", &host.checksum)
+            .field("time", &host.time)
+            .field("compressor", &host.compressor)
+            .field("packetData", &host.packetData)
+            .field("receivedAddress", &host.receivedAddress)
+            .field("receivedData", &host.receivedData)
+            .field("receivedDataLength", &host.receivedDataLength)
+            .field("totalSentData", &host.totalSentData)
+            .field("totalSentPackets", &host.totalSentPackets)
+            .field("totalReceivedData", &host.totalReceivedData)
+            .field("totalReceivedPackets", &host.totalReceivedPackets)
+            .field("intercept", &host.intercept)
+            .field("connectedPeers", &host.connectedPeers)
+            .field("bandwidthLimitedPeers", &host.bandwidthLimitedPeers)
+            .field("duplicatePeers", &host.duplicatePeers)
+            .field("maximumPacketSize", &host.maximumPacketSize)
+            .field("maximumWaitingData", &host.maximumWaitingData)
+            .field("peers", &self.peers)
+            .finish()
     }
 }
