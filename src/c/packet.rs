@@ -8,10 +8,7 @@ pub(crate) struct _ENetPacket {
     pub(crate) flags: u32,
     pub(crate) data: *mut u8,
     pub(crate) dataLength: usize,
-    pub(crate) freeCallback: ENetPacketFreeCallback,
-    pub(crate) userData: *mut c_void,
 }
-pub(crate) type ENetPacketFreeCallback = Option<unsafe extern "C" fn(*mut _ENetPacket) -> ()>;
 pub(crate) unsafe fn enet_packet_create(
     data: *const c_void,
     dataLength: usize,
@@ -39,16 +36,11 @@ pub(crate) unsafe fn enet_packet_create(
     (*packet).referenceCount = 0_i32 as usize;
     (*packet).flags = flags;
     (*packet).dataLength = dataLength;
-    (*packet).freeCallback = None;
-    (*packet).userData = std::ptr::null_mut();
     packet
 }
 pub(crate) unsafe fn enet_packet_destroy(packet: *mut ENetPacket) {
     if packet.is_null() {
         return;
-    }
-    if ((*packet).freeCallback).is_some() {
-        ((*packet).freeCallback).expect("non-null function pointer")(packet);
     }
     if (*packet).flags & ENET_PACKET_FLAG_NO_ALLOCATE as i32 as u32 == 0
         && !((*packet).data).is_null()

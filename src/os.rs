@@ -51,13 +51,13 @@ impl Allocator {
     }
 }
 
-pub(crate) unsafe extern "C" fn _enet_malloc(size: usize) -> *mut c_void {
+pub(crate) unsafe fn enet_malloc(size: usize) -> *mut c_void {
     let singleton = Allocator::singleton();
     let mut allocator = singleton.lock().unwrap();
     allocator.malloc(size)
 }
 
-pub(crate) unsafe extern "C" fn _enet_free(ptr: *mut c_void) {
+pub(crate) unsafe fn enet_free(ptr: *mut c_void) {
     if !ptr.is_null() && ptr as usize != 1 {
         let singleton = Allocator::singleton();
         let mut allocator = singleton.lock().unwrap();
@@ -65,18 +65,18 @@ pub(crate) unsafe extern "C" fn _enet_free(ptr: *mut c_void) {
     }
 }
 
-pub(crate) unsafe extern "C" fn _enet_abort() -> ! {
+pub(crate) unsafe fn _enet_abort() -> ! {
     std::process::abort()
 }
 
-pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: i32, n: usize) -> *mut c_void {
+pub(crate) unsafe fn _enet_memset(s: *mut c_void, c: i32, n: usize) -> *mut c_void {
     for offset in 0..n {
         (*(s.cast::<u8>()).add(offset)) = c as u8;
     }
     s
 }
 
-pub(crate) unsafe extern "C" fn _enet_memcpy(
+pub(crate) unsafe fn _enet_memcpy(
     destination: *mut c_void,
     source: *const c_void,
     num: usize,

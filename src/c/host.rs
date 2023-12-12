@@ -5,15 +5,13 @@ use crate::{
     enet_free, enet_list_clear, enet_malloc, enet_peer_reset, enet_time_get,
     os::{_enet_memset, c_void},
     Compressor, ENetBuffer, ENetChannel, ENetList, ENetPeer, ENetProtocol,
-    ENetProtocolCommandHeader, Socket, SocketOptions, _ENetEvent, _ENetProtocol,
-    enet_packet_destroy, enet_peer_queue_outgoing_command, enet_peer_send, ENetPacket,
-    ENET_PEER_STATE_CONNECTED, ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_DISCONNECTED,
-    ENET_PEER_STATE_DISCONNECT_LATER, ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT,
-    ENET_PROTOCOL_COMMAND_CONNECT, ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE,
+    ENetProtocolCommandHeader, Socket, SocketOptions, _ENetProtocol, enet_packet_destroy,
+    enet_peer_queue_outgoing_command, enet_peer_send, ENetPacket, ENET_PEER_STATE_CONNECTED,
+    ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_DISCONNECTED, ENET_PEER_STATE_DISCONNECT_LATER,
+    ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT, ENET_PROTOCOL_COMMAND_CONNECT,
+    ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE,
 };
 
-pub(crate) type ENetInterceptCallback<S> =
-    Option<unsafe extern "C" fn(*mut _ENetHost<S>, *mut _ENetEvent<S>) -> i32>;
 #[allow(clippy::type_complexity)]
 pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) socket: MaybeUninit<S>,
@@ -46,7 +44,6 @@ pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) totalSentPackets: u32,
     pub(crate) totalReceivedData: u32,
     pub(crate) totalReceivedPackets: u32,
-    pub(crate) intercept: ENetInterceptCallback<S>,
     pub(crate) connectedPeers: usize,
     pub(crate) bandwidthLimitedPeers: usize,
     pub(crate) duplicatePeers: usize,
@@ -130,7 +127,6 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).maximumPacketSize = ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE as i32 as usize;
     (*host).maximumWaitingData = ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA as i32 as usize;
     (*host).compressor.write(None);
-    (*host).intercept = None;
     enet_list_clear(&mut (*host).dispatchQueue);
     currentPeer = (*host).peers;
     while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {

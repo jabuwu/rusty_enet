@@ -425,7 +425,6 @@ impl<S: Socket> Debug for Host<S> {
             .field("totalSentPackets", &host.totalSentPackets)
             .field("totalReceivedData", &host.totalReceivedData)
             .field("totalReceivedPackets", &host.totalReceivedPackets)
-            .field("intercept", &host.intercept)
             .field("connectedPeers", &host.connectedPeers)
             .field("bandwidthLimitedPeers", &host.bandwidthLimitedPeers)
             .field("duplicatePeers", &host.duplicatePeers)

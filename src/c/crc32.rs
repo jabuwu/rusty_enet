@@ -35,11 +35,7 @@ const CRC_TABLE: [u32; 256] = [
     0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D,
 ];
 
-#[no_mangle]
-pub(crate) unsafe extern "C" fn enet_crc32(
-    mut buffers: *const ENetBuffer,
-    mut bufferCount: usize,
-) -> u32 {
+pub(crate) unsafe fn enet_crc32(mut buffers: *const ENetBuffer, mut bufferCount: usize) -> u32 {
     let mut crc: u32 = 0xffffffff_u32;
     loop {
         let fresh30 = bufferCount;

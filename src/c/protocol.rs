@@ -1660,7 +1660,6 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
     event: *mut ENetEvent<S>,
 ) -> i32 {
     let mut packets: i32;
-    let mut current_block_17: u64;
     packets = 0_i32;
     while packets < 256_i32 {
         let mut buffer: ENetBuffer = ENetBuffer {
@@ -1707,50 +1706,10 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             .totalReceivedData
             .wrapping_add(receivedLength as u32) as u32 as u32;
         (*host).totalReceivedPackets = ((*host).totalReceivedPackets).wrapping_add(1);
-        if ((*host).intercept).is_some() {
-            match ((*host).intercept).expect("non-null function pointer")(host, event) {
-                1 => {
-                    current_block_17 = 11187707480244993007;
-                    match current_block_17 {
-                        15717549315443811277 => return -1_i32,
-                        _ => {
-                            if !event.is_null()
-                                && (*event).type_0 != ENET_EVENT_TYPE_NONE as i32 as u32
-                            {
-                                return 1_i32;
-                            }
-                        }
-                    }
-                    current_block_17 = 11174649648027449784;
-                }
-                -1 => {
-                    current_block_17 = 15717549315443811277;
-                    match current_block_17 {
-                        15717549315443811277 => return -1_i32,
-                        _ => {
-                            if !event.is_null()
-                                && (*event).type_0 != ENET_EVENT_TYPE_NONE as i32 as u32
-                            {
-                                return 1_i32;
-                            }
-                        }
-                    }
-                    current_block_17 = 11174649648027449784;
-                }
-                _ => {
-                    current_block_17 = 5143058163439228106;
-                }
-            }
-        } else {
-            current_block_17 = 5143058163439228106;
-        }
-        match current_block_17 {
-            11174649648027449784 => {}
-            _ => match enet_protocol_handle_incoming_commands(host, event) {
-                1 => return 1_i32,
-                -1 => return -1_i32,
-                _ => {}
-            },
+        match enet_protocol_handle_incoming_commands(host, event) {
+            1 => return 1_i32,
+            -1 => return -1_i32,
+            _ => {}
         }
         packets += 1;
     }

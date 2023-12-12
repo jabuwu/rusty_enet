@@ -29,8 +29,7 @@ pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: C2RustUnnamed_3 = 5;
 pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 3;
 pub(crate) const ENET_RANGE_CODER_TOP: C2RustUnnamed_3 = 16777216;
 pub(crate) type C2RustUnnamed_3 = u32;
-#[no_mangle]
-pub(crate) unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
+pub(crate) unsafe fn enet_range_coder_create() -> *mut c_void {
     let rangeCoder: *mut ENetRangeCoder =
         enet_malloc(::core::mem::size_of::<ENetRangeCoder>()) as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
@@ -38,15 +37,14 @@ pub(crate) unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
     }
     rangeCoder as *mut c_void
 }
-#[no_mangle]
-pub(crate) unsafe extern "C" fn enet_range_coder_destroy(context: *mut c_void) {
+pub(crate) unsafe fn enet_range_coder_destroy(context: *mut c_void) {
     let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
         return;
     }
     enet_free(rangeCoder as *mut c_void);
 }
-unsafe extern "C" fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
+unsafe fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
     let mut total: u16 = 0_i32 as u16;
     loop {
         (*symbol).count = ((*symbol).count as i32 - ((*symbol).count as i32 >> 1_i32)) as u8;
@@ -64,8 +62,7 @@ unsafe extern "C" fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
     }
     total
 }
-#[no_mangle]
-pub(crate) unsafe extern "C" fn enet_range_coder_compress(
+pub(crate) unsafe fn enet_range_coder_compress(
     context: *mut c_void,
     mut inBuffers: *const ENetBuffer,
     mut inBufferCount: usize,
@@ -458,8 +455,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
     }
     outData.offset_from(outStart) as i64 as usize
 }
-#[no_mangle]
-pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
+pub(crate) unsafe fn enet_range_coder_decompress(
     context: *mut c_void,
     mut inData: *const u8,
     inLimit: usize,

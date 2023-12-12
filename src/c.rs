@@ -1,7 +1,4 @@
-use crate::{
-    os::{_enet_abort, _enet_free, _enet_malloc, c_void},
-    Socket,
-};
+use crate::{os::c_void, Socket};
 
 mod compress;
 mod crc32;
@@ -27,14 +24,6 @@ pub(crate) struct ENetBuffer {
     pub(crate) data: *mut c_void,
     pub(crate) dataLength: usize,
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub(crate) struct _ENetCallbacks {
-    pub(crate) malloc: Option<unsafe extern "C" fn(usize) -> *mut c_void>,
-    pub(crate) free: Option<unsafe extern "C" fn(*mut c_void) -> ()>,
-    pub(crate) no_memory: Option<unsafe extern "C" fn() -> ()>,
-}
-pub(crate) type ENetCallbacks = _ENetCallbacks;
 pub(crate) type ENetChannel = _ENetChannel;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -85,28 +74,6 @@ pub(crate) struct _ENetIncomingCommand {
     pub(crate) packet: *mut ENetPacket,
 }
 pub(crate) type ENetIncomingCommand = _ENetIncomingCommand;
-static mut CALLBACKS: ENetCallbacks = unsafe {
-    _ENetCallbacks {
-        malloc: Some(_enet_malloc as unsafe extern "C" fn(usize) -> *mut c_void),
-        free: Some(_enet_free as unsafe extern "C" fn(*mut c_void) -> ()),
-        no_memory: ::core::mem::transmute::<
-            Option<unsafe extern "C" fn() -> !>,
-            Option<unsafe extern "C" fn() -> ()>,
-        >(Some(_enet_abort as unsafe extern "C" fn() -> !)),
-    }
-};
-#[no_mangle]
-pub(crate) unsafe extern "C" fn enet_malloc(size: usize) -> *mut c_void {
-    let memory: *mut c_void = (CALLBACKS.malloc).expect("non-null function pointer")(size);
-    if memory.is_null() {
-        (CALLBACKS.no_memory).expect("non-null function pointer")();
-    }
-    memory
-}
-#[no_mangle]
-pub(crate) unsafe extern "C" fn enet_free(memory: *mut c_void) {
-    (CALLBACKS.free).expect("non-null function pointer")(memory);
-}
 pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> u32 {
     ((*host).time.assume_init_ref()().as_millis() % u32::MAX as u128) as u32
 }

@@ -160,7 +160,6 @@ impl Debug for Packet {
         f.debug_struct("Packet")
             .field("data", &packet.data)
             .field("dataLength", &packet.dataLength)
-            .field("userData", &packet.userData)
             .field("flags", &packet.flags)
             .field("kind", &self.kind())
             .finish()
