@@ -35,7 +35,6 @@ pub(crate) struct _ENetCallbacks {
     pub(crate) no_memory: Option<unsafe extern "C" fn() -> ()>,
 }
 pub(crate) type ENetCallbacks = _ENetCallbacks;
-pub(crate) type ENetVersion = u32;
 pub(crate) type ENetChannel = _ENetChannel;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -96,9 +95,6 @@ static mut CALLBACKS: ENetCallbacks = unsafe {
         >(Some(_enet_abort as unsafe extern "C" fn() -> !)),
     }
 };
-pub(crate) unsafe fn enet_linked_version() -> ENetVersion {
-    (1_i32 << 16_i32 | 3_i32 << 8_i32 | 17_i32) as ENetVersion
-}
 #[no_mangle]
 pub(crate) unsafe extern "C" fn enet_malloc(size: usize) -> *mut c_void {
     let memory: *mut c_void = (CALLBACKS.malloc).expect("non-null function pointer")(size);

@@ -1,5 +1,3 @@
-use crate::enet_linked_version;
-
 /// A version representing ENet's version schema.
 ///
 /// Get the current version with [`Version::current`].
@@ -14,11 +12,10 @@ pub struct Version {
 impl Version {
     /// Get the version of the ENet library.
     pub fn current() -> Version {
-        let version = unsafe { enet_linked_version() };
         Version {
-            major: ((version >> 16) & 0xFF) as u8,
-            minor: ((version >> 8) & 0xFF) as u8,
-            patch: (version & 0xFF) as u8,
+            major: 1,
+            minor: 3,
+            patch: 17,
         }
     }
 }
