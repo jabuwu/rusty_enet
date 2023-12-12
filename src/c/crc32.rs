@@ -44,7 +44,7 @@ pub(crate) unsafe fn enet_crc32(mut buffers: *const ENetBuffer, mut bufferCount:
             break;
         }
         let mut data: *const u8 = (*buffers).data as *const u8;
-        let dataEnd: *const u8 = &*data.add((*buffers).dataLength) as *const u8;
+        let dataEnd: *const u8 = data.add((*buffers).dataLength);
         while data < dataEnd {
             let fresh31 = data;
             data = data.offset(1);

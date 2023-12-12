@@ -172,7 +172,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     {
         return -1_i32;
     }
-    let channel = &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
+    let channel = ((*peer).channels).offset(channelID as isize);
     fragmentLength = ((*peer).mtu as usize)
         .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>())
         .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>());
@@ -376,7 +376,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
     enet_peer_reset_incoming_commands(&mut (*peer).dispatchedCommands);
     if !((*peer).channels).is_null() && (*peer).channelCount > 0_i32 as usize {
         channel = (*peer).channels;
-        while channel < &mut *((*peer).channels).add((*peer).channelCount) as *mut ENetChannel {
+        while channel < ((*peer).channels).add((*peer).channelCount) {
             enet_peer_reset_incoming_commands(&mut (*channel).incomingReliableCommands);
             enet_peer_reset_incoming_commands(&mut (*channel).incomingUnreliableCommands);
             channel = channel.offset(1);
@@ -616,9 +616,8 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
     sentTime: u16,
 ) -> *mut ENetAcknowledgement {
     if ((*command).header.channelID as usize) < (*peer).channelCount {
-        let channel: *mut ENetChannel = &mut *((*peer).channels)
-            .offset((*command).header.channelID as isize)
-            as *mut ENetChannel;
+        let channel: *mut ENetChannel =
+            ((*peer).channels).offset((*command).header.channelID as isize);
         let mut reliableWindow: u16 = ((*command).header.reliableSequenceNumber as i32
             / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
         let currentWindow: u16 = ((*channel).incomingReliableSequenceNumber as i32
@@ -666,9 +665,8 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
         (*outgoingCommand).reliableSequenceNumber = (*peer).outgoingReliableSequenceNumber;
         (*outgoingCommand).unreliableSequenceNumber = 0_i32 as u16;
     } else {
-        let channel: *mut ENetChannel = &mut *((*peer).channels)
-            .offset((*outgoingCommand).command.header.channelID as isize)
-            as *mut ENetChannel;
+        let channel: *mut ENetChannel =
+            ((*peer).channels).offset((*outgoingCommand).command.header.channelID as isize);
         if (*outgoingCommand).command.header.command as i32
             & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32
             != 0
@@ -942,8 +940,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         fragments: 0 as *const u32 as *mut u32,
         packet: 0 as *const ENetPacket as *mut ENetPacket,
     };
-    let channel: *mut ENetChannel =
-        &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
+    let channel: *mut ENetChannel = ((*peer).channels).offset((*command).header.channelID as isize);
     let mut unreliableSequenceNumber: u32 = 0_i32 as u32;
     let mut reliableSequenceNumber: u32 = 0_i32 as u32;
     let mut reliableWindow: u16;

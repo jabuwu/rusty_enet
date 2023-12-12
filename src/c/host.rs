@@ -128,7 +128,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).compressor.write(None);
     enet_list_clear(&mut (*host).dispatchQueue);
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+    while currentPeer < ((*host).peers).add((*host).peerCount) {
         (*currentPeer).host = host;
         (*currentPeer).incomingPeerID = currentPeer.offset_from((*host).peers) as i64 as u16;
         (*currentPeer).incomingSessionID = 0xff_i32 as u8;
@@ -152,7 +152,7 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(host: *mut ENetHost<S>) {
     }
     (*host).socket.assume_init_drop();
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+    while currentPeer < ((*host).peers).add((*host).peerCount) {
         enet_peer_reset(currentPeer);
         (*currentPeer).address.assume_init_drop();
         currentPeer = currentPeer.offset(1);
@@ -192,13 +192,13 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         channelCount = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
     }
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+    while currentPeer < ((*host).peers).add((*host).peerCount) {
         if (*currentPeer).state == ENET_PEER_STATE_DISCONNECTED as i32 as u32 {
             break;
         }
         currentPeer = currentPeer.offset(1);
     }
-    if currentPeer >= &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+    if currentPeer >= ((*host).peers).add((*host).peerCount) {
         return std::ptr::null_mut();
     }
     (*currentPeer).channels =
@@ -225,7 +225,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         (*currentPeer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     }
     channel = (*currentPeer).channels;
-    while channel < &mut *((*currentPeer).channels).add(channelCount) as *mut ENetChannel {
+    while channel < ((*currentPeer).channels).add(channelCount) {
         (*channel).outgoingReliableSequenceNumber = 0_i32 as u16;
         (*channel).outgoingUnreliableSequenceNumber = 0_i32 as u16;
         (*channel).incomingReliableSequenceNumber = 0_i32 as u16;
@@ -272,7 +272,7 @@ pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
 ) {
     let mut currentPeer: *mut ENetPeer<S>;
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+    while currentPeer < ((*host).peers).add((*host).peerCount) {
         if (*currentPeer).state == ENET_PEER_STATE_CONNECTED as i32 as u32 {
             enet_peer_send(currentPeer, channelID, packet);
         }
@@ -342,7 +342,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
             .wrapping_mul(elapsedTime)
             .wrapping_div(1000_i32 as u32);
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+        while peer < ((*host).peers).add((*host).peerCount) {
             if !((*peer).state != ENET_PEER_STATE_CONNECTED as i32 as u32
                 && (*peer).state != ENET_PEER_STATE_DISCONNECT_LATER as i32 as u32)
             {
@@ -361,7 +361,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                 .wrapping_div(dataTotal);
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+        while peer < ((*host).peers).add((*host).peerCount) {
             let peerBandwidth: u32;
             if !((*peer).state != ENET_PEER_STATE_CONNECTED as i32 as u32
                 && (*peer).state != ENET_PEER_STATE_DISCONNECT_LATER as i32 as u32
@@ -406,7 +406,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                 .wrapping_div(dataTotal);
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+        while peer < ((*host).peers).add((*host).peerCount) {
             if !((*peer).state != ENET_PEER_STATE_CONNECTED as i32 as u32
                 && (*peer).state != ENET_PEER_STATE_DISCONNECT_LATER as i32 as u32
                 || (*peer).outgoingBandwidthThrottleEpoch == timeCurrent)
@@ -433,7 +433,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                 needsAdjustment = 0_i32;
                 bandwidthLimit = bandwidth.wrapping_div(peersRemaining);
                 peer = (*host).peers;
-                while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+                while peer < ((*host).peers).add((*host).peerCount) {
                     if !((*peer).incomingBandwidthThrottleEpoch == timeCurrent
                         || (*peer).state != ENET_PEER_STATE_CONNECTED as i32 as u32
                             && (*peer).state != ENET_PEER_STATE_DISCONNECT_LATER as i32 as u32
@@ -450,7 +450,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
             }
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+        while peer < ((*host).peers).add((*host).peerCount) {
             if !((*peer).state != ENET_PEER_STATE_CONNECTED as i32 as u32
                 && (*peer).state != ENET_PEER_STATE_DISCONNECT_LATER as i32 as u32)
             {
