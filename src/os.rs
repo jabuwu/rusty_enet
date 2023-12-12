@@ -11,11 +11,6 @@ pub(crate) enum c_void {
     __variant2,
 }
 
-pub(crate) type c_int = i32;
-pub(crate) type c_uint = u32;
-pub(crate) type c_long = i64;
-pub(crate) type c_ulong = u64;
-
 pub(crate) fn ntohl(__netlong: u32) -> u32 {
     u32::from_be(__netlong)
 }
@@ -87,7 +82,7 @@ pub(crate) unsafe extern "C" fn _enet_abort() -> ! {
     std::process::abort()
 }
 
-pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: c_int, n: usize) -> *mut c_void {
+pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: i32, n: usize) -> *mut c_void {
     for offset in 0..n {
         (*(s.cast::<u8>()).add(offset)) = c as u8;
     }
