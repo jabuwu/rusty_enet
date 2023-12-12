@@ -1,5 +1,3 @@
-use crate::os::c_void;
-
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct ENetListNode {
@@ -18,7 +16,7 @@ pub(crate) unsafe fn enet_list_clear(list: *mut ENetList) {
 }
 pub(crate) unsafe fn enet_list_insert(
     position: ENetListIterator,
-    data: *mut c_void,
+    data: *mut u8,
 ) -> ENetListIterator {
     let result: ENetListIterator = data as ENetListIterator;
     (*result).previous = (*position).previous;
@@ -27,15 +25,15 @@ pub(crate) unsafe fn enet_list_insert(
     (*position).previous = result;
     result
 }
-pub(crate) unsafe fn enet_list_remove(position: ENetListIterator) -> *mut c_void {
+pub(crate) unsafe fn enet_list_remove(position: ENetListIterator) -> *mut u8 {
     (*(*position).previous).next = (*position).next;
     (*(*position).next).previous = (*position).previous;
-    position as *mut c_void
+    position as *mut u8
 }
 pub(crate) unsafe fn enet_list_move(
     position: ENetListIterator,
-    dataFirst: *mut c_void,
-    dataLast: *mut c_void,
+    dataFirst: *mut u8,
+    dataLast: *mut u8,
 ) -> ENetListIterator {
     let first: ENetListIterator = dataFirst as ENetListIterator;
     let last: ENetListIterator = dataLast as ENetListIterator;

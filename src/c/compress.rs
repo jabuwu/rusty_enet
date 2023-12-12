@@ -1,4 +1,4 @@
-use crate::{enet_free, enet_malloc, os::c_void, ENetBuffer};
+use crate::{enet_free, enet_malloc, ENetBuffer};
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -26,20 +26,20 @@ pub(crate) const ENET_SUBCONTEXT_SYMBOL_DELTA: u32 = 2;
 pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: u32 = 5;
 pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: u32 = 3;
 pub(crate) const ENET_RANGE_CODER_TOP: u32 = 16777216;
-pub(crate) unsafe fn enet_range_coder_create() -> *mut c_void {
+pub(crate) unsafe fn enet_range_coder_create() -> *mut u8 {
     let rangeCoder: *mut ENetRangeCoder =
         enet_malloc(::core::mem::size_of::<ENetRangeCoder>()) as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
         return std::ptr::null_mut();
     }
-    rangeCoder as *mut c_void
+    rangeCoder as *mut u8
 }
-pub(crate) unsafe fn enet_range_coder_destroy(context: *mut c_void) {
+pub(crate) unsafe fn enet_range_coder_destroy(context: *mut u8) {
     let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
         return;
     }
-    enet_free(rangeCoder as *mut c_void);
+    enet_free(rangeCoder as *mut u8);
 }
 unsafe fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
     let mut total: u16 = 0_i32 as u16;
@@ -60,7 +60,7 @@ unsafe fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
     total
 }
 pub(crate) unsafe fn enet_range_coder_compress(
-    context: *mut c_void,
+    context: *mut u8,
     mut inBuffers: *const ENetBuffer,
     mut inBufferCount: usize,
     inLimit: usize,
@@ -449,7 +449,7 @@ pub(crate) unsafe fn enet_range_coder_compress(
     outData.offset_from(outStart) as i64 as usize
 }
 pub(crate) unsafe fn enet_range_coder_decompress(
-    context: *mut c_void,
+    context: *mut u8,
     mut inData: *const u8,
     inLimit: usize,
     mut outData: *mut u8,

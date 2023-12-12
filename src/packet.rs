@@ -1,7 +1,7 @@
 use std::{fmt::Debug, slice};
 
 use crate::{
-    c_void, enet_packet_create, enet_packet_destroy, ENetPacket, ENET_PACKET_FLAG_RELIABLE,
+    enet_packet_create, enet_packet_destroy, ENetPacket, ENET_PACKET_FLAG_RELIABLE,
     ENET_PACKET_FLAG_SENT, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
 };
 
@@ -56,7 +56,7 @@ impl Packet {
     pub fn new(data: &[u8], flags: PacketKind) -> Self {
         let packet = unsafe {
             enet_packet_create(
-                data.as_ptr() as *const c_void,
+                data.as_ptr(),
                 data.len(),
                 match flags {
                     PacketKind::Unreliable { sequenced: true } => 0,

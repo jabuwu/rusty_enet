@@ -1,4 +1,4 @@
-use crate::{os::c_void, Socket};
+use crate::Socket;
 
 mod compress;
 mod event;
@@ -19,7 +19,7 @@ pub(crate) use protocol::*;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct ENetBuffer {
-    pub(crate) data: *mut c_void,
+    pub(crate) data: *mut u8,
     pub(crate) dataLength: usize,
 }
 #[derive(Copy, Clone)]

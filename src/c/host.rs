@@ -1,11 +1,9 @@
-use std::{mem::MaybeUninit, time::Duration};
+use std::{mem::MaybeUninit, ptr::write_bytes, time::Duration};
 
 use crate::{
-    consts::*,
-    enet_free, enet_list_clear, enet_malloc, enet_packet_destroy, enet_peer_queue_outgoing_command,
-    enet_peer_reset, enet_peer_send, enet_time_get,
-    os::{_enet_memset, c_void},
-    Compressor, ENetBuffer, ENetChannel, ENetList, ENetPacket, ENetPeer, ENetProtocol,
+    consts::*, enet_free, enet_list_clear, enet_malloc, enet_packet_destroy,
+    enet_peer_queue_outgoing_command, enet_peer_reset, enet_peer_send, enet_time_get, Compressor,
+    ENetBuffer, ENetChannel, ENetList, ENetPacket, ENetPeer, ENetProtocol,
     ENetProtocolCommandHeader, Socket, SocketOptions, ENET_PEER_STATE_CONNECTED,
     ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_DISCONNECTED, ENET_PEER_STATE_DISCONNECT_LATER,
     ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT, ENET_PROTOCOL_COMMAND_CONNECT,
@@ -67,22 +65,14 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     if host.is_null() {
         return std::ptr::null_mut();
     }
-    _enet_memset(
-        host as *mut c_void,
-        0_i32,
-        ::core::mem::size_of::<ENetHost<S>>(),
-    );
+    write_bytes(host, 0, 1);
     (*host).peers = enet_malloc(peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>()))
         as *mut ENetPeer<S>;
     if ((*host).peers).is_null() {
-        enet_free(host as *mut c_void);
+        enet_free(host as *mut u8);
         return std::ptr::null_mut();
     }
-    _enet_memset(
-        (*host).peers as *mut c_void,
-        0_i32,
-        peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>()),
-    );
+    write_bytes((*host).peers, 0, peerCount);
     _ = socket.init(SocketOptions {
         receive_buffer: ENET_HOST_RECEIVE_BUFFER_SIZE as usize,
         send_buffer: ENET_HOST_SEND_BUFFER_SIZE as usize,
@@ -161,8 +151,8 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(host: *mut ENetHost<S>) {
     (*host).time.assume_init_drop();
     (*host).compressor.assume_init_drop();
     (*host).receivedAddress.assume_init_drop();
-    enet_free((*host).peers as *mut c_void);
-    enet_free(host as *mut c_void);
+    enet_free((*host).peers as *mut u8);
+    enet_free(host as *mut u8);
 }
 pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> u32 {
     (*host).randomSeed = (*host).randomSeed.wrapping_add(0x6d2b79f5_u32);
@@ -233,11 +223,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         enet_list_clear(&mut (*channel).incomingReliableCommands);
         enet_list_clear(&mut (*channel).incomingUnreliableCommands);
         (*channel).usedReliableWindows = 0_i32 as u16;
-        _enet_memset(
-            ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
-            0_i32,
-            ::core::mem::size_of::<[u16; 16]>(),
-        );
+        write_bytes(((*channel).reliableWindows).as_mut_ptr() as *mut u8, 0, 1);
         channel = channel.offset(1);
     }
     command.header.command = (ENET_PROTOCOL_COMMAND_CONNECT as i32

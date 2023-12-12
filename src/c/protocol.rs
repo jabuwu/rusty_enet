@@ -1,3 +1,5 @@
+use std::ptr::{copy_nonoverlapping, write_bytes};
+
 use crate::{
     consts::{
         ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL, ENET_PEER_FREE_RELIABLE_WINDOWS,
@@ -17,14 +19,12 @@ use crate::{
     enet_peer_has_outgoing_commands, enet_peer_on_connect, enet_peer_on_disconnect, enet_peer_ping,
     enet_peer_queue_acknowledgement, enet_peer_queue_incoming_command,
     enet_peer_queue_outgoing_command, enet_peer_receive, enet_peer_reset, enet_peer_reset_queues,
-    enet_peer_throttle, enet_time_get,
-    os::{_enet_memcpy, _enet_memset, c_void},
-    Address, ENetAcknowledgement, ENetBuffer, ENetChannel, ENetEvent, ENetHost,
-    ENetIncomingCommand, ENetList, ENetListIterator, ENetListNode, ENetOutgoingCommand, ENetPeer,
-    ENetPeerState, PacketReceived, Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT,
-    ENET_EVENT_TYPE_NONE, ENET_EVENT_TYPE_RECEIVE, ENET_PACKET_FLAG_RELIABLE,
-    ENET_PACKET_FLAG_SENT, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
-    ENET_PEER_FLAG_CONTINUE_SENDING, ENET_PEER_FLAG_NEEDS_DISPATCH,
+    enet_peer_throttle, enet_time_get, Address, ENetAcknowledgement, ENetBuffer, ENetChannel,
+    ENetEvent, ENetHost, ENetIncomingCommand, ENetList, ENetListIterator, ENetListNode,
+    ENetOutgoingCommand, ENetPeer, ENetPeerState, PacketReceived, Socket, ENET_EVENT_TYPE_CONNECT,
+    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_NONE, ENET_EVENT_TYPE_RECEIVE,
+    ENET_PACKET_FLAG_RELIABLE, ENET_PACKET_FLAG_SENT, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT,
+    ENET_PACKET_FLAG_UNSEQUENCED, ENET_PEER_FLAG_CONTINUE_SENDING, ENET_PEER_FLAG_NEEDS_DISPATCH,
     ENET_PEER_STATE_ACKNOWLEDGING_CONNECT, ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT,
     ENET_PEER_STATE_CONNECTED, ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
     ENET_PEER_STATE_CONNECTION_SUCCEEDED, ENET_PEER_STATE_DISCONNECTED,
@@ -225,7 +225,7 @@ unsafe fn enet_protocol_dispatch_state<S: Socket>(
     if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
         enet_list_insert(
             &mut (*host).dispatchQueue.sentinel,
-            &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
+            &mut (*peer).dispatchList as *mut ENetListNode as *mut u8,
         );
         (*peer).flags = ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
     }
@@ -275,7 +275,7 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
                         ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
                     enet_list_insert(
                         &mut (*host).dispatchQueue.sentinel,
-                        &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
+                        &mut (*peer).dispatchList as *mut ENetListNode as *mut u8,
                     );
                 }
                 return 1_i32;
@@ -342,7 +342,7 @@ unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
     }
     loop {
         outgoingCommand =
-            (*sentUnreliableCommands).sentinel.next as *mut c_void as *mut ENetOutgoingCommand;
+            (*sentUnreliableCommands).sentinel.next as *mut u8 as *mut ENetOutgoingCommand;
         enet_list_remove(&mut (*outgoingCommand).outgoingCommandList);
         if !((*outgoingCommand).packet).is_null() {
             (*(*outgoingCommand).packet).referenceCount =
@@ -352,7 +352,7 @@ unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
                 enet_packet_destroy((*outgoingCommand).packet);
             }
         }
-        enet_free(outgoingCommand as *mut c_void);
+        enet_free(outgoingCommand as *mut u8);
         if (*sentUnreliableCommands).sentinel.next
             == &mut (*sentUnreliableCommands).sentinel as *mut ENetListNode
         {
@@ -458,14 +458,14 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
             enet_packet_destroy((*outgoingCommand).packet);
         }
     }
-    enet_free(outgoingCommand as *mut c_void);
+    enet_free(outgoingCommand as *mut u8);
     if (*peer).sentReliableCommands.sentinel.next
         == &mut (*peer).sentReliableCommands.sentinel as *mut ENetListNode
     {
         return commandNumber;
     }
     outgoingCommand =
-        (*peer).sentReliableCommands.sentinel.next as *mut c_void as *mut ENetOutgoingCommand;
+        (*peer).sentReliableCommands.sentinel.next as *mut u8 as *mut ENetOutgoingCommand;
     (*peer).nextTimeout =
         ((*outgoingCommand).sentTime).wrapping_add((*outgoingCommand).roundTripTimeout);
     commandNumber
@@ -594,11 +594,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         enet_list_clear(&mut (*channel).incomingReliableCommands);
         enet_list_clear(&mut (*channel).incomingUnreliableCommands);
         (*channel).usedReliableWindows = 0_i32 as u16;
-        _enet_memset(
-            ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
-            0_i32,
-            ::core::mem::size_of::<[u16; 16]>(),
-        );
+        write_bytes(((*channel).reliableWindows).as_mut_ptr(), 0, 1);
         channel = channel.offset(1);
     }
     mtu = u32::from_be((*command).connect.mtu);
@@ -700,8 +696,7 @@ unsafe fn enet_protocol_handle_send_reliable<S: Socket>(
         peer,
         command,
         (command as *const u8)
-            .offset(::core::mem::size_of::<ENetProtocolSendReliable>() as u64 as isize)
-            as *const c_void,
+            .offset(::core::mem::size_of::<ENetProtocolSendReliable>() as u64 as isize),
         dataLength,
         ENET_PACKET_FLAG_RELIABLE as i32 as u32,
         0_i32 as u32,
@@ -749,11 +744,7 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     unsequencedGroup &= 0xffff_i32 as u32;
     if unsequencedGroup.wrapping_sub(index) != (*peer).incomingUnsequencedGroup as u32 {
         (*peer).incomingUnsequencedGroup = unsequencedGroup.wrapping_sub(index) as u16;
-        _enet_memset(
-            ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
-            0_i32,
-            ::core::mem::size_of::<[u32; 32]>(),
-        );
+        write_bytes((*peer).unsequencedWindow.as_mut_ptr(), 0, 1);
     } else if (*peer).unsequencedWindow[index.wrapping_div(32_i32 as u32) as usize]
         & (1_i32 << index.wrapping_rem(32_i32 as u32)) as u32
         != 0
@@ -764,8 +755,7 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
         peer,
         command,
         (command as *const u8)
-            .offset(::core::mem::size_of::<ENetProtocolSendUnsequenced>() as u64 as isize)
-            as *const c_void,
+            .offset(::core::mem::size_of::<ENetProtocolSendUnsequenced>() as u64 as isize),
         dataLength,
         ENET_PACKET_FLAG_UNSEQUENCED as i32 as u32,
         0_i32 as u32,
@@ -802,8 +792,7 @@ unsafe fn enet_protocol_handle_send_unreliable<S: Socket>(
         peer,
         command,
         (command as *const u8)
-            .offset(::core::mem::size_of::<ENetProtocolSendUnreliable>() as u64 as isize)
-            as *const c_void,
+            .offset(::core::mem::size_of::<ENetProtocolSendUnreliable>() as u64 as isize),
         dataLength,
         0_i32 as u32,
         0_i32 as u32,
@@ -935,11 +924,11 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
             fragmentLength =
                 ((*(*startCommand).packet).dataLength).wrapping_sub(fragmentOffset as usize) as u32;
         }
-        _enet_memcpy(
-            ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
+        copy_nonoverlapping(
             (command as *mut u8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as u64 as isize)
-                as *const c_void,
+                as *const u8,
+            ((*(*startCommand).packet).data).offset(fragmentOffset as isize),
             fragmentLength as usize,
         );
         if (*startCommand).fragmentsRemaining <= 0_i32 as u32 {
@@ -1077,11 +1066,11 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
             fragmentLength =
                 ((*(*startCommand).packet).dataLength).wrapping_sub(fragmentOffset as usize) as u32;
         }
-        _enet_memcpy(
-            ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
+        copy_nonoverlapping(
             (command as *mut u8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as u64 as isize)
-                as *const c_void,
+                as *const u8,
+            ((*(*startCommand).packet).data).offset(fragmentOffset as isize),
             fragmentLength as usize,
         );
         if (*startCommand).fragmentsRemaining <= 0_i32 as u32 {
@@ -1451,9 +1440,9 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         {
             return 0_i32;
         }
-        _enet_memcpy(
-            ((*host).packetData[1_i32 as usize]).as_mut_ptr() as *mut c_void,
-            header as *const c_void,
+        copy_nonoverlapping(
+            header as *const u8,
+            ((*host).packetData[1_i32 as usize]).as_mut_ptr(),
             headerSize,
         );
         (*host).receivedData = ((*host).packetData[1_i32 as usize]).as_mut_ptr();
@@ -1463,9 +1452,9 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         let checksum_addr: *mut u8 =
             ((*host).receivedData).add(headerSize.wrapping_sub(::core::mem::size_of::<u32>()));
         let mut desiredChecksum: u32 = 0;
-        _enet_memcpy(
-            &mut desiredChecksum as *mut u32 as *mut c_void,
-            checksum_addr as *const c_void,
+        copy_nonoverlapping(
+            checksum_addr as *const u8,
+            &mut desiredChecksum as *mut u32 as *mut u8,
             ::core::mem::size_of::<u32>(),
         );
         let mut buffer: ENetBuffer = ENetBuffer {
@@ -1477,17 +1466,14 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         } else {
             0_i32 as u32
         };
-        _enet_memcpy(
-            checksum_addr as *mut c_void,
-            &checksum as *const u32 as *const c_void,
+        copy_nonoverlapping(
+            &checksum as *const u32 as *const u8,
+            checksum_addr,
             ::core::mem::size_of::<u32>(),
         );
-        buffer.data = (*host).receivedData as *mut c_void;
+        buffer.data = (*host).receivedData;
         buffer.dataLength = (*host).receivedDataLength;
-        let inBuffers = [std::slice::from_raw_parts(
-            buffer.data as *mut u8,
-            buffer.dataLength,
-        )];
+        let inBuffers = [std::slice::from_raw_parts(buffer.data, buffer.dataLength)];
         if checksum_fn(&inBuffers) != desiredChecksum {
             return 0_i32;
         }
@@ -1646,7 +1632,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             data: std::ptr::null_mut(),
             dataLength: 0,
         };
-        buffer.data = ((*host).packetData[0_i32 as usize]).as_mut_ptr() as *mut c_void;
+        buffer.data = ((*host).packetData[0_i32 as usize]).as_mut_ptr();
         const MTU: usize = 4096;
         buffer.dataLength = ::core::mem::size_of::<[u8; MTU]>();
         let receivedLength = match (*host)
@@ -1657,11 +1643,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             Ok(Some((received_address, PacketReceived::Complete(received_data)))) => {
                 if received_data.len() <= MTU {
                     *(*host).receivedAddress.assume_init_mut() = Some(received_address);
-                    _enet_memcpy(
-                        buffer.data,
-                        received_data.as_ptr() as *const c_void,
-                        received_data.len(),
-                    );
+                    copy_nonoverlapping(received_data.as_ptr(), buffer.data, received_data.len());
                     received_data.len() as i32
                 } else {
                     -2
@@ -1726,7 +1708,7 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
         } else {
             acknowledgement = currentAcknowledgement as *mut ENetAcknowledgement;
             currentAcknowledgement = (*currentAcknowledgement).next;
-            (*buffer).data = command as *mut c_void;
+            (*buffer).data = command as *mut u8;
             (*buffer).dataLength = ::core::mem::size_of::<ENetProtocolAcknowledge>();
             (*host).packetSize = (*host).packetSize.wrapping_add((*buffer).dataLength);
             reliableSequenceNumber = (*acknowledgement)
@@ -1745,7 +1727,7 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
                 enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
             }
             enet_list_remove(&mut (*acknowledgement).acknowledgementList);
-            enet_free(acknowledgement as *mut c_void);
+            enet_free(acknowledgement as *mut u8);
             command = command.offset(1);
             buffer = buffer.offset(1);
         }
@@ -2012,7 +1994,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                                 enet_packet_destroy((*outgoingCommand).packet);
                             }
                             enet_list_remove(&mut (*outgoingCommand).outgoingCommandList);
-                            enet_free(outgoingCommand as *mut c_void);
+                            enet_free(outgoingCommand as *mut u8);
                             if currentCommand
                                 == &mut (*peer).outgoingCommands.sentinel as *mut ENetListNode
                             {
@@ -2035,19 +2017,18 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 if !((*outgoingCommand).packet).is_null() {
                     enet_list_insert(
                         &mut (*sentUnreliableCommands).sentinel,
-                        outgoingCommand as *mut c_void,
+                        outgoingCommand as *mut u8,
                     );
                 }
             }
-            (*buffer).data = command as *mut c_void;
+            (*buffer).data = command as *mut u8;
             (*buffer).dataLength = commandSize;
             (*host).packetSize = ((*host).packetSize).wrapping_add((*buffer).dataLength);
             *command = (*outgoingCommand).command;
             if !((*outgoingCommand).packet).is_null() {
                 buffer = buffer.offset(1);
                 (*buffer).data = ((*(*outgoingCommand).packet).data)
-                    .offset((*outgoingCommand).fragmentOffset as isize)
-                    as *mut c_void;
+                    .offset((*outgoingCommand).fragmentOffset as isize);
                 (*buffer).dataLength = (*outgoingCommand).fragmentLength as usize;
                 (*host).packetSize = ((*host).packetSize as u64)
                     .wrapping_add((*outgoingCommand).fragmentLength as u64)
@@ -2056,7 +2037,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32
                 == 0
             {
-                enet_free(outgoingCommand as *mut c_void);
+                enet_free(outgoingCommand as *mut u8);
             }
             (*peer).packetsSent = ((*peer).packetsSent).wrapping_add(1);
             command = command.offset(1);
@@ -2186,7 +2167,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             (*currentPeer).packetsLost = 0_i32 as u32;
                         }
                         let fresh34 = &mut (*((*host).buffers).as_mut_ptr()).data;
-                        *fresh34 = headerData.as_mut_ptr() as *mut c_void;
+                        *fresh34 = headerData.as_mut_ptr();
                         if (*host).headerFlags as i32 & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as i32
                             != 0
                         {
@@ -2205,7 +2186,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             for i in 0..((*host).bufferCount).wrapping_sub(1) {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(1 + i);
                                 inBuffers.push(std::slice::from_raw_parts(
-                                    (*buffer).data as *mut u8,
+                                    (*buffer).data,
                                     (*buffer).dataLength,
                                 ));
                             }
@@ -2247,9 +2228,9 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             } else {
                                 0_i32 as u32
                             };
-                            _enet_memcpy(
-                                checksum_addr as *mut c_void,
-                                &checksum as *const u32 as *const c_void,
+                            copy_nonoverlapping(
+                                &checksum as *const u32 as *const u8,
+                                checksum_addr,
                                 ::core::mem::size_of::<u32>(),
                             );
                             let fresh35 = &mut (*((*host).buffers).as_mut_ptr()).dataLength;
@@ -2260,20 +2241,20 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             for i in 0..(*host).bufferCount {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(i);
                                 inBuffers.push(std::slice::from_raw_parts(
-                                    (*buffer).data as *mut u8,
+                                    (*buffer).data,
                                     (*buffer).dataLength,
                                 ));
                             }
                             checksum = checksum_fn(&inBuffers);
-                            _enet_memcpy(
-                                checksum_addr as *mut c_void,
-                                &checksum as *const u32 as *const c_void,
+                            copy_nonoverlapping(
+                                &checksum as *const u32 as *const u8,
+                                checksum_addr,
                                 ::core::mem::size_of::<u32>(),
                             );
                         }
                         if shouldCompress > 0_i32 as usize {
                             (*host).buffers[1_i32 as usize].data =
-                                ((*host).packetData[1_i32 as usize]).as_mut_ptr() as *mut c_void;
+                                ((*host).packetData[1_i32 as usize]).as_mut_ptr();
                             (*host).buffers[1_i32 as usize].dataLength = shouldCompress;
                             (*host).bufferCount = 2_i32 as usize;
                         }
@@ -2282,7 +2263,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         for buffer_index in 0..(*host).bufferCount {
                             let buffer = &(*host).buffers[buffer_index];
                             conglomerate_buffer.extend_from_slice(std::slice::from_raw_parts(
-                                buffer.data as *mut u8,
+                                buffer.data,
                                 buffer.dataLength,
                             ));
                         }

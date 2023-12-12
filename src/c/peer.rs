@@ -1,15 +1,13 @@
-use std::mem::MaybeUninit;
+use std::{mem::MaybeUninit, ptr::write_bytes};
 
 use crate::{
-    consts::*,
-    enet_free, enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move,
+    consts::*, enet_free, enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move,
     enet_list_remove, enet_malloc, enet_packet_create, enet_packet_destroy,
-    enet_protocol_command_size,
-    os::{_enet_memset, c_void},
-    ENetAcknowledgement, ENetChannel, ENetIncomingCommand, ENetList, ENetListIterator,
-    ENetListNode, ENetOutgoingCommand, ENetPacket, ENetProtocol, ENetProtocolAcknowledge,
-    ENetProtocolCommandHeader, ENetProtocolHeader, ENetProtocolSendFragment, Socket,
-    ENET_PACKET_FLAG_RELIABLE, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
+    enet_protocol_command_size, ENetAcknowledgement, ENetChannel, ENetIncomingCommand, ENetList,
+    ENetListIterator, ENetListNode, ENetOutgoingCommand, ENetPacket, ENetProtocol,
+    ENetProtocolAcknowledge, ENetProtocolCommandHeader, ENetProtocolHeader,
+    ENetProtocolSendFragment, Socket, ENET_PACKET_FLAG_RELIABLE,
+    ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
     ENET_PROTOCOL_COMMAND_DISCONNECT, ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE,
     ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED, ENET_PROTOCOL_COMMAND_MASK, ENET_PROTOCOL_COMMAND_PING,
     ENET_PROTOCOL_COMMAND_SEND_FRAGMENT, ENET_PROTOCOL_COMMAND_SEND_RELIABLE,
@@ -44,7 +42,7 @@ pub(crate) struct ENetPeer<S: Socket> {
     pub(crate) outgoingSessionID: u8,
     pub(crate) incomingSessionID: u8,
     pub(crate) address: MaybeUninit<Option<S::PeerAddress>>,
-    pub(crate) data: *mut c_void,
+    pub(crate) data: *mut u8,
     pub(crate) state: ENetPeerState,
     pub(crate) channels: *mut ENetChannel,
     pub(crate) channelCount: usize,
@@ -227,7 +225,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
                 while fragments.sentinel.next != &mut fragments.sentinel as *mut ENetListNode {
                     fragment =
                         enet_list_remove(fragments.sentinel.next) as *mut ENetOutgoingCommand;
-                    enet_free(fragment as *mut c_void);
+                    enet_free(fragment as *mut u8);
                 }
                 return -1_i32;
             }
@@ -242,7 +240,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             (*fragment).command.sendFragment.fragmentNumber = fragmentNumber.to_be();
             (*fragment).command.sendFragment.totalLength = ((*packet).dataLength as u32).to_be();
             (*fragment).command.sendFragment.fragmentOffset = u32::from_be(fragmentOffset);
-            enet_list_insert(&mut fragments.sentinel, fragment as *mut c_void);
+            enet_list_insert(&mut fragments.sentinel, fragment as *mut u8);
             fragmentNumber = fragmentNumber.wrapping_add(1);
             fragmentOffset = (fragmentOffset as usize).wrapping_add(fragmentLength) as u32;
         }
@@ -302,9 +300,9 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     let packet = (*incomingCommand).packet;
     (*packet).referenceCount = ((*packet).referenceCount).wrapping_sub(1);
     if !((*incomingCommand).fragments).is_null() {
-        enet_free((*incomingCommand).fragments as *mut c_void);
+        enet_free((*incomingCommand).fragments as *mut u8);
     }
-    enet_free(incomingCommand as *mut c_void);
+    enet_free(incomingCommand as *mut u8);
     (*peer).totalWaitingData =
         (*peer).totalWaitingData.wrapping_sub((*packet).dataLength) as usize as usize;
     packet
@@ -320,7 +318,7 @@ unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
                 enet_packet_destroy((*outgoingCommand).packet);
             }
         }
-        enet_free(outgoingCommand as *mut c_void);
+        enet_free(outgoingCommand as *mut u8);
     }
 }
 unsafe fn enet_peer_remove_incoming_commands(
@@ -346,9 +344,9 @@ unsafe fn enet_peer_remove_incoming_commands(
             }
         }
         if !((*incomingCommand).fragments).is_null() {
-            enet_free((*incomingCommand).fragments as *mut c_void);
+            enet_free((*incomingCommand).fragments as *mut u8);
         }
-        enet_free(incomingCommand as *mut c_void);
+        enet_free(incomingCommand as *mut u8);
     }
 }
 unsafe fn enet_peer_reset_incoming_commands(queue: *mut ENetList) {
@@ -381,7 +379,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
             enet_peer_reset_incoming_commands(&mut (*channel).incomingUnreliableCommands);
             channel = channel.offset(1);
         }
-        enet_free((*peer).channels as *mut c_void);
+        enet_free((*peer).channels as *mut u8);
     }
     (*peer).channels = std::ptr::null_mut();
     (*peer).channelCount = 0_i32 as usize;
@@ -454,11 +452,7 @@ pub(crate) unsafe fn enet_peer_reset<S: Socket>(peer: *mut ENetPeer<S>) {
     (*peer).eventData = 0_i32 as u32;
     (*peer).totalWaitingData = 0_i32 as usize;
     (*peer).flags = 0_i32 as u16;
-    _enet_memset(
-        ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
-        0_i32,
-        ::core::mem::size_of::<[u32; 32]>(),
-    );
+    write_bytes(((*peer).unsequencedWindow).as_mut_ptr(), 0, 1);
     enet_peer_reset_queues(peer);
 }
 pub(crate) unsafe fn enet_peer_ping<S: Socket>(peer: *mut ENetPeer<S>) {
@@ -647,7 +641,7 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
     (*acknowledgement).command = *command;
     enet_list_insert(
         &mut (*peer).acknowledgements.sentinel,
-        acknowledgement as *mut c_void,
+        acknowledgement as *mut u8,
     );
     acknowledgement
 }
@@ -720,12 +714,12 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
     {
         enet_list_insert(
             &mut (*peer).outgoingSendReliableCommands.sentinel,
-            outgoingCommand as *mut c_void,
+            outgoingCommand as *mut u8,
         );
     } else {
         enet_list_insert(
             &mut (*peer).outgoingCommands.sentinel,
-            outgoingCommand as *mut c_void,
+            outgoingCommand as *mut u8,
         );
     };
 }
@@ -780,13 +774,13 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                     if startCommand != currentCommand {
                         enet_list_move(
                             &mut (*peer).dispatchedCommands.sentinel,
-                            startCommand as *mut c_void,
-                            (*currentCommand).previous as *mut c_void,
+                            startCommand as *mut u8,
+                            (*currentCommand).previous as *mut u8,
                         );
                         if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
                             enet_list_insert(
                                 &mut (*(*peer).host).dispatchQueue.sentinel,
-                                &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
+                                &mut (*peer).dispatchList as *mut ENetListNode as *mut u8,
                             );
                             (*peer).flags = ((*peer).flags as i32
                                 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32)
@@ -821,13 +815,13 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                 if startCommand != currentCommand {
                     enet_list_move(
                         &mut (*peer).dispatchedCommands.sentinel,
-                        startCommand as *mut c_void,
-                        (*currentCommand).previous as *mut c_void,
+                        startCommand as *mut u8,
+                        (*currentCommand).previous as *mut u8,
                     );
                     if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
                         enet_list_insert(
                             &mut (*(*peer).host).dispatchQueue.sentinel,
-                            &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
+                            &mut (*peer).dispatchList as *mut ENetListNode as *mut u8,
                         );
                         (*peer).flags =
                             ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
@@ -847,13 +841,13 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
     if startCommand != currentCommand {
         enet_list_move(
             &mut (*peer).dispatchedCommands.sentinel,
-            startCommand as *mut c_void,
-            (*currentCommand).previous as *mut c_void,
+            startCommand as *mut u8,
+            (*currentCommand).previous as *mut u8,
         );
         if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
             enet_list_insert(
                 &mut (*(*peer).host).dispatchQueue.sentinel,
-                &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
+                &mut (*peer).dispatchList as *mut ENetListNode as *mut u8,
             );
             (*peer).flags = ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
         }
@@ -896,13 +890,13 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
     (*channel).incomingUnreliableSequenceNumber = 0_i32 as u16;
     enet_list_move(
         &mut (*peer).dispatchedCommands.sentinel,
-        (*channel).incomingReliableCommands.sentinel.next as *mut c_void,
-        (*currentCommand).previous as *mut c_void,
+        (*channel).incomingReliableCommands.sentinel.next as *mut u8,
+        (*currentCommand).previous as *mut u8,
     );
     if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
         enet_list_insert(
             &mut (*(*peer).host).dispatchQueue.sentinel,
-            &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
+            &mut (*peer).dispatchList as *mut ENetListNode as *mut u8,
         );
         (*peer).flags = ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
     }
@@ -915,7 +909,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
 pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
-    data: *const c_void,
+    data: *const u8,
     dataLength: usize,
     flags: u32,
     fragmentCount: u32,
@@ -1163,12 +1157,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                         as *mut u32;
                                             }
                                             if ((*incomingCommand).fragments).is_null() {
-                                                enet_free(incomingCommand as *mut c_void);
+                                                enet_free(incomingCommand as *mut u8);
                                                 current_block = 15492018734234176694;
                                             } else {
-                                                _enet_memset(
-                                                    (*incomingCommand).fragments as *mut c_void,
-                                                    0_i32,
+                                                write_bytes(
+                                                    (*incomingCommand).fragments as *mut u8,
+                                                    0,
                                                     (fragmentCount
                                                         .wrapping_add(31_i32 as u32)
                                                         .wrapping_div(32_i32 as u32)
@@ -1196,7 +1190,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 }
                                                 enet_list_insert(
                                                     (*currentCommand).next,
-                                                    incomingCommand as *mut c_void,
+                                                    incomingCommand as *mut u8,
                                                 );
                                                 match (*command).header.command as i32
                                                     & ENET_PROTOCOL_COMMAND_MASK as i32
@@ -1411,12 +1405,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                         as *mut u32;
                                             }
                                             if ((*incomingCommand).fragments).is_null() {
-                                                enet_free(incomingCommand as *mut c_void);
+                                                enet_free(incomingCommand as *mut u8);
                                                 current_block = 15492018734234176694;
                                             } else {
-                                                _enet_memset(
-                                                    (*incomingCommand).fragments as *mut c_void,
-                                                    0_i32,
+                                                write_bytes(
+                                                    (*incomingCommand).fragments as *mut u8,
+                                                    0,
                                                     (fragmentCount
                                                         .wrapping_add(31_i32 as u32)
                                                         .wrapping_div(32_i32 as u32)
@@ -1444,7 +1438,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 }
                                                 enet_list_insert(
                                                     (*currentCommand).next,
-                                                    incomingCommand as *mut c_void,
+                                                    incomingCommand as *mut u8,
                                                 );
                                                 match (*command).header.command as i32
                                                     & ENET_PROTOCOL_COMMAND_MASK as i32
@@ -1659,12 +1653,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                         as *mut u32;
                                             }
                                             if ((*incomingCommand).fragments).is_null() {
-                                                enet_free(incomingCommand as *mut c_void);
+                                                enet_free(incomingCommand as *mut u8);
                                                 current_block = 15492018734234176694;
                                             } else {
-                                                _enet_memset(
-                                                    (*incomingCommand).fragments as *mut c_void,
-                                                    0_i32,
+                                                write_bytes(
+                                                    (*incomingCommand).fragments as *mut u8,
+                                                    0,
                                                     (fragmentCount
                                                         .wrapping_add(31_i32 as u32)
                                                         .wrapping_div(32_i32 as u32)
@@ -1692,7 +1686,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 }
                                                 enet_list_insert(
                                                     (*currentCommand).next,
-                                                    incomingCommand as *mut c_void,
+                                                    incomingCommand as *mut u8,
                                                 );
                                                 match (*command).header.command as i32
                                                     & ENET_PROTOCOL_COMMAND_MASK as i32
