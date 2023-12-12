@@ -10,6 +10,7 @@ use crate::{
 };
 
 /// Settings for a newly created host, passed into [`Host::create`].
+#[allow(clippy::type_complexity)]
 pub struct HostSettings {
     /// The maximum number of peers that should be allocated for the host.
     pub peer_limit: usize,
@@ -377,16 +378,6 @@ impl<S: Socket> Host<S> {
 
     fn peer_index(&self, peer: *const ENetPeer<S>) -> PeerID {
         PeerID(unsafe { peer.offset_from((*self.host).peers) as usize })
-    }
-
-    fn peer_ptr(&self, peer: PeerID) -> Result<*mut ENetPeer<S>, Error> {
-        unsafe {
-            if peer.0 < (*self.host).peerCount as usize {
-                Ok((*self.host).peers.add(peer.0))
-            } else {
-                Err(Error::InvalidPeerID)
-            }
-        }
     }
 }
 

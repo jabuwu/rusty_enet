@@ -107,31 +107,7 @@
 //! normal network connections to rectify various types of network congestion by further limiting
 //! the volume of packets sent.
 
-#![allow(
-    dead_code,
-    mutable_transmutes,
-    non_camel_case_types,
-    non_snake_case,
-    non_upper_case_globals,
-    unused_assignments,
-    unused_mut,
-    clippy::zero_ptr,
-    clippy::needless_return,
-    clippy::unnecessary_cast,
-    clippy::toplevel_ref_arg,
-    clippy::ptr_offset_with_cast,
-    clippy::nonminimal_bool,
-    clippy::single_match,
-    clippy::unnecessary_mut_passed,
-    clippy::comparison_chain,
-    clippy::unnecessary_literal_unwrap,
-    clippy::let_and_return,
-    clippy::type_complexity,
-    clippy::new_without_default,
-    clippy::precedence,
-    clippy::collapsible_if,
-    clippy::collapsible_else_if
-)]
+#![allow(non_camel_case_types, non_snake_case, clippy::comparison_chain)]
 #![warn(missing_docs)]
 // https://github.com/rust-lang/rust-clippy/issues/11382
 #![allow(clippy::arc_with_non_send_sync)]
@@ -372,6 +348,7 @@ pub(crate) struct _ENetCallbacks {
 }
 pub(crate) type ENetCallbacks = _ENetCallbacks;
 pub(crate) type ENetVersion = enet_uint32;
+#[allow(clippy::type_complexity)]
 pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) socket: MaybeUninit<S>,
     pub(crate) incomingBandwidth: enet_uint32,
@@ -528,29 +505,6 @@ pub(crate) const ENET_EVENT_TYPE_RECEIVE: _ENetEventType = 3;
 pub(crate) const ENET_EVENT_TYPE_DISCONNECT: _ENetEventType = 2;
 pub(crate) const ENET_EVENT_TYPE_CONNECT: _ENetEventType = 1;
 pub(crate) const ENET_EVENT_TYPE_NONE: _ENetEventType = 0;
-pub(crate) type ENetChecksumCallback =
-    Option<unsafe extern "C" fn(*const ENetBuffer, size_t) -> enet_uint32>;
-pub(crate) type _ENetSocketType = c_uint;
-pub(crate) const ENET_SOCKET_TYPE_DATAGRAM: _ENetSocketType = 2;
-pub(crate) const ENET_SOCKET_TYPE_STREAM: _ENetSocketType = 1;
-pub(crate) type ENetSocketType = _ENetSocketType;
-pub(crate) type _ENetSocketOption = c_uint;
-pub(crate) const ENET_SOCKOPT_TTL: _ENetSocketOption = 10;
-pub(crate) const ENET_SOCKOPT_NODELAY: _ENetSocketOption = 9;
-pub(crate) const ENET_SOCKOPT_ERROR: _ENetSocketOption = 8;
-pub(crate) const ENET_SOCKOPT_SNDTIMEO: _ENetSocketOption = 7;
-pub(crate) const ENET_SOCKOPT_RCVTIMEO: _ENetSocketOption = 6;
-pub(crate) const ENET_SOCKOPT_REUSEADDR: _ENetSocketOption = 5;
-pub(crate) const ENET_SOCKOPT_SNDBUF: _ENetSocketOption = 4;
-pub(crate) const ENET_SOCKOPT_RCVBUF: _ENetSocketOption = 3;
-pub(crate) const ENET_SOCKOPT_BROADCAST: _ENetSocketOption = 2;
-pub(crate) const ENET_SOCKOPT_NONBLOCK: _ENetSocketOption = 1;
-pub(crate) type ENetSocketOption = _ENetSocketOption;
-pub(crate) type _ENetSocketShutdown = c_uint;
-pub(crate) const ENET_SOCKET_SHUTDOWN_READ_WRITE: _ENetSocketShutdown = 2;
-pub(crate) const ENET_SOCKET_SHUTDOWN_WRITE: _ENetSocketShutdown = 1;
-pub(crate) const ENET_SOCKET_SHUTDOWN_READ: _ENetSocketShutdown = 0;
-pub(crate) type ENetSocketShutdown = _ENetSocketShutdown;
 pub(crate) type _ENetPacketFlag = c_uint;
 pub(crate) const ENET_PACKET_FLAG_SENT: _ENetPacketFlag = 256;
 pub(crate) const ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT: _ENetPacketFlag = 8;
@@ -628,65 +582,43 @@ pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: C2RustUnnamed_3 = 5;
 pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 3;
 pub(crate) const ENET_RANGE_CODER_TOP: C2RustUnnamed_3 = 16777216;
 pub(crate) type C2RustUnnamed_3 = c_uint;
-static mut callbacks: ENetCallbacks = unsafe {
-    {
-        let mut init = _ENetCallbacks {
-            malloc: Some(_enet_malloc as unsafe extern "C" fn(size_t) -> *mut c_void),
-            free: Some(_enet_free as unsafe extern "C" fn(*mut c_void) -> ()),
-            no_memory: ::core::mem::transmute::<
-                Option<unsafe extern "C" fn() -> !>,
-                Option<unsafe extern "C" fn() -> ()>,
-            >(Some(_enet_abort as unsafe extern "C" fn() -> !)),
-        };
-        init
+static mut CALLBACKS: ENetCallbacks = unsafe {
+    _ENetCallbacks {
+        malloc: Some(_enet_malloc as unsafe extern "C" fn(size_t) -> *mut c_void),
+        free: Some(_enet_free as unsafe extern "C" fn(*mut c_void) -> ()),
+        no_memory: ::core::mem::transmute::<
+            Option<unsafe extern "C" fn() -> !>,
+            Option<unsafe extern "C" fn() -> ()>,
+        >(Some(_enet_abort as unsafe extern "C" fn() -> !)),
     }
 };
-pub(crate) unsafe fn enet_initialize_with_callbacks(
-    mut version: ENetVersion,
-    mut inits: *const ENetCallbacks,
-) -> c_int {
-    if version < ((1 as c_int) << 16 as c_int | (3 as c_int) << 8 as c_int | 0 as c_int) as c_uint {
-        return -(1 as c_int);
-    }
-    if ((*inits).malloc).is_some() || ((*inits).free).is_some() {
-        if ((*inits).malloc).is_none() || ((*inits).free).is_none() {
-            return -(1 as c_int);
-        }
-        callbacks.malloc = (*inits).malloc;
-        callbacks.free = (*inits).free;
-    }
-    if ((*inits).no_memory).is_some() {
-        callbacks.no_memory = (*inits).no_memory;
-    }
-    return 0;
-}
 pub(crate) unsafe fn enet_linked_version() -> ENetVersion {
-    return ((1 as c_int) << 16 as c_int | (3 as c_int) << 8 as c_int | 17 as c_int) as ENetVersion;
+    ((1 as c_int) << 16 as c_int | (3 as c_int) << 8 as c_int | 17 as c_int) as ENetVersion
 }
 #[no_mangle]
-pub(crate) unsafe extern "C" fn enet_malloc(mut size: size_t) -> *mut c_void {
-    let mut memory: *mut c_void = (callbacks.malloc).expect("non-null function pointer")(size);
+pub(crate) unsafe extern "C" fn enet_malloc(size: size_t) -> *mut c_void {
+    let memory: *mut c_void = (CALLBACKS.malloc).expect("non-null function pointer")(size);
     if memory.is_null() {
-        (callbacks.no_memory).expect("non-null function pointer")();
+        (CALLBACKS.no_memory).expect("non-null function pointer")();
     }
-    return memory;
+    memory
 }
 #[no_mangle]
-pub(crate) unsafe extern "C" fn enet_free(mut memory: *mut c_void) {
-    (callbacks.free).expect("non-null function pointer")(memory);
+pub(crate) unsafe extern "C" fn enet_free(memory: *mut c_void) {
+    (CALLBACKS.free).expect("non-null function pointer")(memory);
 }
 #[no_mangle]
 pub(crate) unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
-    let mut rangeCoder: *mut ENetRangeCoder =
+    let rangeCoder: *mut ENetRangeCoder =
         enet_malloc(::core::mem::size_of::<ENetRangeCoder>() as size_t) as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
-        return 0 as *mut c_void;
+        return std::ptr::null_mut();
     }
-    return rangeCoder as *mut c_void;
+    rangeCoder as *mut c_void
 }
 #[no_mangle]
-pub(crate) unsafe extern "C" fn enet_range_coder_destroy(mut context: *mut c_void) {
-    let mut rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+pub(crate) unsafe extern "C" fn enet_range_coder_destroy(context: *mut c_void) {
+    let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
         return;
     }
@@ -709,25 +641,25 @@ unsafe extern "C" fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> enet_ui
         }
         symbol = symbol.offset((*symbol).right as c_int as isize);
     }
-    return total;
+    total
 }
 #[no_mangle]
 pub(crate) unsafe extern "C" fn enet_range_coder_compress(
-    mut context: *mut c_void,
+    context: *mut c_void,
     mut inBuffers: *const ENetBuffer,
     mut inBufferCount: size_t,
-    mut inLimit: size_t,
+    inLimit: size_t,
     mut outData: *mut enet_uint8,
-    mut outLimit: size_t,
+    outLimit: size_t,
 ) -> size_t {
-    let mut rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
-    let mut outStart: *mut enet_uint8 = outData;
-    let mut outEnd: *mut enet_uint8 = &mut *outData.offset(outLimit as isize) as *mut enet_uint8;
-    let mut inData: *const enet_uint8 = 0 as *const enet_uint8;
-    let mut inEnd: *const enet_uint8 = 0 as *const enet_uint8;
+    let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    let outStart: *mut enet_uint8 = outData;
+    let outEnd: *mut enet_uint8 = &mut *outData.add(outLimit) as *mut enet_uint8;
+    let mut inData: *const enet_uint8;
+    let mut inEnd: *const enet_uint8;
     let mut encodeLow: enet_uint32 = 0 as c_int as enet_uint32;
     let mut encodeRange: enet_uint32 = !(0 as c_int) as enet_uint32;
-    let mut root: *mut ENetSymbol = 0 as *mut ENetSymbol;
+    let mut root: *mut ENetSymbol;
     let mut predicted: enet_uint16 = 0 as c_int as enet_uint16;
     let mut order: size_t = 0 as c_int as size_t;
     let mut nextSymbol: size_t = 0 as c_int as size_t;
@@ -738,12 +670,12 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
         return 0 as c_int as size_t;
     }
     inData = (*inBuffers).data as *const enet_uint8;
-    inEnd = &*inData.offset((*inBuffers).dataLength as isize) as *const enet_uint8;
+    inEnd = &*inData.add((*inBuffers).dataLength) as *const enet_uint8;
     inBuffers = inBuffers.offset(1);
     inBufferCount = inBufferCount.wrapping_sub(1);
     let fresh0 = nextSymbol;
     nextSymbol = nextSymbol.wrapping_add(1);
-    root = &mut *((*rangeCoder).symbols).as_mut_ptr().offset(fresh0 as isize) as *mut ENetSymbol;
+    root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh0) as *mut ENetSymbol;
     (*root).value = 0 as c_int as enet_uint8;
     (*root).count = 0 as c_int as enet_uint8;
     (*root).under = 0 as c_int as enet_uint16;
@@ -759,30 +691,29 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
     (*root).symbols = 0 as c_int as enet_uint16;
     let mut current_block_237: u64;
     loop {
-        let mut subcontext: *mut ENetSymbol = 0 as *mut ENetSymbol;
-        let mut symbol: *mut ENetSymbol = 0 as *mut ENetSymbol;
-        let mut value: enet_uint8 = 0;
-        let mut count: enet_uint16 = 0;
-        let mut under: enet_uint16 = 0;
+        let mut subcontext: *mut ENetSymbol;
+        let mut symbol: *mut ENetSymbol;
+        let mut count: enet_uint16;
+        let mut under: enet_uint16;
         let mut parent: *mut enet_uint16 = &mut predicted;
-        let mut total: enet_uint16 = 0;
+        let mut total: enet_uint16;
         if inData >= inEnd {
             if inBufferCount <= 0 as c_int as size_t {
                 break;
             }
             inData = (*inBuffers).data as *const enet_uint8;
-            inEnd = &*inData.offset((*inBuffers).dataLength as isize) as *const enet_uint8;
+            inEnd = &*inData.add((*inBuffers).dataLength) as *const enet_uint8;
             inBuffers = inBuffers.offset(1);
             inBufferCount = inBufferCount.wrapping_sub(1);
         }
         let fresh1 = inData;
         inData = inData.offset(1);
-        value = *fresh1;
+        let value = *fresh1;
         subcontext = &mut *((*rangeCoder).symbols)
             .as_mut_ptr()
             .offset(predicted as isize) as *mut ENetSymbol;
         loop {
-            if !(subcontext != root) {
+            if subcontext == root {
                 current_block_237 = 2463987395154258233;
                 break;
             }
@@ -791,8 +722,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
             if (*subcontext).symbols == 0 {
                 let fresh2 = nextSymbol;
                 nextSymbol = nextSymbol.wrapping_add(1);
-                symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().offset(fresh2 as isize)
-                    as *mut ENetSymbol;
+                symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh2) as *mut ENetSymbol;
                 (*symbol).value = value;
                 (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
                 (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
@@ -816,9 +746,8 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                         } else {
                             let fresh3 = nextSymbol;
                             nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol =
-                                &mut *((*rangeCoder).symbols).as_mut_ptr().offset(fresh3 as isize)
-                                    as *mut ENetSymbol;
+                            symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh3)
+                                as *mut ENetSymbol;
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
                             (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
@@ -838,9 +767,8 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                         } else {
                             let fresh4 = nextSymbol;
                             nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol =
-                                &mut *((*rangeCoder).symbols).as_mut_ptr().offset(fresh4 as isize)
-                                    as *mut ENetSymbol;
+                            symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh4)
+                                as *mut ENetSymbol;
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
                             (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
@@ -966,148 +894,135 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                 .as_mut_ptr()
                 .offset((*subcontext).parent as isize) as *mut ENetSymbol;
         }
-        match current_block_237 {
-            2463987395154258233 => {
-                under = (value as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint16;
-                count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as enet_uint16;
-                if (*root).symbols == 0 {
-                    let fresh7 = nextSymbol;
-                    nextSymbol = nextSymbol.wrapping_add(1);
-                    symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().offset(fresh7 as isize)
-                        as *mut ENetSymbol;
-                    (*symbol).value = value;
-                    (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                    (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                    (*symbol).left = 0 as c_int as enet_uint16;
-                    (*symbol).right = 0 as c_int as enet_uint16;
-                    (*symbol).symbols = 0 as c_int as enet_uint16;
-                    (*symbol).escapes = 0 as c_int as enet_uint16;
-                    (*symbol).total = 0 as c_int as enet_uint16;
-                    (*symbol).parent = 0 as c_int as enet_uint16;
-                    (*root).symbols = symbol.offset_from(root) as c_long as enet_uint16;
-                } else {
-                    let mut node_0: *mut ENetSymbol =
-                        root.offset((*root).symbols as c_int as isize);
-                    loop {
-                        if (value as c_int) < (*node_0).value as c_int {
-                            (*node_0).under = ((*node_0).under as c_int
-                                + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                as enet_uint16;
-                            if (*node_0).left != 0 {
-                                node_0 = node_0.offset((*node_0).left as c_int as isize);
-                            } else {
-                                let fresh8 = nextSymbol;
-                                nextSymbol = nextSymbol.wrapping_add(1);
-                                symbol = &mut *((*rangeCoder).symbols)
-                                    .as_mut_ptr()
-                                    .offset(fresh8 as isize)
-                                    as *mut ENetSymbol;
-                                (*symbol).value = value;
-                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                                (*symbol).left = 0 as c_int as enet_uint16;
-                                (*symbol).right = 0 as c_int as enet_uint16;
-                                (*symbol).symbols = 0 as c_int as enet_uint16;
-                                (*symbol).escapes = 0 as c_int as enet_uint16;
-                                (*symbol).total = 0 as c_int as enet_uint16;
-                                (*symbol).parent = 0 as c_int as enet_uint16;
-                                (*node_0).left =
-                                    symbol.offset_from(node_0) as c_long as enet_uint16;
-                                break;
-                            }
-                        } else if value as c_int > (*node_0).value as c_int {
-                            under = (under as c_int + (*node_0).under as c_int) as enet_uint16;
-                            if (*node_0).right != 0 {
-                                node_0 = node_0.offset((*node_0).right as c_int as isize);
-                            } else {
-                                let fresh9 = nextSymbol;
-                                nextSymbol = nextSymbol.wrapping_add(1);
-                                symbol = &mut *((*rangeCoder).symbols)
-                                    .as_mut_ptr()
-                                    .offset(fresh9 as isize)
-                                    as *mut ENetSymbol;
-                                (*symbol).value = value;
-                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                                (*symbol).left = 0 as c_int as enet_uint16;
-                                (*symbol).right = 0 as c_int as enet_uint16;
-                                (*symbol).symbols = 0 as c_int as enet_uint16;
-                                (*symbol).escapes = 0 as c_int as enet_uint16;
-                                (*symbol).total = 0 as c_int as enet_uint16;
-                                (*symbol).parent = 0 as c_int as enet_uint16;
-                                (*node_0).right =
-                                    symbol.offset_from(node_0) as c_long as enet_uint16;
-                                break;
-                            }
-                        } else {
-                            count = (count as c_int + (*node_0).count as c_int) as enet_uint16;
-                            under = (under as c_int
-                                + ((*node_0).under as c_int - (*node_0).count as c_int))
-                                as enet_uint16;
-                            (*node_0).under = ((*node_0).under as c_int
-                                + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                as enet_uint16;
-                            (*node_0).count = ((*node_0).count as c_int
-                                + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                as enet_uint8;
-                            symbol = node_0;
-                            break;
-                        }
-                    }
-                }
-                *parent = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long
-                    as enet_uint16;
-                parent = &mut (*symbol).parent;
-                total = (*root).total;
-                encodeRange = (encodeRange as c_uint).wrapping_div(total as c_uint) as enet_uint32
-                    as enet_uint32;
-                encodeLow = (encodeLow as c_uint).wrapping_add(
-                    (((*root).escapes as c_int + under as c_int) as c_uint)
-                        .wrapping_mul(encodeRange),
-                ) as enet_uint32 as enet_uint32;
-                encodeRange = (encodeRange as c_uint).wrapping_mul(count as c_uint) as enet_uint32
-                    as enet_uint32;
+        if let 2463987395154258233 = current_block_237 {
+            under = (value as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint16;
+            count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as enet_uint16;
+            if (*root).symbols == 0 {
+                let fresh7 = nextSymbol;
+                nextSymbol = nextSymbol.wrapping_add(1);
+                symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh7) as *mut ENetSymbol;
+                (*symbol).value = value;
+                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
+                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
+                (*symbol).left = 0 as c_int as enet_uint16;
+                (*symbol).right = 0 as c_int as enet_uint16;
+                (*symbol).symbols = 0 as c_int as enet_uint16;
+                (*symbol).escapes = 0 as c_int as enet_uint16;
+                (*symbol).total = 0 as c_int as enet_uint16;
+                (*symbol).parent = 0 as c_int as enet_uint16;
+                (*root).symbols = symbol.offset_from(root) as c_long as enet_uint16;
+            } else {
+                let mut node_0: *mut ENetSymbol = root.offset((*root).symbols as c_int as isize);
                 loop {
-                    if encodeLow ^ encodeLow.wrapping_add(encodeRange)
-                        >= ENET_RANGE_CODER_TOP as c_int as c_uint
-                    {
-                        if encodeRange >= ENET_RANGE_CODER_BOTTOM as c_int as c_uint {
+                    if (value as c_int) < (*node_0).value as c_int {
+                        (*node_0).under = ((*node_0).under as c_int
+                            + ENET_CONTEXT_SYMBOL_DELTA as c_int)
+                            as enet_uint16;
+                        if (*node_0).left != 0 {
+                            node_0 = node_0.offset((*node_0).left as c_int as isize);
+                        } else {
+                            let fresh8 = nextSymbol;
+                            nextSymbol = nextSymbol.wrapping_add(1);
+                            symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh8)
+                                as *mut ENetSymbol;
+                            (*symbol).value = value;
+                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
+                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
+                            (*symbol).left = 0 as c_int as enet_uint16;
+                            (*symbol).right = 0 as c_int as enet_uint16;
+                            (*symbol).symbols = 0 as c_int as enet_uint16;
+                            (*symbol).escapes = 0 as c_int as enet_uint16;
+                            (*symbol).total = 0 as c_int as enet_uint16;
+                            (*symbol).parent = 0 as c_int as enet_uint16;
+                            (*node_0).left = symbol.offset_from(node_0) as c_long as enet_uint16;
                             break;
                         }
-                        encodeRange = encodeLow.wrapping_neg()
-                            & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
-                    }
-                    if outData >= outEnd {
-                        return 0 as c_int as size_t;
-                    }
-                    let fresh10 = outData;
-                    outData = outData.offset(1);
-                    *fresh10 = (encodeLow >> 24 as c_int) as enet_uint8;
-                    encodeRange <<= 8 as c_int;
-                    encodeLow <<= 8 as c_int;
-                }
-                (*root).total =
-                    ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as enet_uint16;
-                if count as c_int
-                    > 0xff as c_int - 2 as c_int * ENET_CONTEXT_SYMBOL_DELTA as c_int
-                        + ENET_CONTEXT_SYMBOL_MINIMUM as c_int
-                    || (*root).total as c_int > ENET_RANGE_CODER_BOTTOM as c_int - 0x100 as c_int
-                {
-                    (*root).total = (if (*root).symbols as c_int != 0 {
-                        enet_symbol_rescale(root.offset((*root).symbols as c_int as isize)) as c_int
+                    } else if value as c_int > (*node_0).value as c_int {
+                        under = (under as c_int + (*node_0).under as c_int) as enet_uint16;
+                        if (*node_0).right != 0 {
+                            node_0 = node_0.offset((*node_0).right as c_int as isize);
+                        } else {
+                            let fresh9 = nextSymbol;
+                            nextSymbol = nextSymbol.wrapping_add(1);
+                            symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh9)
+                                as *mut ENetSymbol;
+                            (*symbol).value = value;
+                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
+                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
+                            (*symbol).left = 0 as c_int as enet_uint16;
+                            (*symbol).right = 0 as c_int as enet_uint16;
+                            (*symbol).symbols = 0 as c_int as enet_uint16;
+                            (*symbol).escapes = 0 as c_int as enet_uint16;
+                            (*symbol).total = 0 as c_int as enet_uint16;
+                            (*symbol).parent = 0 as c_int as enet_uint16;
+                            (*node_0).right = symbol.offset_from(node_0) as c_long as enet_uint16;
+                            break;
+                        }
                     } else {
-                        0 as c_int
-                    }) as enet_uint16;
-                    (*root).escapes = ((*root).escapes as c_int
-                        - ((*root).escapes as c_int >> 1 as c_int))
-                        as enet_uint16;
-                    (*root).total = ((*root).total as c_int
-                        + ((*root).escapes as c_int
-                            + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int))
-                        as enet_uint16;
+                        count = (count as c_int + (*node_0).count as c_int) as enet_uint16;
+                        under = (under as c_int
+                            + ((*node_0).under as c_int - (*node_0).count as c_int))
+                            as enet_uint16;
+                        (*node_0).under = ((*node_0).under as c_int
+                            + ENET_CONTEXT_SYMBOL_DELTA as c_int)
+                            as enet_uint16;
+                        (*node_0).count = ((*node_0).count as c_int
+                            + ENET_CONTEXT_SYMBOL_DELTA as c_int)
+                            as enet_uint8;
+                        symbol = node_0;
+                        break;
+                    }
                 }
             }
-            _ => {}
+            *parent =
+                symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as enet_uint16;
+            total = (*root).total;
+            encodeRange =
+                (encodeRange as c_uint).wrapping_div(total as c_uint) as enet_uint32 as enet_uint32;
+            encodeLow = (encodeLow as c_uint).wrapping_add(
+                (((*root).escapes as c_int + under as c_int) as c_uint).wrapping_mul(encodeRange),
+            ) as enet_uint32 as enet_uint32;
+            encodeRange =
+                (encodeRange as c_uint).wrapping_mul(count as c_uint) as enet_uint32 as enet_uint32;
+            loop {
+                if encodeLow ^ encodeLow.wrapping_add(encodeRange)
+                    >= ENET_RANGE_CODER_TOP as c_int as c_uint
+                {
+                    if encodeRange >= ENET_RANGE_CODER_BOTTOM as c_int as c_uint {
+                        break;
+                    }
+                    encodeRange = encodeLow.wrapping_neg()
+                        & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
+                }
+                if outData >= outEnd {
+                    return 0 as c_int as size_t;
+                }
+                let fresh10 = outData;
+                outData = outData.offset(1);
+                *fresh10 = (encodeLow >> 24 as c_int) as enet_uint8;
+                encodeRange <<= 8 as c_int;
+                encodeLow <<= 8 as c_int;
+            }
+            (*root).total =
+                ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as enet_uint16;
+            if count as c_int
+                > 0xff as c_int - 2 as c_int * ENET_CONTEXT_SYMBOL_DELTA as c_int
+                    + ENET_CONTEXT_SYMBOL_MINIMUM as c_int
+                || (*root).total as c_int > ENET_RANGE_CODER_BOTTOM as c_int - 0x100 as c_int
+            {
+                (*root).total = (if (*root).symbols as c_int != 0 {
+                    enet_symbol_rescale(root.offset((*root).symbols as c_int as isize)) as c_int
+                } else {
+                    0 as c_int
+                }) as enet_uint16;
+                (*root).escapes = ((*root).escapes as c_int
+                    - ((*root).escapes as c_int >> 1 as c_int))
+                    as enet_uint16;
+                (*root).total = ((*root).total as c_int
+                    + ((*root).escapes as c_int
+                        + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int))
+                    as enet_uint16;
+            }
         }
         if order >= ENET_SUBCONTEXT_ORDER as c_int as size_t {
             predicted = (*rangeCoder).symbols[predicted as usize].parent;
@@ -1122,9 +1037,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
             nextSymbol = 0 as c_int as size_t;
             let fresh11 = nextSymbol;
             nextSymbol = nextSymbol.wrapping_add(1);
-            root = &mut *((*rangeCoder).symbols)
-                .as_mut_ptr()
-                .offset(fresh11 as isize) as *mut ENetSymbol;
+            root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh11) as *mut ENetSymbol;
             (*root).value = 0 as c_int as enet_uint8;
             (*root).count = 0 as c_int as enet_uint8;
             (*root).under = 0 as c_int as enet_uint16;
@@ -1152,24 +1065,24 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
         *fresh12 = (encodeLow >> 24 as c_int) as enet_uint8;
         encodeLow <<= 8 as c_int;
     }
-    return outData.offset_from(outStart) as c_long as size_t;
+    outData.offset_from(outStart) as c_long as size_t
 }
 #[no_mangle]
 pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
-    mut context: *mut c_void,
+    context: *mut c_void,
     mut inData: *const enet_uint8,
-    mut inLimit: size_t,
+    inLimit: size_t,
     mut outData: *mut enet_uint8,
-    mut outLimit: size_t,
+    outLimit: size_t,
 ) -> size_t {
-    let mut rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
-    let mut outStart: *mut enet_uint8 = outData;
-    let mut outEnd: *mut enet_uint8 = &mut *outData.offset(outLimit as isize) as *mut enet_uint8;
-    let mut inEnd: *const enet_uint8 = &*inData.offset(inLimit as isize) as *const enet_uint8;
+    let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    let outStart: *mut enet_uint8 = outData;
+    let outEnd: *mut enet_uint8 = &mut *outData.add(outLimit) as *mut enet_uint8;
+    let inEnd: *const enet_uint8 = &*inData.add(inLimit) as *const enet_uint8;
     let mut decodeLow: enet_uint32 = 0 as c_int as enet_uint32;
     let mut decodeCode: enet_uint32 = 0 as c_int as enet_uint32;
     let mut decodeRange: enet_uint32 = !(0 as c_int) as enet_uint32;
-    let mut root: *mut ENetSymbol = 0 as *mut ENetSymbol;
+    let mut root: *mut ENetSymbol;
     let mut predicted: enet_uint16 = 0 as c_int as enet_uint16;
     let mut order: size_t = 0 as c_int as size_t;
     let mut nextSymbol: size_t = 0 as c_int as size_t;
@@ -1178,9 +1091,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
     }
     let fresh13 = nextSymbol;
     nextSymbol = nextSymbol.wrapping_add(1);
-    root = &mut *((*rangeCoder).symbols)
-        .as_mut_ptr()
-        .offset(fresh13 as isize) as *mut ENetSymbol;
+    root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh13) as *mut ENetSymbol;
     (*root).value = 0 as c_int as enet_uint8;
     (*root).count = 0 as c_int as enet_uint8;
     (*root).under = 0 as c_int as enet_uint16;
@@ -1216,27 +1127,27 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
     }
     let mut current_block_297: u64;
     loop {
-        let mut subcontext: *mut ENetSymbol = 0 as *mut ENetSymbol;
-        let mut symbol: *mut ENetSymbol = 0 as *mut ENetSymbol;
-        let mut patch: *mut ENetSymbol = 0 as *mut ENetSymbol;
+        let mut subcontext: *mut ENetSymbol;
+        let mut symbol: *mut ENetSymbol;
+        let mut patch: *mut ENetSymbol;
         let mut value: enet_uint8 = 0 as c_int as enet_uint8;
-        let mut code: enet_uint16 = 0;
-        let mut under: enet_uint16 = 0;
-        let mut count: enet_uint16 = 0;
+        let mut code: enet_uint16;
+        let mut under: enet_uint16;
+        let mut count: enet_uint16;
         let mut bottom: enet_uint16 = 0;
         let mut parent: *mut enet_uint16 = &mut predicted;
-        let mut total: enet_uint16 = 0;
+        let mut total: enet_uint16;
         subcontext = &mut *((*rangeCoder).symbols)
             .as_mut_ptr()
             .offset(predicted as isize) as *mut ENetSymbol;
         loop {
-            if !(subcontext != root) {
+            if subcontext == root {
                 current_block_297 = 18325745679564279244;
                 break;
             }
-            if !((*subcontext).escapes as c_int <= 0 as c_int) {
+            if (*subcontext).escapes as c_int > 0 as c_int {
                 total = (*subcontext).total;
-                if !((*subcontext).escapes as c_int >= total as c_int) {
+                if ((*subcontext).escapes as c_int) < total as c_int {
                     decodeRange = (decodeRange as c_uint).wrapping_div(total as c_uint)
                         as enet_uint32 as enet_uint32;
                     code =
@@ -1277,11 +1188,11 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                             let mut node: *mut ENetSymbol =
                                 subcontext.offset((*subcontext).symbols as c_int as isize);
                             loop {
-                                let mut after: enet_uint16 = (under as c_int
+                                let after: enet_uint16 = (under as c_int
                                     + (*node).under as c_int
                                     + ((*node).value as c_int + 1 as c_int) * 0 as c_int)
                                     as enet_uint16;
-                                let mut before: enet_uint16 =
+                                let before: enet_uint16 =
                                     ((*node).count as c_int + 0 as c_int) as enet_uint16;
                                 if code as c_int >= after as c_int {
                                     under =
@@ -1374,221 +1285,204 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                 .as_mut_ptr()
                 .offset((*subcontext).parent as isize) as *mut ENetSymbol;
         }
-        match current_block_297 {
-            18325745679564279244 => {
-                total = (*root).total;
-                decodeRange = (decodeRange as c_uint).wrapping_div(total as c_uint) as enet_uint32
-                    as enet_uint32;
-                code = decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as enet_uint16;
-                if (code as c_int) < (*root).escapes as c_int {
-                    decodeLow = (decodeLow as c_uint)
-                        .wrapping_add((0 as c_int as c_uint).wrapping_mul(decodeRange))
-                        as enet_uint32 as enet_uint32;
-                    decodeRange = (decodeRange as c_uint).wrapping_mul((*root).escapes as c_uint)
-                        as enet_uint32 as enet_uint32;
-                    loop {
-                        if decodeLow ^ decodeLow.wrapping_add(decodeRange)
-                            >= ENET_RANGE_CODER_TOP as c_int as c_uint
-                        {
-                            if decodeRange >= ENET_RANGE_CODER_BOTTOM as c_int as c_uint {
-                                break;
-                            }
-                            decodeRange = decodeLow.wrapping_neg()
-                                & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
-                        }
-                        decodeCode <<= 8 as c_int;
-                        if inData < inEnd {
-                            let fresh20 = inData;
-                            inData = inData.offset(1);
-                            decodeCode |= *fresh20 as c_uint;
-                        }
-                        decodeRange <<= 8 as c_int;
-                        decodeLow <<= 8 as c_int;
-                    }
-                    break;
-                } else {
-                    code = (code as c_int - (*root).escapes as c_int) as enet_uint16;
-                    under = 0 as c_int as enet_uint16;
-                    count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as enet_uint16;
-                    if (*root).symbols == 0 {
-                        value =
-                            (code as c_int / ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint8;
-                        under = (code as c_int
-                            - code as c_int % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                            as enet_uint16;
-                        let fresh21 = nextSymbol;
-                        nextSymbol = nextSymbol.wrapping_add(1);
-                        symbol = &mut *((*rangeCoder).symbols)
-                            .as_mut_ptr()
-                            .offset(fresh21 as isize)
-                            as *mut ENetSymbol;
-                        (*symbol).value = value;
-                        (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                        (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                        (*symbol).left = 0 as c_int as enet_uint16;
-                        (*symbol).right = 0 as c_int as enet_uint16;
-                        (*symbol).symbols = 0 as c_int as enet_uint16;
-                        (*symbol).escapes = 0 as c_int as enet_uint16;
-                        (*symbol).total = 0 as c_int as enet_uint16;
-                        (*symbol).parent = 0 as c_int as enet_uint16;
-                        (*root).symbols = symbol.offset_from(root) as c_long as enet_uint16;
-                    } else {
-                        let mut node_0: *mut ENetSymbol =
-                            root.offset((*root).symbols as c_int as isize);
-                        loop {
-                            let mut after_0: enet_uint16 = (under as c_int
-                                + (*node_0).under as c_int
-                                + ((*node_0).value as c_int + 1 as c_int)
-                                    * ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                as enet_uint16;
-                            let mut before_0: enet_uint16 = ((*node_0).count as c_int
-                                + ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                as enet_uint16;
-                            if code as c_int >= after_0 as c_int {
-                                under = (under as c_int + (*node_0).under as c_int) as enet_uint16;
-                                if (*node_0).right != 0 {
-                                    node_0 = node_0.offset((*node_0).right as c_int as isize);
-                                } else {
-                                    value = ((*node_0).value as c_int
-                                        + 1 as c_int
-                                        + (code as c_int - after_0 as c_int)
-                                            / ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                        as enet_uint8;
-                                    under = (code as c_int
-                                        - (code as c_int - after_0 as c_int)
-                                            % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                        as enet_uint16;
-                                    let fresh22 = nextSymbol;
-                                    nextSymbol = nextSymbol.wrapping_add(1);
-                                    symbol = &mut *((*rangeCoder).symbols)
-                                        .as_mut_ptr()
-                                        .offset(fresh22 as isize)
-                                        as *mut ENetSymbol;
-                                    (*symbol).value = value;
-                                    (*symbol).count =
-                                        ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                                    (*symbol).under =
-                                        ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                                    (*symbol).left = 0 as c_int as enet_uint16;
-                                    (*symbol).right = 0 as c_int as enet_uint16;
-                                    (*symbol).symbols = 0 as c_int as enet_uint16;
-                                    (*symbol).escapes = 0 as c_int as enet_uint16;
-                                    (*symbol).total = 0 as c_int as enet_uint16;
-                                    (*symbol).parent = 0 as c_int as enet_uint16;
-                                    (*node_0).right =
-                                        symbol.offset_from(node_0) as c_long as enet_uint16;
-                                    break;
-                                }
-                            } else if (code as c_int) < after_0 as c_int - before_0 as c_int {
-                                (*node_0).under = ((*node_0).under as c_int
-                                    + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                    as enet_uint16;
-                                if (*node_0).left != 0 {
-                                    node_0 = node_0.offset((*node_0).left as c_int as isize);
-                                } else {
-                                    value = ((*node_0).value as c_int
-                                        - 1 as c_int
-                                        - (after_0 as c_int
-                                            - before_0 as c_int
-                                            - code as c_int
-                                            - 1 as c_int)
-                                            / ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                        as enet_uint8;
-                                    under = (code as c_int
-                                        - (after_0 as c_int
-                                            - before_0 as c_int
-                                            - code as c_int
-                                            - 1 as c_int)
-                                            % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                        as enet_uint16;
-                                    let fresh23 = nextSymbol;
-                                    nextSymbol = nextSymbol.wrapping_add(1);
-                                    symbol = &mut *((*rangeCoder).symbols)
-                                        .as_mut_ptr()
-                                        .offset(fresh23 as isize)
-                                        as *mut ENetSymbol;
-                                    (*symbol).value = value;
-                                    (*symbol).count =
-                                        ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                                    (*symbol).under =
-                                        ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                                    (*symbol).left = 0 as c_int as enet_uint16;
-                                    (*symbol).right = 0 as c_int as enet_uint16;
-                                    (*symbol).symbols = 0 as c_int as enet_uint16;
-                                    (*symbol).escapes = 0 as c_int as enet_uint16;
-                                    (*symbol).total = 0 as c_int as enet_uint16;
-                                    (*symbol).parent = 0 as c_int as enet_uint16;
-                                    (*node_0).left =
-                                        symbol.offset_from(node_0) as c_long as enet_uint16;
-                                    break;
-                                }
-                            } else {
-                                value = (*node_0).value;
-                                count = (count as c_int + (*node_0).count as c_int) as enet_uint16;
-                                under = (after_0 as c_int - before_0 as c_int) as enet_uint16;
-                                (*node_0).under = ((*node_0).under as c_int
-                                    + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                    as enet_uint16;
-                                (*node_0).count = ((*node_0).count as c_int
-                                    + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                    as enet_uint8;
-                                symbol = node_0;
-                                break;
-                            }
-                        }
-                    }
-                    bottom = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long
-                        as enet_uint16;
-                    decodeLow = (decodeLow as c_uint).wrapping_add(
-                        (((*root).escapes as c_int + under as c_int) as c_uint)
-                            .wrapping_mul(decodeRange),
-                    ) as enet_uint32 as enet_uint32;
-                    decodeRange = (decodeRange as c_uint).wrapping_mul(count as c_uint)
-                        as enet_uint32 as enet_uint32;
-                    loop {
-                        if decodeLow ^ decodeLow.wrapping_add(decodeRange)
-                            >= ENET_RANGE_CODER_TOP as c_int as c_uint
-                        {
-                            if decodeRange >= ENET_RANGE_CODER_BOTTOM as c_int as c_uint {
-                                break;
-                            }
-                            decodeRange = decodeLow.wrapping_neg()
-                                & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
-                        }
-                        decodeCode <<= 8 as c_int;
-                        if inData < inEnd {
-                            let fresh24 = inData;
-                            inData = inData.offset(1);
-                            decodeCode |= *fresh24 as c_uint;
-                        }
-                        decodeRange <<= 8 as c_int;
-                        decodeLow <<= 8 as c_int;
-                    }
-                    (*root).total = ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                        as enet_uint16;
-                    if count as c_int
-                        > 0xff as c_int - 2 as c_int * ENET_CONTEXT_SYMBOL_DELTA as c_int
-                            + ENET_CONTEXT_SYMBOL_MINIMUM as c_int
-                        || (*root).total as c_int
-                            > ENET_RANGE_CODER_BOTTOM as c_int - 0x100 as c_int
+        if let 18325745679564279244 = current_block_297 {
+            total = (*root).total;
+            decodeRange =
+                (decodeRange as c_uint).wrapping_div(total as c_uint) as enet_uint32 as enet_uint32;
+            code = decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as enet_uint16;
+            if (code as c_int) < (*root).escapes as c_int {
+                decodeLow = (decodeLow as c_uint)
+                    .wrapping_add((0 as c_int as c_uint).wrapping_mul(decodeRange))
+                    as enet_uint32 as enet_uint32;
+                decodeRange = (decodeRange as c_uint).wrapping_mul((*root).escapes as c_uint)
+                    as enet_uint32 as enet_uint32;
+                loop {
+                    if decodeLow ^ decodeLow.wrapping_add(decodeRange)
+                        >= ENET_RANGE_CODER_TOP as c_int as c_uint
                     {
-                        (*root).total = (if (*root).symbols as c_int != 0 {
-                            enet_symbol_rescale(root.offset((*root).symbols as c_int as isize))
-                                as c_int
+                        if decodeRange >= ENET_RANGE_CODER_BOTTOM as c_int as c_uint {
+                            break;
+                        }
+                        decodeRange = decodeLow.wrapping_neg()
+                            & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
+                    }
+                    decodeCode <<= 8 as c_int;
+                    if inData < inEnd {
+                        let fresh20 = inData;
+                        inData = inData.offset(1);
+                        decodeCode |= *fresh20 as c_uint;
+                    }
+                    decodeRange <<= 8 as c_int;
+                    decodeLow <<= 8 as c_int;
+                }
+                break;
+            } else {
+                code = (code as c_int - (*root).escapes as c_int) as enet_uint16;
+                under = 0 as c_int as enet_uint16;
+                count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as enet_uint16;
+                if (*root).symbols == 0 {
+                    value = (code as c_int / ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint8;
+                    under = (code as c_int - code as c_int % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
+                        as enet_uint16;
+                    let fresh21 = nextSymbol;
+                    nextSymbol = nextSymbol.wrapping_add(1);
+                    symbol =
+                        &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh21) as *mut ENetSymbol;
+                    (*symbol).value = value;
+                    (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
+                    (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
+                    (*symbol).left = 0 as c_int as enet_uint16;
+                    (*symbol).right = 0 as c_int as enet_uint16;
+                    (*symbol).symbols = 0 as c_int as enet_uint16;
+                    (*symbol).escapes = 0 as c_int as enet_uint16;
+                    (*symbol).total = 0 as c_int as enet_uint16;
+                    (*symbol).parent = 0 as c_int as enet_uint16;
+                    (*root).symbols = symbol.offset_from(root) as c_long as enet_uint16;
+                } else {
+                    let mut node_0: *mut ENetSymbol =
+                        root.offset((*root).symbols as c_int as isize);
+                    loop {
+                        let after_0: enet_uint16 = (under as c_int
+                            + (*node_0).under as c_int
+                            + ((*node_0).value as c_int + 1 as c_int)
+                                * ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
+                            as enet_uint16;
+                        let before_0: enet_uint16 = ((*node_0).count as c_int
+                            + ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
+                            as enet_uint16;
+                        if code as c_int >= after_0 as c_int {
+                            under = (under as c_int + (*node_0).under as c_int) as enet_uint16;
+                            if (*node_0).right != 0 {
+                                node_0 = node_0.offset((*node_0).right as c_int as isize);
+                            } else {
+                                value = ((*node_0).value as c_int
+                                    + 1 as c_int
+                                    + (code as c_int - after_0 as c_int)
+                                        / ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
+                                    as enet_uint8;
+                                under = (code as c_int
+                                    - (code as c_int - after_0 as c_int)
+                                        % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
+                                    as enet_uint16;
+                                let fresh22 = nextSymbol;
+                                nextSymbol = nextSymbol.wrapping_add(1);
+                                symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh22)
+                                    as *mut ENetSymbol;
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
+                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
+                                (*symbol).left = 0 as c_int as enet_uint16;
+                                (*symbol).right = 0 as c_int as enet_uint16;
+                                (*symbol).symbols = 0 as c_int as enet_uint16;
+                                (*symbol).escapes = 0 as c_int as enet_uint16;
+                                (*symbol).total = 0 as c_int as enet_uint16;
+                                (*symbol).parent = 0 as c_int as enet_uint16;
+                                (*node_0).right =
+                                    symbol.offset_from(node_0) as c_long as enet_uint16;
+                                break;
+                            }
+                        } else if (code as c_int) < after_0 as c_int - before_0 as c_int {
+                            (*node_0).under = ((*node_0).under as c_int
+                                + ENET_CONTEXT_SYMBOL_DELTA as c_int)
+                                as enet_uint16;
+                            if (*node_0).left != 0 {
+                                node_0 = node_0.offset((*node_0).left as c_int as isize);
+                            } else {
+                                value = ((*node_0).value as c_int
+                                    - 1 as c_int
+                                    - (after_0 as c_int
+                                        - before_0 as c_int
+                                        - code as c_int
+                                        - 1 as c_int)
+                                        / ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
+                                    as enet_uint8;
+                                under = (code as c_int
+                                    - (after_0 as c_int
+                                        - before_0 as c_int
+                                        - code as c_int
+                                        - 1 as c_int)
+                                        % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
+                                    as enet_uint16;
+                                let fresh23 = nextSymbol;
+                                nextSymbol = nextSymbol.wrapping_add(1);
+                                symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh23)
+                                    as *mut ENetSymbol;
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
+                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
+                                (*symbol).left = 0 as c_int as enet_uint16;
+                                (*symbol).right = 0 as c_int as enet_uint16;
+                                (*symbol).symbols = 0 as c_int as enet_uint16;
+                                (*symbol).escapes = 0 as c_int as enet_uint16;
+                                (*symbol).total = 0 as c_int as enet_uint16;
+                                (*symbol).parent = 0 as c_int as enet_uint16;
+                                (*node_0).left =
+                                    symbol.offset_from(node_0) as c_long as enet_uint16;
+                                break;
+                            }
                         } else {
-                            0 as c_int
-                        }) as enet_uint16;
-                        (*root).escapes = ((*root).escapes as c_int
-                            - ((*root).escapes as c_int >> 1 as c_int))
-                            as enet_uint16;
-                        (*root).total = ((*root).total as c_int
-                            + ((*root).escapes as c_int
-                                + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int))
-                            as enet_uint16;
+                            value = (*node_0).value;
+                            count = (count as c_int + (*node_0).count as c_int) as enet_uint16;
+                            under = (after_0 as c_int - before_0 as c_int) as enet_uint16;
+                            (*node_0).under = ((*node_0).under as c_int
+                                + ENET_CONTEXT_SYMBOL_DELTA as c_int)
+                                as enet_uint16;
+                            (*node_0).count = ((*node_0).count as c_int
+                                + ENET_CONTEXT_SYMBOL_DELTA as c_int)
+                                as enet_uint8;
+                            symbol = node_0;
+                            break;
+                        }
                     }
                 }
+                bottom = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long
+                    as enet_uint16;
+                decodeLow = (decodeLow as c_uint).wrapping_add(
+                    (((*root).escapes as c_int + under as c_int) as c_uint)
+                        .wrapping_mul(decodeRange),
+                ) as enet_uint32 as enet_uint32;
+                decodeRange = (decodeRange as c_uint).wrapping_mul(count as c_uint) as enet_uint32
+                    as enet_uint32;
+                loop {
+                    if decodeLow ^ decodeLow.wrapping_add(decodeRange)
+                        >= ENET_RANGE_CODER_TOP as c_int as c_uint
+                    {
+                        if decodeRange >= ENET_RANGE_CODER_BOTTOM as c_int as c_uint {
+                            break;
+                        }
+                        decodeRange = decodeLow.wrapping_neg()
+                            & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
+                    }
+                    decodeCode <<= 8 as c_int;
+                    if inData < inEnd {
+                        let fresh24 = inData;
+                        inData = inData.offset(1);
+                        decodeCode |= *fresh24 as c_uint;
+                    }
+                    decodeRange <<= 8 as c_int;
+                    decodeLow <<= 8 as c_int;
+                }
+                (*root).total =
+                    ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as enet_uint16;
+                if count as c_int
+                    > 0xff as c_int - 2 as c_int * ENET_CONTEXT_SYMBOL_DELTA as c_int
+                        + ENET_CONTEXT_SYMBOL_MINIMUM as c_int
+                    || (*root).total as c_int > ENET_RANGE_CODER_BOTTOM as c_int - 0x100 as c_int
+                {
+                    (*root).total = (if (*root).symbols as c_int != 0 {
+                        enet_symbol_rescale(root.offset((*root).symbols as c_int as isize)) as c_int
+                    } else {
+                        0 as c_int
+                    }) as enet_uint16;
+                    (*root).escapes = ((*root).escapes as c_int
+                        - ((*root).escapes as c_int >> 1 as c_int))
+                        as enet_uint16;
+                    (*root).total = ((*root).total as c_int
+                        + ((*root).escapes as c_int
+                            + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int))
+                        as enet_uint16;
+                }
             }
-            _ => {}
         }
         patch = &mut *((*rangeCoder).symbols)
             .as_mut_ptr()
@@ -1599,9 +1493,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
             if (*patch).symbols == 0 {
                 let fresh25 = nextSymbol;
                 nextSymbol = nextSymbol.wrapping_add(1);
-                symbol = &mut *((*rangeCoder).symbols)
-                    .as_mut_ptr()
-                    .offset(fresh25 as isize) as *mut ENetSymbol;
+                symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh25) as *mut ENetSymbol;
                 (*symbol).value = value;
                 (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
                 (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
@@ -1624,9 +1516,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                         } else {
                             let fresh26 = nextSymbol;
                             nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = &mut *((*rangeCoder).symbols)
-                                .as_mut_ptr()
-                                .offset(fresh26 as isize)
+                            symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh26)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
@@ -1647,9 +1537,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                         } else {
                             let fresh27 = nextSymbol;
                             nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = &mut *((*rangeCoder).symbols)
-                                .as_mut_ptr()
-                                .offset(fresh27 as isize)
+                            symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh27)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
@@ -1665,9 +1553,6 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                         }
                     } else {
                         count = (count as c_int + (*node_1).count as c_int) as enet_uint16;
-                        under = (under as c_int
-                            + ((*node_1).under as c_int - (*node_1).count as c_int))
-                            as enet_uint16;
                         (*node_1).under = ((*node_1).under as c_int
                             + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
                             as enet_uint16;
@@ -1730,9 +1615,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
             nextSymbol = 0 as c_int as size_t;
             let fresh29 = nextSymbol;
             nextSymbol = nextSymbol.wrapping_add(1);
-            root = &mut *((*rangeCoder).symbols)
-                .as_mut_ptr()
-                .offset(fresh29 as isize) as *mut ENetSymbol;
+            root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh29) as *mut ENetSymbol;
             (*root).value = 0 as c_int as enet_uint8;
             (*root).count = 0 as c_int as enet_uint8;
             (*root).under = 0 as c_int as enet_uint16;
@@ -1751,25 +1634,24 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
             order = 0 as c_int as size_t;
         }
     }
-    return outData.offset_from(outStart) as c_long as size_t;
+    outData.offset_from(outStart) as c_long as size_t
 }
 pub(crate) unsafe fn enet_host_create<S: Socket>(
     mut socket: S,
-    mut peerCount: size_t,
+    peerCount: size_t,
     mut channelLimit: size_t,
-    mut incomingBandwidth: enet_uint32,
-    mut outgoingBandwidth: enet_uint32,
+    incomingBandwidth: enet_uint32,
+    outgoingBandwidth: enet_uint32,
     time: Box<dyn Fn() -> Duration>,
     seed: Option<u32>,
 ) -> *mut ENetHost<S> {
-    let mut host: *mut ENetHost<S> = 0 as *mut ENetHost<S>;
-    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
+    let mut currentPeer: *mut ENetPeer<S>;
     if peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as size_t {
-        return 0 as *mut ENetHost<S>;
+        return std::ptr::null_mut();
     }
-    host = enet_malloc(::core::mem::size_of::<ENetHost<S>>() as size_t) as *mut ENetHost<S>;
+    let host = enet_malloc(::core::mem::size_of::<ENetHost<S>>() as size_t) as *mut ENetHost<S>;
     if host.is_null() {
-        return 0 as *mut ENetHost<S>;
+        return std::ptr::null_mut();
     }
     _enet_memset(
         host as *mut c_void,
@@ -1781,7 +1663,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
             as *mut ENetPeer<S>;
     if ((*host).peers).is_null() {
         enet_free(host as *mut c_void);
-        return 0 as *mut ENetHost<S>;
+        return std::ptr::null_mut();
     }
     _enet_memset(
         (*host).peers as *mut c_void,
@@ -1818,7 +1700,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).bufferCount = 0 as c_int as size_t;
     (*host).checksum.write(None);
     (*host).receivedAddress.write(None);
-    (*host).receivedData = 0 as *mut enet_uint8;
+    (*host).receivedData = std::ptr::null_mut();
     (*host).receivedDataLength = 0 as c_int as size_t;
     (*host).totalSentData = 0 as c_int as enet_uint32;
     (*host).totalSentPackets = 0 as c_int as enet_uint32;
@@ -1834,15 +1716,14 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).intercept = None;
     enet_list_clear(&mut (*host).dispatchQueue);
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
-    {
+    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
         (*currentPeer).host = host;
         (*currentPeer).incomingPeerID =
             currentPeer.offset_from((*host).peers) as c_long as enet_uint16;
         (*currentPeer).incomingSessionID = 0xff as c_int as enet_uint8;
         (*currentPeer).outgoingSessionID = (*currentPeer).incomingSessionID;
         (*currentPeer).address.write(None);
-        (*currentPeer).data = 0 as *mut c_void;
+        (*currentPeer).data = std::ptr::null_mut();
         enet_list_clear(&mut (*currentPeer).acknowledgements);
         enet_list_clear(&mut (*currentPeer).sentReliableCommands);
         enet_list_clear(&mut (*currentPeer).outgoingCommands);
@@ -1851,17 +1732,16 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
         enet_peer_reset(currentPeer);
         currentPeer = currentPeer.offset(1);
     }
-    return host;
+    host
 }
-pub(crate) unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
-    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
+pub(crate) unsafe fn enet_host_destroy<S: Socket>(host: *mut ENetHost<S>) {
+    let mut currentPeer: *mut ENetPeer<S>;
     if host.is_null() {
         return;
     }
     (*host).socket.assume_init_drop();
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
-    {
+    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
         enet_peer_reset(currentPeer);
         (*currentPeer).address.assume_init_drop();
         currentPeer = currentPeer.offset(1);
@@ -1873,22 +1753,22 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(mut host: *mut ENetHost<S>) {
     enet_free((*host).peers as *mut c_void);
     enet_free(host as *mut c_void);
 }
-pub(crate) unsafe fn enet_host_random<S: Socket>(mut host: *mut ENetHost<S>) -> enet_uint32 {
+pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
     (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(0x6d2b79f5 as c_uint)
         as enet_uint32 as enet_uint32;
     let mut n: enet_uint32 = (*host).randomSeed;
     n = (n ^ n >> 15 as c_int).wrapping_mul(n | 1 as c_uint);
     n ^= n.wrapping_add((n ^ n >> 7 as c_int).wrapping_mul(n | 61 as c_uint));
-    return n ^ n >> 14 as c_int;
+    n ^ n >> 14 as c_int
 }
 pub(crate) unsafe fn enet_host_connect<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut address: S::PeerAddress,
+    host: *mut ENetHost<S>,
+    address: S::PeerAddress,
     mut channelCount: size_t,
-    mut data: enet_uint32,
+    data: enet_uint32,
 ) -> *mut ENetPeer<S> {
-    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
-    let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
+    let mut currentPeer: *mut ENetPeer<S>;
+    let mut channel: *mut ENetChannel;
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -1902,21 +1782,20 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         channelCount = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
     }
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
-    {
+    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
         if (*currentPeer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint {
             break;
         }
         currentPeer = currentPeer.offset(1);
     }
-    if currentPeer >= &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
-        return 0 as *mut ENetPeer<S>;
+    if currentPeer >= &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+        return std::ptr::null_mut();
     }
     (*currentPeer).channels =
         enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as size_t))
             as *mut ENetChannel;
     if ((*currentPeer).channels).is_null() {
-        return 0 as *mut ENetPeer<S>;
+        return std::ptr::null_mut();
     }
     (*currentPeer).channelCount = channelCount;
     (*currentPeer).state = ENET_PEER_STATE_CONNECTING;
@@ -1936,9 +1815,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         (*currentPeer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
     }
     channel = (*currentPeer).channels;
-    while channel
-        < &mut *((*currentPeer).channels).offset(channelCount as isize) as *mut ENetChannel
-    {
+    while channel < &mut *((*currentPeer).channels).add(channelCount) as *mut ENetChannel {
         (*channel).outgoingReliableSequenceNumber = 0 as c_int as enet_uint16;
         (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
         (*channel).incomingReliableSequenceNumber = 0 as c_int as enet_uint16;
@@ -1972,23 +1849,22 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
     command.connect.data = htonl(data);
     enet_peer_queue_outgoing_command(
         currentPeer,
-        &mut command,
-        0 as *mut ENetPacket,
+        &command,
+        std::ptr::null_mut(),
         0 as c_int as enet_uint32,
         0 as c_int as enet_uint16,
     );
-    return currentPeer;
+    currentPeer
 }
 pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut channelID: enet_uint8,
-    mut packet: *mut ENetPacket,
+    host: *mut ENetHost<S>,
+    channelID: enet_uint8,
+    packet: *mut ENetPacket,
 ) {
-    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
+    let mut currentPeer: *mut ENetPeer<S>;
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
-    {
-        if !((*currentPeer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint) {
+    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+        if (*currentPeer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint {
             enet_peer_send(currentPeer, channelID, packet);
         }
         currentPeer = currentPeer.offset(1);
@@ -1998,13 +1874,13 @@ pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
     }
 }
 pub(crate) unsafe fn enet_host_compress<S: Socket>(
-    mut host: *mut ENetHost<S>,
+    host: *mut ENetHost<S>,
     compressor: Option<Box<dyn Compressor>>,
 ) {
     *(*host).compressor.assume_init_mut() = compressor;
 }
 pub(crate) unsafe fn enet_host_channel_limit<S: Socket>(
-    mut host: *mut ENetHost<S>,
+    host: *mut ENetHost<S>,
     mut channelLimit: size_t,
 ) {
     if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t {
@@ -2015,28 +1891,28 @@ pub(crate) unsafe fn enet_host_channel_limit<S: Socket>(
     (*host).channelLimit = channelLimit;
 }
 pub(crate) unsafe fn enet_host_bandwidth_limit<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut incomingBandwidth: enet_uint32,
-    mut outgoingBandwidth: enet_uint32,
+    host: *mut ENetHost<S>,
+    incomingBandwidth: enet_uint32,
+    outgoingBandwidth: enet_uint32,
 ) {
     (*host).incomingBandwidth = incomingBandwidth;
     (*host).outgoingBandwidth = outgoingBandwidth;
     (*host).recalculateBandwidthLimits = 1 as c_int;
 }
-pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENetHost<S>) {
-    let mut timeCurrent: enet_uint32 = enet_time_get(host);
-    let mut elapsedTime: enet_uint32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
+pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost<S>) {
+    let timeCurrent: enet_uint32 = enet_time_get(host);
+    let elapsedTime: enet_uint32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
     let mut peersRemaining: enet_uint32 = (*host).connectedPeers as enet_uint32;
     let mut dataTotal: enet_uint32 = !(0 as c_int) as enet_uint32;
     let mut bandwidth: enet_uint32 = !(0 as c_int) as enet_uint32;
-    let mut throttle: enet_uint32 = 0 as c_int as enet_uint32;
+    let mut throttle: enet_uint32;
     let mut bandwidthLimit: enet_uint32 = 0 as c_int as enet_uint32;
     let mut needsAdjustment: c_int = if (*host).bandwidthLimitedPeers > 0 as c_int as size_t {
         1 as c_int
     } else {
         0 as c_int
     };
-    let mut peer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
+    let mut peer: *mut ENetPeer<S>;
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -2057,7 +1933,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENet
             .wrapping_mul(elapsedTime)
             .wrapping_div(1000 as c_int as c_uint);
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
+        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
             {
@@ -2077,8 +1953,8 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENet
                 .wrapping_div(dataTotal);
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
-            let mut peerBandwidth: enet_uint32 = 0;
+        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+            let peerBandwidth: enet_uint32;
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
                 || (*peer).incomingBandwidth == 0 as c_int as c_uint
@@ -2087,10 +1963,10 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENet
                 peerBandwidth = ((*peer).incomingBandwidth)
                     .wrapping_mul(elapsedTime)
                     .wrapping_div(1000 as c_int as c_uint);
-                if !(throttle
+                if throttle
                     .wrapping_mul((*peer).outgoingDataTotal)
                     .wrapping_div(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint)
-                    <= peerBandwidth)
+                    > peerBandwidth
                 {
                     (*peer).packetThrottleLimit = peerBandwidth
                         .wrapping_mul(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint)
@@ -2124,7 +2000,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENet
                 .wrapping_div(dataTotal);
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
+        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
                 || (*peer).outgoingBandwidthThrottleEpoch == timeCurrent)
@@ -2151,31 +2027,26 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENet
                 needsAdjustment = 0 as c_int;
                 bandwidthLimit = bandwidth.wrapping_div(peersRemaining);
                 peer = (*host).peers;
-                while peer
-                    < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
-                {
-                    if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
-                        && (*peer).state as c_uint
-                            != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
-                        || (*peer).incomingBandwidthThrottleEpoch == timeCurrent)
-                    {
-                        if !((*peer).outgoingBandwidth > 0 as c_int as c_uint
+                while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
+                    if !((*peer).incomingBandwidthThrottleEpoch == timeCurrent
+                        || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
+                            && (*peer).state as c_uint
+                                != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
+                        || (*peer).outgoingBandwidth > 0 as c_int as c_uint
                             && (*peer).outgoingBandwidth >= bandwidthLimit)
-                        {
-                            (*peer).incomingBandwidthThrottleEpoch = timeCurrent;
-                            needsAdjustment = 1 as c_int;
-                            peersRemaining = peersRemaining.wrapping_sub(1);
-                            bandwidth =
-                                (bandwidth as c_uint).wrapping_sub((*peer).outgoingBandwidth)
-                                    as enet_uint32 as enet_uint32;
-                        }
+                    {
+                        (*peer).incomingBandwidthThrottleEpoch = timeCurrent;
+                        needsAdjustment = 1 as c_int;
+                        peersRemaining = peersRemaining.wrapping_sub(1);
+                        bandwidth = (bandwidth as c_uint).wrapping_sub((*peer).outgoingBandwidth)
+                            as enet_uint32 as enet_uint32;
                     }
                     peer = peer.offset(1);
                 }
             }
         }
         peer = (*host).peers;
-        while peer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S> {
+        while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
             {
@@ -2191,8 +2062,8 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENet
                 }
                 enet_peer_queue_outgoing_command(
                     peer,
-                    &mut command,
-                    0 as *mut ENetPacket,
+                    &command,
+                    std::ptr::null_mut(),
                     0 as c_int as enet_uint32,
                     0 as c_int as enet_uint16,
                 );
@@ -2201,70 +2072,60 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(mut host: *mut ENet
         }
     }
 }
-pub(crate) unsafe fn enet_list_clear(mut list: *mut ENetList) {
+pub(crate) unsafe fn enet_list_clear(list: *mut ENetList) {
     (*list).sentinel.next = &mut (*list).sentinel;
     (*list).sentinel.previous = &mut (*list).sentinel;
 }
 pub(crate) unsafe fn enet_list_insert(
-    mut position: ENetListIterator,
-    mut data: *mut c_void,
+    position: ENetListIterator,
+    data: *mut c_void,
 ) -> ENetListIterator {
-    let mut result: ENetListIterator = data as ENetListIterator;
+    let result: ENetListIterator = data as ENetListIterator;
     (*result).previous = (*position).previous;
     (*result).next = position;
     (*(*result).previous).next = result;
     (*position).previous = result;
-    return result;
+    result
 }
-pub(crate) unsafe fn enet_list_remove(mut position: ENetListIterator) -> *mut c_void {
+pub(crate) unsafe fn enet_list_remove(position: ENetListIterator) -> *mut c_void {
     (*(*position).previous).next = (*position).next;
     (*(*position).next).previous = (*position).previous;
-    return position as *mut c_void;
+    position as *mut c_void
 }
 pub(crate) unsafe fn enet_list_move(
-    mut position: ENetListIterator,
-    mut dataFirst: *mut c_void,
-    mut dataLast: *mut c_void,
+    position: ENetListIterator,
+    dataFirst: *mut c_void,
+    dataLast: *mut c_void,
 ) -> ENetListIterator {
-    let mut first: ENetListIterator = dataFirst as ENetListIterator;
-    let mut last: ENetListIterator = dataLast as ENetListIterator;
+    let first: ENetListIterator = dataFirst as ENetListIterator;
+    let last: ENetListIterator = dataLast as ENetListIterator;
     (*(*first).previous).next = (*last).next;
     (*(*last).next).previous = (*first).previous;
     (*first).previous = (*position).previous;
     (*last).next = position;
     (*(*first).previous).next = first;
     (*position).previous = last;
-    return first;
-}
-pub(crate) unsafe fn enet_list_size(mut list: *mut ENetList) -> size_t {
-    let mut size: size_t = 0 as c_int as size_t;
-    let mut position: ENetListIterator = 0 as *mut ENetListNode;
-    position = (*list).sentinel.next;
-    while position != &mut (*list).sentinel as *mut ENetListNode {
-        size = size.wrapping_add(1);
-        position = (*position).next;
-    }
-    return size;
+    first
 }
 pub(crate) unsafe fn enet_packet_create(
-    mut data: *const c_void,
-    mut dataLength: size_t,
-    mut flags: enet_uint32,
+    data: *const c_void,
+    dataLength: size_t,
+    flags: enet_uint32,
 ) -> *mut ENetPacket {
-    let mut packet: *mut ENetPacket =
+    let packet: *mut ENetPacket =
         enet_malloc(::core::mem::size_of::<ENetPacket>() as size_t) as *mut ENetPacket;
     if packet.is_null() {
-        return 0 as *mut ENetPacket;
+        return std::ptr::null_mut();
     }
     if flags & ENET_PACKET_FLAG_NO_ALLOCATE as c_int as c_uint != 0 {
         (*packet).data = data as *mut enet_uint8;
     } else if dataLength <= 0 as c_int as size_t {
-        (*packet).data = 0 as *mut enet_uint8;
+        (*packet).data = std::ptr::null_mut();
     } else {
         (*packet).data = enet_malloc(dataLength) as *mut enet_uint8;
         if ((*packet).data).is_null() {
             enet_free(packet as *mut c_void);
-            return 0 as *mut ENetPacket;
+            return std::ptr::null_mut();
         }
         if !data.is_null() {
             _enet_memcpy((*packet).data as *mut c_void, data, dataLength);
@@ -2274,16 +2135,15 @@ pub(crate) unsafe fn enet_packet_create(
     (*packet).flags = flags;
     (*packet).dataLength = dataLength;
     (*packet).freeCallback = None;
-    (*packet).userData = 0 as *mut c_void;
-    return packet;
+    (*packet).userData = std::ptr::null_mut();
+    packet
 }
-pub(crate) unsafe fn enet_packet_destroy(mut packet: *mut ENetPacket) {
+pub(crate) unsafe fn enet_packet_destroy(packet: *mut ENetPacket) {
     if packet.is_null() {
         return;
     }
     if ((*packet).freeCallback).is_some() {
-        (Some(((*packet).freeCallback).expect("non-null function pointer")))
-            .expect("non-null function pointer")(packet);
+        ((*packet).freeCallback).expect("non-null function pointer")(packet);
     }
     if (*packet).flags & ENET_PACKET_FLAG_NO_ALLOCATE as c_int as c_uint == 0
         && !((*packet).data).is_null()
@@ -2292,32 +2152,7 @@ pub(crate) unsafe fn enet_packet_destroy(mut packet: *mut ENetPacket) {
     }
     enet_free(packet as *mut c_void);
 }
-pub(crate) unsafe fn enet_packet_resize(
-    mut packet: *mut ENetPacket,
-    mut dataLength: size_t,
-) -> c_int {
-    let mut newData: *mut enet_uint8 = 0 as *mut enet_uint8;
-    if dataLength <= (*packet).dataLength
-        || (*packet).flags & ENET_PACKET_FLAG_NO_ALLOCATE as c_int as c_uint != 0
-    {
-        (*packet).dataLength = dataLength;
-        return 0 as c_int;
-    }
-    newData = enet_malloc(dataLength) as *mut enet_uint8;
-    if newData.is_null() {
-        return -(1 as c_int);
-    }
-    _enet_memcpy(
-        newData as *mut c_void,
-        (*packet).data as *const c_void,
-        (*packet).dataLength,
-    );
-    enet_free((*packet).data as *mut c_void);
-    (*packet).data = newData;
-    (*packet).dataLength = dataLength;
-    return 0 as c_int;
-}
-static mut crcTable: [enet_uint32; 256] = [
+static mut CRC_TABLE: [enet_uint32; 256] = [
     0 as c_int as enet_uint32,
     0x77073096 as c_int as enet_uint32,
     0xee0e612c as c_uint,
@@ -2584,27 +2419,26 @@ pub(crate) unsafe extern "C" fn enet_crc32(
     loop {
         let fresh30 = bufferCount;
         bufferCount = bufferCount.wrapping_sub(1);
-        if !(fresh30 > 0 as c_int as size_t) {
+        if fresh30 <= 0 as c_int as size_t {
             break;
         }
         let mut data: *const enet_uint8 = (*buffers).data as *const enet_uint8;
-        let mut dataEnd: *const enet_uint8 =
-            &*data.offset((*buffers).dataLength as isize) as *const enet_uint8;
+        let dataEnd: *const enet_uint8 = &*data.add((*buffers).dataLength) as *const enet_uint8;
         while data < dataEnd {
             let fresh31 = data;
             data = data.offset(1);
             crc = crc >> 8 as c_int
-                ^ crcTable[(crc & 0xff as c_int as c_uint ^ *fresh31 as c_uint) as usize];
+                ^ CRC_TABLE[(crc & 0xff as c_int as c_uint ^ *fresh31 as c_uint) as usize];
         }
         buffers = buffers.offset(1);
     }
-    return htonl(!crc);
+    htonl(!crc)
 }
 pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut interval: enet_uint32,
-    mut acceleration: enet_uint32,
-    mut deceleration: enet_uint32,
+    peer: *mut ENetPeer<S>,
+    interval: enet_uint32,
+    acceleration: enet_uint32,
+    deceleration: enet_uint32,
 ) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
@@ -2625,15 +2459,15 @@ pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     command.throttleConfigure.packetThrottleDeceleration = htonl(deceleration);
     enet_peer_queue_outgoing_command(
         peer,
-        &mut command,
-        0 as *mut ENetPacket,
+        &command,
+        std::ptr::null_mut(),
         0 as c_int as enet_uint32,
         0 as c_int as enet_uint16,
     );
 }
 pub(crate) unsafe fn enet_peer_throttle<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut rtt: enet_uint32,
+    peer: *mut ENetPeer<S>,
+    rtt: enet_uint32,
 ) -> c_int {
     if (*peer).lastRoundTripTime <= (*peer).lastRoundTripTimeVariance {
         (*peer).packetThrottle = (*peer).packetThrottleLimit;
@@ -2645,30 +2479,26 @@ pub(crate) unsafe fn enet_peer_throttle<S: Socket>(
             (*peer).packetThrottle = (*peer).packetThrottleLimit;
         }
         return 1 as c_int;
-    } else {
-        if rtt
-            > ((*peer).lastRoundTripTime).wrapping_add(
-                (2 as c_int as c_uint).wrapping_mul((*peer).lastRoundTripTimeVariance),
-            )
-        {
-            if (*peer).packetThrottle > (*peer).packetThrottleDeceleration {
-                (*peer).packetThrottle = ((*peer).packetThrottle as c_uint)
-                    .wrapping_sub((*peer).packetThrottleDeceleration)
-                    as enet_uint32 as enet_uint32;
-            } else {
-                (*peer).packetThrottle = 0 as c_int as enet_uint32;
-            }
-            return -(1 as c_int);
+    } else if rtt
+        > ((*peer).lastRoundTripTime)
+            .wrapping_add((2 as c_int as c_uint).wrapping_mul((*peer).lastRoundTripTimeVariance))
+    {
+        if (*peer).packetThrottle > (*peer).packetThrottleDeceleration {
+            (*peer).packetThrottle = ((*peer).packetThrottle as c_uint)
+                .wrapping_sub((*peer).packetThrottleDeceleration)
+                as enet_uint32 as enet_uint32;
+        } else {
+            (*peer).packetThrottle = 0 as c_int as enet_uint32;
         }
+        return -(1 as c_int);
     }
-    return 0 as c_int;
+    0 as c_int
 }
 pub(crate) unsafe fn enet_peer_send<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut channelID: enet_uint8,
-    mut packet: *mut ENetPacket,
+    peer: *mut ENetPeer<S>,
+    channelID: enet_uint8,
+    packet: *mut ENetPacket,
 ) -> c_int {
-    let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -2676,14 +2506,14 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             reliableSequenceNumber: 0,
         },
     };
-    let mut fragmentLength: size_t = 0;
+    let mut fragmentLength: size_t;
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || channelID as size_t >= (*peer).channelCount
         || (*packet).dataLength > (*(*peer).host).maximumPacketSize
     {
         return -(1 as c_int);
     }
-    channel = &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
+    let channel = &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
     fragmentLength = ((*peer).mtu as size_t)
         .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>() as size_t)
         .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>() as size_t);
@@ -2693,22 +2523,21 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             as size_t as size_t;
     }
     if (*packet).dataLength > fragmentLength {
-        let mut fragmentCount: enet_uint32 = ((*packet).dataLength)
+        let fragmentCount: enet_uint32 = ((*packet).dataLength)
             .wrapping_add(fragmentLength)
             .wrapping_sub(1 as c_int as size_t)
-            .wrapping_div(fragmentLength)
-            as enet_uint32;
-        let mut fragmentNumber: enet_uint32 = 0;
-        let mut fragmentOffset: enet_uint32 = 0;
-        let mut commandNumber: enet_uint8 = 0;
-        let mut startSequenceNumber: enet_uint16 = 0;
+            .wrapping_div(fragmentLength) as enet_uint32;
+        let mut fragmentNumber: enet_uint32;
+        let mut fragmentOffset: enet_uint32;
+        let commandNumber: enet_uint8;
+        let startSequenceNumber: enet_uint16;
         let mut fragments: ENetList = ENetList {
             sentinel: ENetListNode {
-                next: 0 as *mut _ENetListNode,
-                previous: 0 as *mut _ENetListNode,
+                next: std::ptr::null_mut(),
+                previous: std::ptr::null_mut(),
             },
         };
-        let mut fragment: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
+        let mut fragment: *mut ENetOutgoingCommand;
         if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int as c_uint {
             return -(1 as c_int);
         }
@@ -2740,7 +2569,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>() as size_t)
                 as *mut ENetOutgoingCommand;
             if fragment.is_null() {
-                while !(fragments.sentinel.next == &mut fragments.sentinel as *mut ENetListNode) {
+                while fragments.sentinel.next != &mut fragments.sentinel as *mut ENetListNode {
                     fragment =
                         enet_list_remove(fragments.sentinel.next) as *mut ENetOutgoingCommand;
                     enet_free(fragment as *mut c_void);
@@ -2766,7 +2595,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
         (*packet).referenceCount = ((*packet).referenceCount as c_ulong)
             .wrapping_add(fragmentNumber as c_ulong) as size_t
             as size_t;
-        while !(fragments.sentinel.next == &mut fragments.sentinel as *mut ENetListNode) {
+        while fragments.sentinel.next != &mut fragments.sentinel as *mut ENetListNode {
             fragment = enet_list_remove(fragments.sentinel.next) as *mut ENetOutgoingCommand;
             enet_peer_setup_outgoing_command(peer, fragment);
         }
@@ -2794,7 +2623,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     }
     if (enet_peer_queue_outgoing_command(
         peer,
-        &mut command,
+        &command,
         packet,
         0 as c_int as enet_uint32,
         (*packet).dataLength as enet_uint16,
@@ -2803,25 +2632,23 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     {
         return -(1 as c_int);
     }
-    return 0 as c_int;
+    0 as c_int
 }
 pub(crate) unsafe fn enet_peer_receive<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut channelID: *mut enet_uint8,
+    peer: *mut ENetPeer<S>,
+    channelID: *mut enet_uint8,
 ) -> *mut ENetPacket {
-    let mut incomingCommand: *mut ENetIncomingCommand = 0 as *mut ENetIncomingCommand;
-    let mut packet: *mut ENetPacket = 0 as *mut ENetPacket;
     if (*peer).dispatchedCommands.sentinel.next
         == &mut (*peer).dispatchedCommands.sentinel as *mut ENetListNode
     {
-        return 0 as *mut ENetPacket;
+        return std::ptr::null_mut();
     }
-    incomingCommand =
+    let incomingCommand =
         enet_list_remove((*peer).dispatchedCommands.sentinel.next) as *mut ENetIncomingCommand;
     if !channelID.is_null() {
         *channelID = (*incomingCommand).command.header.channelID;
     }
-    packet = (*incomingCommand).packet;
+    let packet = (*incomingCommand).packet;
     (*packet).referenceCount = ((*packet).referenceCount).wrapping_sub(1);
     if !((*incomingCommand).fragments).is_null() {
         enet_free((*incomingCommand).fragments as *mut c_void);
@@ -2829,11 +2656,11 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     enet_free(incomingCommand as *mut c_void);
     (*peer).totalWaitingData =
         ((*peer).totalWaitingData as size_t).wrapping_sub((*packet).dataLength) as size_t as size_t;
-    return packet;
+    packet
 }
-unsafe fn enet_peer_reset_outgoing_commands(mut queue: *mut ENetList) {
-    let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
-    while !((*queue).sentinel.next == &mut (*queue).sentinel as *mut ENetListNode) {
+unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
+    let mut outgoingCommand: *mut ENetOutgoingCommand;
+    while (*queue).sentinel.next != &mut (*queue).sentinel as *mut ENetListNode {
         outgoingCommand = enet_list_remove((*queue).sentinel.next) as *mut ENetOutgoingCommand;
         if !((*outgoingCommand).packet).is_null() {
             (*(*outgoingCommand).packet).referenceCount =
@@ -2847,15 +2674,14 @@ unsafe fn enet_peer_reset_outgoing_commands(mut queue: *mut ENetList) {
 }
 unsafe fn enet_peer_remove_incoming_commands(
     mut _queue: *mut ENetList,
-    mut startCommand: ENetListIterator,
-    mut endCommand: ENetListIterator,
-    mut excludeCommand: *mut ENetIncomingCommand,
+    startCommand: ENetListIterator,
+    endCommand: ENetListIterator,
+    excludeCommand: *mut ENetIncomingCommand,
 ) {
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
+    let mut currentCommand: ENetListIterator;
     currentCommand = startCommand;
     while currentCommand != endCommand {
-        let mut incomingCommand: *mut ENetIncomingCommand =
-            currentCommand as *mut ENetIncomingCommand;
+        let incomingCommand: *mut ENetIncomingCommand = currentCommand as *mut ENetIncomingCommand;
         currentCommand = (*currentCommand).next;
         if incomingCommand == excludeCommand {
             continue;
@@ -2874,23 +2700,23 @@ unsafe fn enet_peer_remove_incoming_commands(
         enet_free(incomingCommand as *mut c_void);
     }
 }
-unsafe fn enet_peer_reset_incoming_commands(mut queue: *mut ENetList) {
+unsafe fn enet_peer_reset_incoming_commands(queue: *mut ENetList) {
     enet_peer_remove_incoming_commands(
         queue,
         (*queue).sentinel.next,
         &mut (*queue).sentinel,
-        0 as *mut ENetIncomingCommand,
+        std::ptr::null_mut(),
     );
 }
-pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(mut peer: *mut ENetPeer<S>) {
-    let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
+pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
+    let mut channel: *mut ENetChannel;
     if (*peer).flags as c_int & ENET_PEER_FLAG_NEEDS_DISPATCH as c_int != 0 {
         enet_list_remove(&mut (*peer).dispatchList);
         (*peer).flags =
             ((*peer).flags as c_int & !(ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)) as enet_uint16;
     }
-    while !((*peer).acknowledgements.sentinel.next
-        == &mut (*peer).acknowledgements.sentinel as *mut ENetListNode)
+    while (*peer).acknowledgements.sentinel.next
+        != &mut (*peer).acknowledgements.sentinel as *mut ENetListNode
     {
         enet_free(enet_list_remove((*peer).acknowledgements.sentinel.next));
     }
@@ -2900,19 +2726,17 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(mut peer: *mut ENetPeer<S
     enet_peer_reset_incoming_commands(&mut (*peer).dispatchedCommands);
     if !((*peer).channels).is_null() && (*peer).channelCount > 0 as c_int as size_t {
         channel = (*peer).channels;
-        while channel
-            < &mut *((*peer).channels).offset((*peer).channelCount as isize) as *mut ENetChannel
-        {
+        while channel < &mut *((*peer).channels).add((*peer).channelCount) as *mut ENetChannel {
             enet_peer_reset_incoming_commands(&mut (*channel).incomingReliableCommands);
             enet_peer_reset_incoming_commands(&mut (*channel).incomingUnreliableCommands);
             channel = channel.offset(1);
         }
         enet_free((*peer).channels as *mut c_void);
     }
-    (*peer).channels = 0 as *mut ENetChannel;
+    (*peer).channels = std::ptr::null_mut();
     (*peer).channelCount = 0 as c_int as size_t;
 }
-pub(crate) unsafe fn enet_peer_on_connect<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_on_connect<S: Socket>(peer: *mut ENetPeer<S>) {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
         && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -2923,7 +2747,7 @@ pub(crate) unsafe fn enet_peer_on_connect<S: Socket>(mut peer: *mut ENetPeer<S>)
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_add(1);
     }
 }
-pub(crate) unsafe fn enet_peer_on_disconnect<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_on_disconnect<S: Socket>(peer: *mut ENetPeer<S>) {
     if (*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
@@ -2934,7 +2758,7 @@ pub(crate) unsafe fn enet_peer_on_disconnect<S: Socket>(mut peer: *mut ENetPeer<
         (*(*peer).host).connectedPeers = ((*(*peer).host).connectedPeers).wrapping_sub(1);
     }
 }
-pub(crate) unsafe fn enet_peer_reset<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_reset<S: Socket>(peer: *mut ENetPeer<S>) {
     enet_peer_on_disconnect(peer);
     (*peer).outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as enet_uint16;
     (*peer).connectID = 0 as c_int as enet_uint32;
@@ -2989,7 +2813,7 @@ pub(crate) unsafe fn enet_peer_reset<S: Socket>(mut peer: *mut ENetPeer<S>) {
     );
     enet_peer_reset_queues(peer);
 }
-pub(crate) unsafe fn enet_peer_ping<S: Socket>(mut peer: *mut ENetPeer<S>) {
+pub(crate) unsafe fn enet_peer_ping<S: Socket>(peer: *mut ENetPeer<S>) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3006,15 +2830,15 @@ pub(crate) unsafe fn enet_peer_ping<S: Socket>(mut peer: *mut ENetPeer<S>) {
     command.header.channelID = 0xff as c_int as enet_uint8;
     enet_peer_queue_outgoing_command(
         peer,
-        &mut command,
-        0 as *mut ENetPacket,
+        &command,
+        std::ptr::null_mut(),
         0 as c_int as enet_uint32,
         0 as c_int as enet_uint16,
     );
 }
 pub(crate) unsafe fn enet_peer_ping_interval<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut pingInterval: enet_uint32,
+    peer: *mut ENetPeer<S>,
+    pingInterval: enet_uint32,
 ) {
     (*peer).pingInterval = if pingInterval != 0 {
         pingInterval
@@ -3023,10 +2847,10 @@ pub(crate) unsafe fn enet_peer_ping_interval<S: Socket>(
     };
 }
 pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut timeoutLimit: enet_uint32,
-    mut timeoutMinimum: enet_uint32,
-    mut timeoutMaximum: enet_uint32,
+    peer: *mut ENetPeer<S>,
+    timeoutLimit: enet_uint32,
+    timeoutMinimum: enet_uint32,
+    timeoutMaximum: enet_uint32,
 ) {
     (*peer).timeoutLimit = if timeoutLimit != 0 {
         timeoutLimit
@@ -3045,8 +2869,8 @@ pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
     };
 }
 pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut data: enet_uint32,
+    peer: *mut ENetPeer<S>,
+    data: enet_uint32,
 ) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
@@ -3069,8 +2893,8 @@ pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(
         command.disconnect.data = htonl(data);
         enet_peer_queue_outgoing_command(
             peer,
-            &mut command,
-            0 as *mut ENetPacket,
+            &command,
+            std::ptr::null_mut(),
             0 as c_int as enet_uint32,
             0 as c_int as enet_uint16,
         );
@@ -3078,10 +2902,7 @@ pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(
     }
     enet_peer_reset(peer);
 }
-pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut data: enet_uint32,
-) {
+pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, data: enet_uint32) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -3113,8 +2934,8 @@ pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(
     }
     enet_peer_queue_outgoing_command(
         peer,
-        &mut command,
-        0 as *mut ENetPacket,
+        &command,
+        std::ptr::null_mut(),
         0 as c_int as enet_uint32,
         0 as c_int as enet_uint16,
     );
@@ -3128,9 +2949,7 @@ pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(
         enet_peer_reset(peer);
     };
 }
-pub(crate) unsafe fn enet_peer_has_outgoing_commands<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-) -> c_int {
+pub(crate) unsafe fn enet_peer_has_outgoing_commands<S: Socket>(peer: *mut ENetPeer<S>) -> c_int {
     if (*peer).outgoingCommands.sentinel.next
         == &mut (*peer).outgoingCommands.sentinel as *mut ENetListNode
         && (*peer).outgoingSendReliableCommands.sentinel.next
@@ -3140,11 +2959,11 @@ pub(crate) unsafe fn enet_peer_has_outgoing_commands<S: Socket>(
     {
         return 0 as c_int;
     }
-    return 1 as c_int;
+    1 as c_int
 }
 pub(crate) unsafe fn enet_peer_disconnect_later<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut data: enet_uint32,
+    peer: *mut ENetPeer<S>,
+    data: enet_uint32,
 ) {
     if ((*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
@@ -3157,19 +2976,18 @@ pub(crate) unsafe fn enet_peer_disconnect_later<S: Socket>(
     };
 }
 pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut sentTime: enet_uint16,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    sentTime: enet_uint16,
 ) -> *mut ENetAcknowledgement {
-    let mut acknowledgement: *mut ENetAcknowledgement = 0 as *mut ENetAcknowledgement;
     if ((*command).header.channelID as size_t) < (*peer).channelCount {
-        let mut channel: *mut ENetChannel = &mut *((*peer).channels)
+        let channel: *mut ENetChannel = &mut *((*peer).channels)
             .offset((*command).header.channelID as isize)
             as *mut ENetChannel;
         let mut reliableWindow: enet_uint16 = ((*command).header.reliableSequenceNumber as c_int
             / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
             as enet_uint16;
-        let mut currentWindow: enet_uint16 = ((*channel).incomingReliableSequenceNumber as c_int
+        let currentWindow: enet_uint16 = ((*channel).incomingReliableSequenceNumber as c_int
             / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
             as enet_uint16;
         if ((*command).header.reliableSequenceNumber as c_int)
@@ -3183,13 +3001,13 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
             && reliableWindow as c_int
                 <= currentWindow as c_int + ENET_PEER_FREE_RELIABLE_WINDOWS as c_int
         {
-            return 0 as *mut ENetAcknowledgement;
+            return std::ptr::null_mut();
         }
     }
-    acknowledgement = enet_malloc(::core::mem::size_of::<ENetAcknowledgement>() as size_t)
+    let acknowledgement = enet_malloc(::core::mem::size_of::<ENetAcknowledgement>() as size_t)
         as *mut ENetAcknowledgement;
     if acknowledgement.is_null() {
-        return 0 as *mut ENetAcknowledgement;
+        return std::ptr::null_mut();
     }
     (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as c_ulong)
         .wrapping_add(::core::mem::size_of::<ENetProtocolAcknowledge>() as c_ulong)
@@ -3200,11 +3018,11 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
         &mut (*peer).acknowledgements.sentinel,
         acknowledgement as *mut c_void,
     );
-    return acknowledgement;
+    acknowledgement
 }
 pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut outgoingCommand: *mut ENetOutgoingCommand,
+    peer: *mut ENetPeer<S>,
+    outgoingCommand: *mut ENetOutgoingCommand,
 ) {
     (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as size_t).wrapping_add(
         (enet_protocol_command_size((*outgoingCommand).command.header.command))
@@ -3216,7 +3034,7 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
         (*outgoingCommand).reliableSequenceNumber = (*peer).outgoingReliableSequenceNumber;
         (*outgoingCommand).unreliableSequenceNumber = 0 as c_int as enet_uint16;
     } else {
-        let mut channel: *mut ENetChannel = &mut *((*peer).channels)
+        let channel: *mut ENetChannel = &mut *((*peer).channels)
             .offset((*outgoingCommand).command.header.channelID as isize)
             as *mut ENetChannel;
         if (*outgoingCommand).command.header.command as c_int
@@ -3282,17 +3100,17 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
     };
 }
 pub(crate) unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut packet: *mut ENetPacket,
-    mut offset: enet_uint32,
-    mut length: enet_uint16,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    packet: *mut ENetPacket,
+    offset: enet_uint32,
+    length: enet_uint16,
 ) -> *mut ENetOutgoingCommand {
-    let mut outgoingCommand: *mut ENetOutgoingCommand =
-        enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>() as size_t)
-            as *mut ENetOutgoingCommand;
+    let outgoingCommand: *mut ENetOutgoingCommand = enet_malloc(::core::mem::size_of::<
+        ENetOutgoingCommand,
+    >() as size_t) as *mut ENetOutgoingCommand;
     if outgoingCommand.is_null() {
-        return 0 as *mut ENetOutgoingCommand;
+        return std::ptr::null_mut();
     }
     (*outgoingCommand).command = *command;
     (*outgoingCommand).fragmentOffset = offset;
@@ -3302,27 +3120,25 @@ pub(crate) unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
         (*packet).referenceCount = ((*packet).referenceCount).wrapping_add(1);
     }
     enet_peer_setup_outgoing_command(peer, outgoingCommand);
-    return outgoingCommand;
+    outgoingCommand
 }
 pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut channel: *mut ENetChannel,
-    mut queuedCommand: *mut ENetIncomingCommand,
+    peer: *mut ENetPeer<S>,
+    channel: *mut ENetChannel,
+    queuedCommand: *mut ENetIncomingCommand,
 ) {
-    let mut droppedCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut startCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
+    let mut droppedCommand: ENetListIterator;
+    let mut startCommand: ENetListIterator;
+    let mut currentCommand: ENetListIterator;
     let mut current_block_22: u64;
     currentCommand = (*channel).incomingUnreliableCommands.sentinel.next;
     startCommand = currentCommand;
     droppedCommand = startCommand;
     while currentCommand != &mut (*channel).incomingUnreliableCommands.sentinel as *mut ENetListNode
     {
-        let mut incomingCommand: *mut ENetIncomingCommand =
-            currentCommand as *mut ENetIncomingCommand;
-        if !((*incomingCommand).command.header.command as c_int
-            & ENET_PROTOCOL_COMMAND_MASK as c_int
-            == ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int)
+        let incomingCommand: *mut ENetIncomingCommand = currentCommand as *mut ENetIncomingCommand;
+        if (*incomingCommand).command.header.command as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int
+            != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int
         {
             if (*incomingCommand).reliableSequenceNumber as c_int
                 == (*channel).incomingReliableSequenceNumber as c_int
@@ -3358,7 +3174,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                     as c_int
                     / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
                     as enet_uint16;
-                let mut currentWindow: enet_uint16 = ((*channel).incomingReliableSequenceNumber
+                let currentWindow: enet_uint16 = ((*channel).incomingReliableSequenceNumber
                     as c_int
                     / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
                     as enet_uint16;
@@ -3427,15 +3243,14 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
     );
 }
 pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut channel: *mut ENetChannel,
-    mut queuedCommand: *mut ENetIncomingCommand,
+    peer: *mut ENetPeer<S>,
+    channel: *mut ENetChannel,
+    queuedCommand: *mut ENetIncomingCommand,
 ) {
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
+    let mut currentCommand: ENetListIterator;
     currentCommand = (*channel).incomingReliableCommands.sentinel.next;
     while currentCommand != &mut (*channel).incomingReliableCommands.sentinel as *mut ENetListNode {
-        let mut incomingCommand: *mut ENetIncomingCommand =
-            currentCommand as *mut ENetIncomingCommand;
+        let incomingCommand: *mut ENetIncomingCommand = currentCommand as *mut ENetIncomingCommand;
         if (*incomingCommand).fragmentsRemaining > 0 as c_int as c_uint
             || (*incomingCommand).reliableSequenceNumber as c_int
                 != ((*channel).incomingReliableSequenceNumber as c_int + 1 as c_int) as enet_uint16
@@ -3469,22 +3284,22 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
         (*peer).flags =
             ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as enet_uint16;
     }
-    if !((*channel).incomingUnreliableCommands.sentinel.next
-        == &mut (*channel).incomingUnreliableCommands.sentinel as *mut ENetListNode)
+    if (*channel).incomingUnreliableCommands.sentinel.next
+        != &mut (*channel).incomingUnreliableCommands.sentinel as *mut ENetListNode
     {
         enet_peer_dispatch_incoming_unreliable_commands(peer, channel, queuedCommand);
     }
 }
 pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut data: *const c_void,
-    mut dataLength: size_t,
-    mut flags: enet_uint32,
-    mut fragmentCount: enet_uint32,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    data: *const c_void,
+    dataLength: size_t,
+    flags: enet_uint32,
+    fragmentCount: enet_uint32,
 ) -> *mut ENetIncomingCommand {
     let mut current_block: u64;
-    static mut dummyCommand: ENetIncomingCommand = ENetIncomingCommand {
+    static mut DUMMY_COMMAND: ENetIncomingCommand = ENetIncomingCommand {
         incomingCommandList: ENetListNode {
             next: 0 as *mut _ENetListNode,
             previous: 0 as *mut _ENetListNode,
@@ -3503,15 +3318,15 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         fragments: 0 as *const enet_uint32 as *mut enet_uint32,
         packet: 0 as *const ENetPacket as *mut ENetPacket,
     };
-    let mut channel: *mut ENetChannel =
+    let channel: *mut ENetChannel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
     let mut unreliableSequenceNumber: enet_uint32 = 0 as c_int as enet_uint32;
     let mut reliableSequenceNumber: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut reliableWindow: enet_uint16 = 0;
-    let mut currentWindow: enet_uint16 = 0;
-    let mut incomingCommand: *mut ENetIncomingCommand = 0 as *mut ENetIncomingCommand;
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut packet: *mut ENetPacket = 0 as *mut ENetPacket;
+    let mut reliableWindow: enet_uint16;
+    let currentWindow: enet_uint16;
+    let mut incomingCommand: *mut ENetIncomingCommand;
+    let mut currentCommand: ENetListIterator = std::ptr::null_mut();
+    let mut packet: *mut ENetPacket = std::ptr::null_mut();
     if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint {
         current_block = 9207730764507465628;
     } else {
@@ -3560,9 +3375,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 currentCommand =
                                     (*channel).incomingReliableCommands.sentinel.previous;
                                 loop {
-                                    if !(currentCommand
-                                        != &mut (*channel).incomingReliableCommands.sentinel
-                                            as *mut ENetListNode)
+                                    if currentCommand
+                                        == &mut (*channel).incomingReliableCommands.sentinel
+                                            as *mut ENetListNode
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -3587,24 +3402,20 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         }
                                         current_block = 8457315219000651999;
                                     }
-                                    match current_block {
-                                        8457315219000651999 => {
-                                            if (*incomingCommand).reliableSequenceNumber as c_uint
-                                                <= reliableSequenceNumber
+                                    if let 8457315219000651999 = current_block {
+                                        if (*incomingCommand).reliableSequenceNumber as c_uint
+                                            <= reliableSequenceNumber
+                                        {
+                                            if ((*incomingCommand).reliableSequenceNumber as c_uint)
+                                                < reliableSequenceNumber
                                             {
-                                                if ((*incomingCommand).reliableSequenceNumber
-                                                    as c_uint)
-                                                    < reliableSequenceNumber
-                                                {
-                                                    current_block = 7746103178988627676;
-                                                    break;
-                                                } else {
-                                                    current_block = 9207730764507465628;
-                                                    break;
-                                                }
+                                                current_block = 7746103178988627676;
+                                                break;
+                                            } else {
+                                                current_block = 9207730764507465628;
+                                                break;
                                             }
                                         }
-                                        _ => {}
                                     }
                                     currentCommand = (*currentCommand).previous;
                                 }
@@ -3624,17 +3435,17 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 currentCommand =
                                     (*channel).incomingUnreliableCommands.sentinel.previous;
                                 loop {
-                                    if !(currentCommand
-                                        != &mut (*channel).incomingUnreliableCommands.sentinel
-                                            as *mut ENetListNode)
+                                    if currentCommand
+                                        == &mut (*channel).incomingUnreliableCommands.sentinel
+                                            as *mut ENetListNode
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
                                     incomingCommand = currentCommand as *mut ENetIncomingCommand;
-                                    if !((*command).header.command as c_int
+                                    if (*command).header.command as c_int
                                         & ENET_PROTOCOL_COMMAND_MASK as c_int
-                                        == ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int)
+                                        != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int
                                     {
                                         if reliableSequenceNumber
                                             >= (*channel).incomingReliableSequenceNumber as c_uint
@@ -3666,25 +3477,22 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     current_block = 7746103178988627676;
                                                     break;
                                                 }
-                                                if !((*incomingCommand).reliableSequenceNumber
+                                                if (*incomingCommand).reliableSequenceNumber
                                                     as c_uint
-                                                    > reliableSequenceNumber)
-                                                {
-                                                    if (*incomingCommand).unreliableSequenceNumber
+                                                    <= reliableSequenceNumber
+                                                    && (*incomingCommand).unreliableSequenceNumber
                                                         as c_uint
                                                         <= unreliableSequenceNumber
+                                                {
+                                                    if ((*incomingCommand).unreliableSequenceNumber
+                                                        as c_uint)
+                                                        < unreliableSequenceNumber
                                                     {
-                                                        if ((*incomingCommand)
-                                                            .unreliableSequenceNumber
-                                                            as c_uint)
-                                                            < unreliableSequenceNumber
-                                                        {
-                                                            current_block = 7746103178988627676;
-                                                            break;
-                                                        } else {
-                                                            current_block = 9207730764507465628;
-                                                            break;
-                                                        }
+                                                        current_block = 7746103178988627676;
+                                                        break;
+                                                    } else {
+                                                        current_block = 9207730764507465628;
+                                                        break;
                                                     }
                                                 }
                                             }
@@ -3722,7 +3530,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incomingCommand).fragmentCount = fragmentCount;
                                         (*incomingCommand).fragmentsRemaining = fragmentCount;
                                         (*incomingCommand).packet = packet;
-                                        (*incomingCommand).fragments = 0 as *mut enet_uint32;
+                                        (*incomingCommand).fragments = std::ptr::null_mut();
                                         if fragmentCount > 0 as c_int as c_uint {
                                             if fragmentCount
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int
@@ -3822,9 +3630,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 currentCommand =
                                     (*channel).incomingReliableCommands.sentinel.previous;
                                 loop {
-                                    if !(currentCommand
-                                        != &mut (*channel).incomingReliableCommands.sentinel
-                                            as *mut ENetListNode)
+                                    if currentCommand
+                                        == &mut (*channel).incomingReliableCommands.sentinel
+                                            as *mut ENetListNode
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -3849,24 +3657,20 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         }
                                         current_block = 8457315219000651999;
                                     }
-                                    match current_block {
-                                        8457315219000651999 => {
-                                            if (*incomingCommand).reliableSequenceNumber as c_uint
-                                                <= reliableSequenceNumber
+                                    if let 8457315219000651999 = current_block {
+                                        if (*incomingCommand).reliableSequenceNumber as c_uint
+                                            <= reliableSequenceNumber
+                                        {
+                                            if ((*incomingCommand).reliableSequenceNumber as c_uint)
+                                                < reliableSequenceNumber
                                             {
-                                                if ((*incomingCommand).reliableSequenceNumber
-                                                    as c_uint)
-                                                    < reliableSequenceNumber
-                                                {
-                                                    current_block = 7746103178988627676;
-                                                    break;
-                                                } else {
-                                                    current_block = 9207730764507465628;
-                                                    break;
-                                                }
+                                                current_block = 7746103178988627676;
+                                                break;
+                                            } else {
+                                                current_block = 9207730764507465628;
+                                                break;
                                             }
                                         }
-                                        _ => {}
                                     }
                                     currentCommand = (*currentCommand).previous;
                                 }
@@ -3886,17 +3690,17 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 currentCommand =
                                     (*channel).incomingUnreliableCommands.sentinel.previous;
                                 loop {
-                                    if !(currentCommand
-                                        != &mut (*channel).incomingUnreliableCommands.sentinel
-                                            as *mut ENetListNode)
+                                    if currentCommand
+                                        == &mut (*channel).incomingUnreliableCommands.sentinel
+                                            as *mut ENetListNode
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
                                     incomingCommand = currentCommand as *mut ENetIncomingCommand;
-                                    if !((*command).header.command as c_int
+                                    if (*command).header.command as c_int
                                         & ENET_PROTOCOL_COMMAND_MASK as c_int
-                                        == ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int)
+                                        != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int
                                     {
                                         if reliableSequenceNumber
                                             >= (*channel).incomingReliableSequenceNumber as c_uint
@@ -3928,25 +3732,22 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     current_block = 7746103178988627676;
                                                     break;
                                                 }
-                                                if !((*incomingCommand).reliableSequenceNumber
+                                                if (*incomingCommand).reliableSequenceNumber
                                                     as c_uint
-                                                    > reliableSequenceNumber)
-                                                {
-                                                    if (*incomingCommand).unreliableSequenceNumber
+                                                    <= reliableSequenceNumber
+                                                    && (*incomingCommand).unreliableSequenceNumber
                                                         as c_uint
                                                         <= unreliableSequenceNumber
+                                                {
+                                                    if ((*incomingCommand).unreliableSequenceNumber
+                                                        as c_uint)
+                                                        < unreliableSequenceNumber
                                                     {
-                                                        if ((*incomingCommand)
-                                                            .unreliableSequenceNumber
-                                                            as c_uint)
-                                                            < unreliableSequenceNumber
-                                                        {
-                                                            current_block = 7746103178988627676;
-                                                            break;
-                                                        } else {
-                                                            current_block = 9207730764507465628;
-                                                            break;
-                                                        }
+                                                        current_block = 7746103178988627676;
+                                                        break;
+                                                    } else {
+                                                        current_block = 9207730764507465628;
+                                                        break;
                                                     }
                                                 }
                                             }
@@ -3984,7 +3785,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incomingCommand).fragmentCount = fragmentCount;
                                         (*incomingCommand).fragmentsRemaining = fragmentCount;
                                         (*incomingCommand).packet = packet;
-                                        (*incomingCommand).fragments = 0 as *mut enet_uint32;
+                                        (*incomingCommand).fragments = std::ptr::null_mut();
                                         if fragmentCount > 0 as c_int as c_uint {
                                             if fragmentCount
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int
@@ -4084,9 +3885,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 currentCommand =
                                     (*channel).incomingReliableCommands.sentinel.previous;
                                 loop {
-                                    if !(currentCommand
-                                        != &mut (*channel).incomingReliableCommands.sentinel
-                                            as *mut ENetListNode)
+                                    if currentCommand
+                                        == &mut (*channel).incomingReliableCommands.sentinel
+                                            as *mut ENetListNode
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -4111,24 +3912,20 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         }
                                         current_block = 8457315219000651999;
                                     }
-                                    match current_block {
-                                        8457315219000651999 => {
-                                            if (*incomingCommand).reliableSequenceNumber as c_uint
-                                                <= reliableSequenceNumber
+                                    if let 8457315219000651999 = current_block {
+                                        if (*incomingCommand).reliableSequenceNumber as c_uint
+                                            <= reliableSequenceNumber
+                                        {
+                                            if ((*incomingCommand).reliableSequenceNumber as c_uint)
+                                                < reliableSequenceNumber
                                             {
-                                                if ((*incomingCommand).reliableSequenceNumber
-                                                    as c_uint)
-                                                    < reliableSequenceNumber
-                                                {
-                                                    current_block = 7746103178988627676;
-                                                    break;
-                                                } else {
-                                                    current_block = 9207730764507465628;
-                                                    break;
-                                                }
+                                                current_block = 7746103178988627676;
+                                                break;
+                                            } else {
+                                                current_block = 9207730764507465628;
+                                                break;
                                             }
                                         }
-                                        _ => {}
                                     }
                                     currentCommand = (*currentCommand).previous;
                                 }
@@ -4148,17 +3945,17 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 currentCommand =
                                     (*channel).incomingUnreliableCommands.sentinel.previous;
                                 loop {
-                                    if !(currentCommand
-                                        != &mut (*channel).incomingUnreliableCommands.sentinel
-                                            as *mut ENetListNode)
+                                    if currentCommand
+                                        == &mut (*channel).incomingUnreliableCommands.sentinel
+                                            as *mut ENetListNode
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
                                     incomingCommand = currentCommand as *mut ENetIncomingCommand;
-                                    if !((*command).header.command as c_int
+                                    if (*command).header.command as c_int
                                         & ENET_PROTOCOL_COMMAND_MASK as c_int
-                                        == ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int)
+                                        != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int
                                     {
                                         if reliableSequenceNumber
                                             >= (*channel).incomingReliableSequenceNumber as c_uint
@@ -4190,25 +3987,22 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     current_block = 7746103178988627676;
                                                     break;
                                                 }
-                                                if !((*incomingCommand).reliableSequenceNumber
+                                                if (*incomingCommand).reliableSequenceNumber
                                                     as c_uint
-                                                    > reliableSequenceNumber)
-                                                {
-                                                    if (*incomingCommand).unreliableSequenceNumber
+                                                    <= reliableSequenceNumber
+                                                    && (*incomingCommand).unreliableSequenceNumber
                                                         as c_uint
                                                         <= unreliableSequenceNumber
+                                                {
+                                                    if ((*incomingCommand).unreliableSequenceNumber
+                                                        as c_uint)
+                                                        < unreliableSequenceNumber
                                                     {
-                                                        if ((*incomingCommand)
-                                                            .unreliableSequenceNumber
-                                                            as c_uint)
-                                                            < unreliableSequenceNumber
-                                                        {
-                                                            current_block = 7746103178988627676;
-                                                            break;
-                                                        } else {
-                                                            current_block = 9207730764507465628;
-                                                            break;
-                                                        }
+                                                        current_block = 7746103178988627676;
+                                                        break;
+                                                    } else {
+                                                        current_block = 9207730764507465628;
+                                                        break;
                                                     }
                                                 }
                                             }
@@ -4246,7 +4040,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incomingCommand).fragmentCount = fragmentCount;
                                         (*incomingCommand).fragmentsRemaining = fragmentCount;
                                         (*incomingCommand).packet = packet;
-                                        (*incomingCommand).fragments = 0 as *mut enet_uint32;
+                                        (*incomingCommand).fragments = std::ptr::null_mut();
                                         if fragmentCount > 0 as c_int as c_uint {
                                             if fragmentCount
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int
@@ -4336,23 +4130,20 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
             },
         }
     }
-    match current_block {
-        9207730764507465628 => {
-            if !(fragmentCount > 0 as c_int as c_uint) {
-                if !packet.is_null() && (*packet).referenceCount == 0 as c_int as size_t {
-                    enet_packet_destroy(packet);
-                }
-                return &mut dummyCommand;
+    if let 9207730764507465628 = current_block {
+        if fragmentCount <= 0 as c_int as c_uint {
+            if !packet.is_null() && (*packet).referenceCount == 0 as c_int as size_t {
+                enet_packet_destroy(packet);
             }
+            return &mut DUMMY_COMMAND;
         }
-        _ => {}
     }
     if !packet.is_null() && (*packet).referenceCount == 0 as c_int as size_t {
         enet_packet_destroy(packet);
     }
-    return 0 as *mut ENetIncomingCommand;
+    std::ptr::null_mut()
 }
-static mut commandSizes: [size_t; 13] = [
+static mut COMMAND_SIZES: [size_t; 13] = [
     0 as c_int as size_t,
     ::core::mem::size_of::<ENetProtocolAcknowledge>() as size_t,
     ::core::mem::size_of::<ENetProtocolConnect>() as size_t,
@@ -4367,13 +4158,13 @@ static mut commandSizes: [size_t; 13] = [
     ::core::mem::size_of::<ENetProtocolThrottleConfigure>() as size_t,
     ::core::mem::size_of::<ENetProtocolSendFragment>() as size_t,
 ];
-pub(crate) unsafe fn enet_protocol_command_size(mut commandNumber: enet_uint8) -> size_t {
-    return commandSizes[(commandNumber as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int) as usize];
+pub(crate) unsafe fn enet_protocol_command_size(commandNumber: enet_uint8) -> size_t {
+    COMMAND_SIZES[(commandNumber as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int) as usize]
 }
 unsafe fn enet_protocol_change_state<S: Socket>(
     mut _host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut state: ENetPeerState,
+    peer: *mut ENetPeer<S>,
+    state: ENetPeerState,
 ) {
     if state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
@@ -4385,9 +4176,9 @@ unsafe fn enet_protocol_change_state<S: Socket>(
     (*peer).state = state;
 }
 unsafe fn enet_protocol_dispatch_state<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut state: ENetPeerState,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    state: ENetPeerState,
 ) {
     enet_protocol_change_state(host, peer, state);
     if (*peer).flags as c_int & ENET_PEER_FLAG_NEEDS_DISPATCH as c_int == 0 {
@@ -4400,13 +4191,13 @@ unsafe fn enet_protocol_dispatch_state<S: Socket>(
     }
 }
 unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
 ) -> c_int {
-    while !((*host).dispatchQueue.sentinel.next
-        == &mut (*host).dispatchQueue.sentinel as *mut ENetListNode)
+    while (*host).dispatchQueue.sentinel.next
+        != &mut (*host).dispatchQueue.sentinel as *mut ENetListNode
     {
-        let mut peer: *mut ENetPeer<S> =
+        let peer: *mut ENetPeer<S> =
             enet_list_remove((*host).dispatchQueue.sentinel.next) as *mut ENetPeer<S>;
         (*peer).flags =
             ((*peer).flags as c_int & !(ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)) as enet_uint16;
@@ -4438,8 +4229,8 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
                 }
                 (*event).type_0 = ENET_EVENT_TYPE_RECEIVE;
                 (*event).peer = peer;
-                if !((*peer).dispatchedCommands.sentinel.next
-                    == &mut (*peer).dispatchedCommands.sentinel as *mut ENetListNode)
+                if (*peer).dispatchedCommands.sentinel.next
+                    != &mut (*peer).dispatchedCommands.sentinel as *mut ENetListNode
                 {
                     (*peer).flags = ((*peer).flags as c_int
                         | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)
@@ -4454,12 +4245,12 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
             _ => {}
         }
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_notify_connect<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    event: *mut ENetEvent<S>,
 ) {
     (*host).recalculateBandwidthLimits = 1 as c_int;
     if !event.is_null() {
@@ -4480,9 +4271,9 @@ unsafe fn enet_protocol_notify_connect<S: Socket>(
     };
 }
 unsafe fn enet_protocol_notify_disconnect<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    event: *mut ENetEvent<S>,
 ) {
     if (*peer).state as c_uint >= ENET_PEER_STATE_CONNECTION_PENDING as c_int as c_uint {
         (*host).recalculateBandwidthLimits = 1 as c_int;
@@ -4502,10 +4293,10 @@ unsafe fn enet_protocol_notify_disconnect<S: Socket>(
     };
 }
 unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut sentUnreliableCommands: *mut ENetList,
+    peer: *mut ENetPeer<S>,
+    sentUnreliableCommands: *mut ENetList,
 ) {
-    let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
+    let mut outgoingCommand: *mut ENetOutgoingCommand;
     if (*sentUnreliableCommands).sentinel.next
         == &mut (*sentUnreliableCommands).sentinel as *mut ENetListNode
     {
@@ -4537,18 +4328,17 @@ unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
     }
 }
 unsafe fn enet_protocol_find_sent_reliable_command(
-    mut list: *mut ENetList,
-    mut reliableSequenceNumber: enet_uint16,
-    mut channelID: enet_uint8,
+    list: *mut ENetList,
+    reliableSequenceNumber: enet_uint16,
+    channelID: enet_uint8,
 ) -> *mut ENetOutgoingCommand {
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
+    let mut currentCommand: ENetListIterator;
     currentCommand = (*list).sentinel.next;
     while currentCommand != &mut (*list).sentinel as *mut ENetListNode {
-        let mut outgoingCommand: *mut ENetOutgoingCommand =
-            currentCommand as *mut ENetOutgoingCommand;
-        if !((*outgoingCommand).command.header.command as c_int
+        let outgoingCommand: *mut ENetOutgoingCommand = currentCommand as *mut ENetOutgoingCommand;
+        if (*outgoingCommand).command.header.command as c_int
             & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int
-            == 0)
+            != 0
         {
             if ((*outgoingCommand).sendAttempts as c_int) < 1 as c_int {
                 break;
@@ -4561,16 +4351,15 @@ unsafe fn enet_protocol_find_sent_reliable_command(
         }
         currentCommand = (*currentCommand).next;
     }
-    return 0 as *mut ENetOutgoingCommand;
+    std::ptr::null_mut()
 }
 unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
-    mut peer: *mut ENetPeer<S>,
-    mut reliableSequenceNumber: enet_uint16,
-    mut channelID: enet_uint8,
+    peer: *mut ENetPeer<S>,
+    reliableSequenceNumber: enet_uint16,
+    channelID: enet_uint8,
 ) -> ENetProtocolCommand {
-    let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut commandNumber: ENetProtocolCommand = ENET_PROTOCOL_COMMAND_NONE;
+    let mut outgoingCommand: *mut ENetOutgoingCommand = std::ptr::null_mut();
+    let mut currentCommand: ENetListIterator;
     let mut wasSent: c_int = 1 as c_int;
     currentCommand = (*peer).sentReliableCommands.sentinel.next;
     while currentCommand != &mut (*peer).sentReliableCommands.sentinel as *mut ENetListNode {
@@ -4601,9 +4390,9 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
         return ENET_PROTOCOL_COMMAND_NONE;
     }
     if (channelID as size_t) < (*peer).channelCount {
-        let mut channel: *mut ENetChannel =
+        let channel: *mut ENetChannel =
             &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
-        let mut reliableWindow: enet_uint16 = (reliableSequenceNumber as c_int
+        let reliableWindow: enet_uint16 = (reliableSequenceNumber as c_int
             / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
             as enet_uint16;
         if (*channel).reliableWindows[reliableWindow as usize] as c_int > 0 as c_int {
@@ -4616,7 +4405,7 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
             }
         }
     }
-    commandNumber = ((*outgoingCommand).command.header.command as c_int
+    let commandNumber = ((*outgoingCommand).command.header.command as c_int
         & ENET_PROTOCOL_COMMAND_MASK as c_int) as ENetProtocolCommand;
     enet_list_remove(&mut (*outgoingCommand).outgoingCommandList);
     if !((*outgoingCommand).packet).is_null() {
@@ -4642,22 +4431,22 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
         (*peer).sentReliableCommands.sentinel.next as *mut c_void as *mut ENetOutgoingCommand;
     (*peer).nextTimeout =
         ((*outgoingCommand).sentTime).wrapping_add((*outgoingCommand).roundTripTimeout);
-    return commandNumber;
+    commandNumber
 }
 unsafe fn enet_protocol_handle_connect<S: Socket>(
-    mut host: *mut ENetHost<S>,
+    host: *mut ENetHost<S>,
     mut _header: *mut ENetProtocolHeader,
-    mut command: *mut ENetProtocol,
+    command: *mut ENetProtocol,
 ) -> *mut ENetPeer<S> {
-    let mut incomingSessionID: enet_uint8 = 0;
-    let mut outgoingSessionID: enet_uint8 = 0;
-    let mut mtu: enet_uint32 = 0;
-    let mut windowSize: enet_uint32 = 0;
-    let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
-    let mut channelCount: size_t = 0;
+    let mut incomingSessionID: enet_uint8;
+    let mut outgoingSessionID: enet_uint8;
+    let mut mtu: enet_uint32;
+    let mut windowSize: enet_uint32;
+    let mut channel: *mut ENetChannel;
+    let mut channelCount: size_t;
     let mut duplicatePeers: size_t = 0 as c_int as size_t;
-    let mut currentPeer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
-    let mut peer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
+    let mut currentPeer: *mut ENetPeer<S>;
+    let mut peer: *mut ENetPeer<S> = std::ptr::null_mut();
     let mut verifyCommand: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -4669,11 +4458,10 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t
         || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t
     {
-        return 0 as *mut ENetPeer<S>;
+        return std::ptr::null_mut();
     }
     currentPeer = (*host).peers;
-    while currentPeer < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
-    {
+    while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
         if (*currentPeer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint {
             if peer.is_null() {
                 peer = currentPeer;
@@ -4694,14 +4482,14 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
                 .same((*host).receivedAddress.assume_init_ref().as_ref().unwrap())
                 && (*currentPeer).connectID == (*command).connect.connectID
             {
-                return 0 as *mut ENetPeer<S>;
+                return std::ptr::null_mut();
             }
             duplicatePeers = duplicatePeers.wrapping_add(1);
         }
         currentPeer = currentPeer.offset(1);
     }
     if peer.is_null() || duplicatePeers >= (*host).duplicatePeers {
-        return 0 as *mut ENetPeer<S>;
+        return std::ptr::null_mut();
     }
     if channelCount > (*host).channelLimit {
         channelCount = (*host).channelLimit;
@@ -4710,7 +4498,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as size_t))
             as *mut ENetChannel;
     if ((*peer).channels).is_null() {
-        return 0 as *mut ENetPeer<S>;
+        return std::ptr::null_mut();
     }
     (*peer).channelCount = channelCount;
     (*peer).state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
@@ -4736,11 +4524,11 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     } else {
         (*command).connect.incomingSessionID as c_int
     }) as enet_uint8;
-    incomingSessionID = (incomingSessionID as c_int + 1 as c_int
+    incomingSessionID = ((incomingSessionID as c_int + 1 as c_int)
         & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
         as enet_uint8;
     if incomingSessionID as c_int == (*peer).outgoingSessionID as c_int {
-        incomingSessionID = (incomingSessionID as c_int + 1 as c_int
+        incomingSessionID = ((incomingSessionID as c_int + 1 as c_int)
             & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int
                 >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
             as enet_uint8;
@@ -4751,18 +4539,18 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     } else {
         (*command).connect.outgoingSessionID as c_int
     }) as enet_uint8;
-    outgoingSessionID = (outgoingSessionID as c_int + 1 as c_int
+    outgoingSessionID = ((outgoingSessionID as c_int + 1 as c_int)
         & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
         as enet_uint8;
     if outgoingSessionID as c_int == (*peer).incomingSessionID as c_int {
-        outgoingSessionID = (outgoingSessionID as c_int + 1 as c_int
+        outgoingSessionID = ((outgoingSessionID as c_int + 1 as c_int)
             & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int
                 >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
             as enet_uint8;
     }
     (*peer).incomingSessionID = outgoingSessionID;
     channel = (*peer).channels;
-    while channel < &mut *((*peer).channels).offset(channelCount as isize) as *mut ENetChannel {
+    while channel < &mut *((*peer).channels).add(channelCount) as *mut ENetChannel {
         (*channel).outgoingReliableSequenceNumber = 0 as c_int as enet_uint16;
         (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
         (*channel).incomingReliableSequenceNumber = 0 as c_int as enet_uint16;
@@ -4849,33 +4637,31 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     verifyCommand.verifyConnect.connectID = (*peer).connectID;
     enet_peer_queue_outgoing_command(
         peer,
-        &mut verifyCommand,
-        0 as *mut ENetPacket,
+        &verifyCommand,
+        std::ptr::null_mut(),
         0 as c_int as enet_uint32,
         0 as c_int as enet_uint16,
     );
-    return peer;
+    peer
 }
 unsafe fn enet_protocol_handle_send_reliable<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut currentData: *mut *mut enet_uint8,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    currentData: *mut *mut enet_uint8,
 ) -> c_int {
-    let mut dataLength: size_t = 0;
     if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    dataLength = ntohs((*command).sendReliable.dataLength) as size_t;
-    *currentData = (*currentData).offset(dataLength as isize);
+    let dataLength = ntohs((*command).sendReliable.dataLength) as size_t;
+    *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
         || *currentData
-            > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-                as *mut enet_uint8
+            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
     {
         return -(1 as c_int);
     }
@@ -4893,35 +4679,32 @@ unsafe fn enet_protocol_handle_send_reliable<S: Socket>(
     {
         return -(1 as c_int);
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut currentData: *mut *mut enet_uint8,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    currentData: *mut *mut enet_uint8,
 ) -> c_int {
-    let mut unsequencedGroup: enet_uint32 = 0;
-    let mut index: enet_uint32 = 0;
-    let mut dataLength: size_t = 0;
+    let mut unsequencedGroup: enet_uint32;
     if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    dataLength = ntohs((*command).sendUnsequenced.dataLength) as size_t;
-    *currentData = (*currentData).offset(dataLength as isize);
+    let dataLength = ntohs((*command).sendUnsequenced.dataLength) as size_t;
+    *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
         || *currentData
-            > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-                as *mut enet_uint8
+            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
     {
         return -(1 as c_int);
     }
     unsequencedGroup = ntohs((*command).sendUnsequenced.unsequencedGroup) as enet_uint32;
-    index = unsequencedGroup.wrapping_rem(ENET_PEER_UNSEQUENCED_WINDOW_SIZE as c_int as c_uint);
+    let index = unsequencedGroup.wrapping_rem(ENET_PEER_UNSEQUENCED_WINDOW_SIZE as c_int as c_uint);
     if unsequencedGroup < (*peer).incomingUnsequencedGroup as c_uint {
         unsequencedGroup = (unsequencedGroup as c_uint).wrapping_add(0x10000 as c_int as c_uint)
             as enet_uint32 as enet_uint32;
@@ -4964,28 +4747,26 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     }
     (*peer).unsequencedWindow[index.wrapping_div(32 as c_int as c_uint) as usize] |=
         ((1 as c_int) << index.wrapping_rem(32 as c_int as c_uint)) as c_uint;
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_send_unreliable<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut currentData: *mut *mut enet_uint8,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    currentData: *mut *mut enet_uint8,
 ) -> c_int {
-    let mut dataLength: size_t = 0;
     if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    dataLength = ntohs((*command).sendUnreliable.dataLength) as size_t;
-    *currentData = (*currentData).offset(dataLength as isize);
+    let dataLength = ntohs((*command).sendUnreliable.dataLength) as size_t;
+    *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
         || *currentData
-            > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-                as *mut enet_uint8
+            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
     {
         return -(1 as c_int);
     }
@@ -5003,25 +4784,18 @@ unsafe fn enet_protocol_handle_send_unreliable<S: Socket>(
     {
         return -(1 as c_int);
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut currentData: *mut *mut enet_uint8,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    currentData: *mut *mut enet_uint8,
 ) -> c_int {
-    let mut fragmentNumber: enet_uint32 = 0;
-    let mut fragmentCount: enet_uint32 = 0;
-    let mut fragmentOffset: enet_uint32 = 0;
-    let mut fragmentLength: enet_uint32 = 0;
-    let mut startSequenceNumber: enet_uint32 = 0;
-    let mut totalLength: enet_uint32 = 0;
-    let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
-    let mut startWindow: enet_uint16 = 0;
-    let mut currentWindow: enet_uint16 = 0;
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut startCommand: *mut ENetIncomingCommand = 0 as *mut ENetIncomingCommand;
+    let mut fragmentLength: enet_uint32;
+    let mut startWindow: enet_uint16;
+    let mut currentCommand: ENetListIterator;
+    let mut startCommand: *mut ENetIncomingCommand = std::ptr::null_mut();
     if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
@@ -5034,18 +4808,17 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
         || fragmentLength as size_t > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
         || *currentData
-            > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-                as *mut enet_uint8
+            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
     {
         return -(1 as c_int);
     }
-    channel =
+    let channel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
-    startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as enet_uint32;
+    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as enet_uint32;
     startWindow = startSequenceNumber
         .wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as c_int as c_uint)
         as enet_uint16;
-    currentWindow = ((*channel).incomingReliableSequenceNumber as c_int
+    let currentWindow = ((*channel).incomingReliableSequenceNumber as c_int
         / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as enet_uint16;
     if startSequenceNumber < (*channel).incomingReliableSequenceNumber as c_uint {
         startWindow = (startWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as enet_uint16;
@@ -5056,10 +4829,10 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     {
         return 0 as c_int;
     }
-    fragmentNumber = ntohl((*command).sendFragment.fragmentNumber);
-    fragmentCount = ntohl((*command).sendFragment.fragmentCount);
-    fragmentOffset = ntohl((*command).sendFragment.fragmentOffset);
-    totalLength = ntohl((*command).sendFragment.totalLength);
+    let fragmentNumber = ntohl((*command).sendFragment.fragmentNumber);
+    let fragmentCount = ntohl((*command).sendFragment.fragmentCount);
+    let fragmentOffset = ntohl((*command).sendFragment.fragmentOffset);
+    let totalLength = ntohl((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int as c_uint
         || fragmentNumber >= fragmentCount
         || totalLength as size_t > (*host).maximumPacketSize
@@ -5072,8 +4845,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     let mut current_block_23: u64;
     currentCommand = (*channel).incomingReliableCommands.sentinel.previous;
     while currentCommand != &mut (*channel).incomingReliableCommands.sentinel as *mut ENetListNode {
-        let mut incomingCommand: *mut ENetIncomingCommand =
-            currentCommand as *mut ENetIncomingCommand;
+        let incomingCommand: *mut ENetIncomingCommand = currentCommand as *mut ENetIncomingCommand;
         if startSequenceNumber >= (*channel).incomingReliableSequenceNumber as c_uint {
             if ((*incomingCommand).reliableSequenceNumber as c_int)
                 < (*channel).incomingReliableSequenceNumber as c_int
@@ -5090,25 +4862,22 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
             }
             current_block_23 = 12147880666119273379;
         }
-        match current_block_23 {
-            12147880666119273379 => {
-                if (*incomingCommand).reliableSequenceNumber as c_uint <= startSequenceNumber {
-                    if ((*incomingCommand).reliableSequenceNumber as c_uint) < startSequenceNumber {
-                        break;
-                    }
-                    if (*incomingCommand).command.header.command as c_int
-                        & ENET_PROTOCOL_COMMAND_MASK as c_int
-                        != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT as c_int
-                        || totalLength as size_t != (*(*incomingCommand).packet).dataLength
-                        || fragmentCount != (*incomingCommand).fragmentCount
-                    {
-                        return -(1 as c_int);
-                    }
-                    startCommand = incomingCommand;
+        if let 12147880666119273379 = current_block_23 {
+            if (*incomingCommand).reliableSequenceNumber as c_uint <= startSequenceNumber {
+                if ((*incomingCommand).reliableSequenceNumber as c_uint) < startSequenceNumber {
                     break;
                 }
+                if (*incomingCommand).command.header.command as c_int
+                    & ENET_PROTOCOL_COMMAND_MASK as c_int
+                    != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT as c_int
+                    || totalLength as size_t != (*(*incomingCommand).packet).dataLength
+                    || fragmentCount != (*incomingCommand).fragmentCount
+                {
+                    return -(1 as c_int);
+                }
+                startCommand = incomingCommand;
+                break;
             }
-            _ => {}
         }
         currentCommand = (*currentCommand).previous;
     }
@@ -5117,8 +4886,8 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
         hostCommand.header.reliableSequenceNumber = startSequenceNumber as enet_uint16;
         startCommand = enet_peer_queue_incoming_command(
             peer,
-            &mut hostCommand,
-            0 as *const c_void,
+            &hostCommand,
+            std::ptr::null(),
             totalLength as size_t,
             ENET_PACKET_FLAG_RELIABLE as c_int as enet_uint32,
             fragmentCount,
@@ -5133,7 +4902,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
         == 0 as c_int as c_uint
     {
         (*startCommand).fragmentsRemaining = ((*startCommand).fragmentsRemaining).wrapping_sub(1);
-        let ref mut fresh32 = *((*startCommand).fragments)
+        let fresh32 = &mut *((*startCommand).fragments)
             .offset(fragmentNumber.wrapping_div(32 as c_int as c_uint) as isize);
         *fresh32 |= ((1 as c_int) << fragmentNumber.wrapping_rem(32 as c_int as c_uint)) as c_uint;
         if fragmentOffset.wrapping_add(fragmentLength) as size_t
@@ -5150,33 +4919,21 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
             fragmentLength as size_t,
         );
         if (*startCommand).fragmentsRemaining <= 0 as c_int as c_uint {
-            enet_peer_dispatch_incoming_reliable_commands(
-                peer,
-                channel,
-                0 as *mut ENetIncomingCommand,
-            );
+            enet_peer_dispatch_incoming_reliable_commands(peer, channel, std::ptr::null_mut());
         }
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
-    mut currentData: *mut *mut enet_uint8,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
+    currentData: *mut *mut enet_uint8,
 ) -> c_int {
-    let mut fragmentNumber: enet_uint32 = 0;
-    let mut fragmentCount: enet_uint32 = 0;
-    let mut fragmentOffset: enet_uint32 = 0;
-    let mut fragmentLength: enet_uint32 = 0;
-    let mut reliableSequenceNumber: enet_uint32 = 0;
-    let mut startSequenceNumber: enet_uint32 = 0;
-    let mut totalLength: enet_uint32 = 0;
-    let mut reliableWindow: enet_uint16 = 0;
-    let mut currentWindow: enet_uint16 = 0;
-    let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut startCommand: *mut ENetIncomingCommand = 0 as *mut ENetIncomingCommand;
+    let mut fragmentLength: enet_uint32;
+    let mut reliableWindow: enet_uint16;
+    let mut currentCommand: ENetListIterator;
+    let mut startCommand: *mut ENetIncomingCommand = std::ptr::null_mut();
     if (*command).header.channelID as size_t >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
@@ -5188,19 +4945,18 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     if fragmentLength as size_t > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
         || *currentData
-            > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-                as *mut enet_uint8
+            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
     {
         return -(1 as c_int);
     }
-    channel =
+    let channel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
-    reliableSequenceNumber = (*command).header.reliableSequenceNumber as enet_uint32;
-    startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as enet_uint32;
+    let reliableSequenceNumber = (*command).header.reliableSequenceNumber as enet_uint32;
+    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as enet_uint32;
     reliableWindow = reliableSequenceNumber
         .wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as c_int as c_uint)
         as enet_uint16;
-    currentWindow = ((*channel).incomingReliableSequenceNumber as c_int
+    let currentWindow = ((*channel).incomingReliableSequenceNumber as c_int
         / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as enet_uint16;
     if reliableSequenceNumber < (*channel).incomingReliableSequenceNumber as c_uint {
         reliableWindow =
@@ -5217,10 +4973,10 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     {
         return 0 as c_int;
     }
-    fragmentNumber = ntohl((*command).sendFragment.fragmentNumber);
-    fragmentCount = ntohl((*command).sendFragment.fragmentCount);
-    fragmentOffset = ntohl((*command).sendFragment.fragmentOffset);
-    totalLength = ntohl((*command).sendFragment.totalLength);
+    let fragmentNumber = ntohl((*command).sendFragment.fragmentNumber);
+    let fragmentCount = ntohl((*command).sendFragment.fragmentCount);
+    let fragmentOffset = ntohl((*command).sendFragment.fragmentOffset);
+    let totalLength = ntohl((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int as c_uint
         || fragmentNumber >= fragmentCount
         || totalLength as size_t > (*host).maximumPacketSize
@@ -5233,8 +4989,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     currentCommand = (*channel).incomingUnreliableCommands.sentinel.previous;
     while currentCommand != &mut (*channel).incomingUnreliableCommands.sentinel as *mut ENetListNode
     {
-        let mut incomingCommand: *mut ENetIncomingCommand =
-            currentCommand as *mut ENetIncomingCommand;
+        let incomingCommand: *mut ENetIncomingCommand = currentCommand as *mut ENetIncomingCommand;
         if reliableSequenceNumber >= (*channel).incomingReliableSequenceNumber as c_uint {
             if ((*incomingCommand).reliableSequenceNumber as c_int)
                 < (*channel).incomingReliableSequenceNumber as c_int
@@ -5251,33 +5006,27 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
             }
             current_block_26 = 1109700713171191020;
         }
-        match current_block_26 {
-            1109700713171191020 => {
-                if ((*incomingCommand).reliableSequenceNumber as c_uint) < reliableSequenceNumber {
+        if let 1109700713171191020 = current_block_26 {
+            if ((*incomingCommand).reliableSequenceNumber as c_uint) < reliableSequenceNumber {
+                break;
+            }
+            if (*incomingCommand).reliableSequenceNumber as c_uint <= reliableSequenceNumber
+                && (*incomingCommand).unreliableSequenceNumber as c_uint <= startSequenceNumber
+            {
+                if ((*incomingCommand).unreliableSequenceNumber as c_uint) < startSequenceNumber {
                     break;
                 }
-                if !((*incomingCommand).reliableSequenceNumber as c_uint > reliableSequenceNumber) {
-                    if (*incomingCommand).unreliableSequenceNumber as c_uint <= startSequenceNumber
-                    {
-                        if ((*incomingCommand).unreliableSequenceNumber as c_uint)
-                            < startSequenceNumber
-                        {
-                            break;
-                        }
-                        if (*incomingCommand).command.header.command as c_int
-                            & ENET_PROTOCOL_COMMAND_MASK as c_int
-                            != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT as c_int
-                            || totalLength as size_t != (*(*incomingCommand).packet).dataLength
-                            || fragmentCount != (*incomingCommand).fragmentCount
-                        {
-                            return -(1 as c_int);
-                        }
-                        startCommand = incomingCommand;
-                        break;
-                    }
+                if (*incomingCommand).command.header.command as c_int
+                    & ENET_PROTOCOL_COMMAND_MASK as c_int
+                    != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT as c_int
+                    || totalLength as size_t != (*(*incomingCommand).packet).dataLength
+                    || fragmentCount != (*incomingCommand).fragmentCount
+                {
+                    return -(1 as c_int);
                 }
+                startCommand = incomingCommand;
+                break;
             }
-            _ => {}
         }
         currentCommand = (*currentCommand).previous;
     }
@@ -5285,7 +5034,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
         startCommand = enet_peer_queue_incoming_command(
             peer,
             command,
-            0 as *const c_void,
+            std::ptr::null(),
             totalLength as size_t,
             ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT as c_int as enet_uint32,
             fragmentCount,
@@ -5300,7 +5049,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
         == 0 as c_int as c_uint
     {
         (*startCommand).fragmentsRemaining = ((*startCommand).fragmentsRemaining).wrapping_sub(1);
-        let ref mut fresh33 = *((*startCommand).fragments)
+        let fresh33 = &mut *((*startCommand).fragments)
             .offset(fragmentNumber.wrapping_div(32 as c_int as c_uint) as isize);
         *fresh33 |= ((1 as c_int) << fragmentNumber.wrapping_rem(32 as c_int as c_uint)) as c_uint;
         if fragmentOffset.wrapping_add(fragmentLength) as size_t
@@ -5317,18 +5066,14 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
             fragmentLength as size_t,
         );
         if (*startCommand).fragmentsRemaining <= 0 as c_int as c_uint {
-            enet_peer_dispatch_incoming_unreliable_commands(
-                peer,
-                channel,
-                0 as *mut ENetIncomingCommand,
-            );
+            enet_peer_dispatch_incoming_unreliable_commands(peer, channel, std::ptr::null_mut());
         }
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_ping<S: Socket>(
     mut _host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
+    peer: *mut ENetPeer<S>,
     mut _command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
@@ -5336,12 +5081,12 @@ unsafe fn enet_protocol_handle_ping<S: Socket>(
     {
         return -(1 as c_int);
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
         && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
@@ -5384,12 +5129,12 @@ unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
     } else if (*peer).windowSize > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as c_uint {
         (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_throttle_configure<S: Socket>(
     mut _host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
         && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
@@ -5401,12 +5146,12 @@ unsafe fn enet_protocol_handle_throttle_configure<S: Socket>(
         ntohl((*command).throttleConfigure.packetThrottleAcceleration);
     (*peer).packetThrottleDeceleration =
         ntohl((*command).throttleConfigure.packetThrottleDeceleration);
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_disconnect<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
 ) -> c_int {
     if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_ZOMBIE as c_int as c_uint
@@ -5437,18 +5182,16 @@ unsafe fn enet_protocol_handle_disconnect<S: Socket>(
     if (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECTED as c_int as c_uint {
         (*peer).eventData = ntohl((*command).disconnect.data);
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
 ) -> c_int {
-    let mut roundTripTime: enet_uint32 = 0;
-    let mut receivedSentTime: enet_uint32 = 0;
-    let mut receivedReliableSequenceNumber: enet_uint32 = 0;
-    let mut commandNumber: ENetProtocolCommand = ENET_PROTOCOL_COMMAND_NONE;
+    let mut roundTripTime: enet_uint32;
+    let mut receivedSentTime: enet_uint32;
     if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_ZOMBIE as c_int as c_uint
     {
@@ -5482,7 +5225,7 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
             .wrapping_sub(((*peer).roundTripTimeVariance).wrapping_div(4 as c_int as c_uint))
             as enet_uint32 as enet_uint32;
         if roundTripTime >= (*peer).roundTripTime {
-            let mut diff: enet_uint32 = roundTripTime.wrapping_sub((*peer).roundTripTime);
+            let diff: enet_uint32 = roundTripTime.wrapping_sub((*peer).roundTripTime);
             (*peer).roundTripTimeVariance = ((*peer).roundTripTimeVariance as c_uint)
                 .wrapping_add(diff.wrapping_div(4 as c_int as c_uint))
                 as enet_uint32 as enet_uint32;
@@ -5490,7 +5233,7 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
                 .wrapping_add(diff.wrapping_div(8 as c_int as c_uint))
                 as enet_uint32 as enet_uint32;
         } else {
-            let mut diff_0: enet_uint32 = ((*peer).roundTripTime).wrapping_sub(roundTripTime);
+            let diff_0: enet_uint32 = ((*peer).roundTripTime).wrapping_sub(roundTripTime);
             (*peer).roundTripTimeVariance = ((*peer).roundTripTimeVariance as c_uint)
                 .wrapping_add(diff_0.wrapping_div(4 as c_int as c_uint))
                 as enet_uint32 as enet_uint32;
@@ -5536,9 +5279,9 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
         1 as c_int as c_uint
     };
     (*peer).earliestTimeout = 0 as c_int as enet_uint32;
-    receivedReliableSequenceNumber =
+    let receivedReliableSequenceNumber =
         ntohs((*command).acknowledge.receivedReliableSequenceNumber) as enet_uint32;
-    commandNumber = enet_protocol_remove_sent_reliable_command(
+    let commandNumber = enet_protocol_remove_sent_reliable_command(
         peer,
         receivedReliableSequenceNumber as enet_uint16,
         (*command).header.channelID,
@@ -5563,21 +5306,20 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
         }
         _ => {}
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut command: *const ENetProtocol,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
+    peer: *mut ENetPeer<S>,
+    command: *const ENetProtocol,
 ) -> c_int {
-    let mut mtu: enet_uint32 = 0;
-    let mut windowSize: enet_uint32 = 0;
-    let mut channelCount: size_t = 0;
+    let mut mtu: enet_uint32;
+    let mut windowSize: enet_uint32;
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTING as c_int as c_uint {
         return 0 as c_int;
     }
-    channelCount = ntohl((*command).verifyConnect.channelCount) as size_t;
+    let channelCount = ntohl((*command).verifyConnect.channelCount) as size_t;
     if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t
         || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t
         || ntohl((*command).verifyConnect.packetThrottleInterval) != (*peer).packetThrottleInterval
@@ -5624,28 +5366,25 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     (*peer).incomingBandwidth = ntohl((*command).verifyConnect.incomingBandwidth);
     (*peer).outgoingBandwidth = ntohl((*command).verifyConnect.outgoingBandwidth);
     enet_protocol_notify_connect(host, peer, event);
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
 ) -> c_int {
-    let mut header: *mut ENetProtocolHeader = 0 as *mut ENetProtocolHeader;
-    let mut command: *mut ENetProtocol = 0 as *mut ENetProtocol;
-    let mut peer: *mut ENetPeer<S> = 0 as *mut ENetPeer<S>;
-    let mut currentData: *mut enet_uint8 = 0 as *mut enet_uint8;
-    let mut headerSize: size_t = 0;
-    let mut peerID: enet_uint16 = 0;
-    let mut flags: enet_uint16 = 0;
-    let mut sessionID: enet_uint8 = 0;
+    let mut command: *mut ENetProtocol;
+    let mut peer: *mut ENetPeer<S>;
+    let mut currentData: *mut enet_uint8;
+    let mut headerSize: size_t;
+    let mut peerID: enet_uint16;
     if (*host).receivedDataLength < 2 as size_t {
         return 0 as c_int;
     }
-    header = (*host).receivedData as *mut ENetProtocolHeader;
+    let header = (*host).receivedData as *mut ENetProtocolHeader;
     peerID = ntohs((*header).peerID);
-    sessionID = ((peerID as c_int & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int)
+    let sessionID = ((peerID as c_int & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int)
         >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int) as enet_uint8;
-    flags = (peerID as c_int & ENET_PROTOCOL_HEADER_FLAG_MASK as c_int) as enet_uint16;
+    let flags = (peerID as c_int & ENET_PROTOCOL_HEADER_FLAG_MASK as c_int) as enet_uint16;
     peerID = (peerID as c_int
         & !(ENET_PROTOCOL_HEADER_FLAG_MASK as c_int | ENET_PROTOCOL_HEADER_SESSION_MASK as c_int))
         as enet_uint16;
@@ -5660,7 +5399,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             as size_t as size_t;
     }
     if peerID as c_int == ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int {
-        peer = 0 as *mut ENetPeer<S>;
+        peer = std::ptr::null_mut();
     } else if peerID as size_t >= (*host).peerCount {
         return 0 as c_int;
     } else {
@@ -5686,21 +5425,20 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         }
     }
     if flags as c_int & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED as c_int != 0 {
-        let mut originalSize: size_t = 0;
         let Some(compressor) = (*host).compressor.assume_init_mut() else {
             return 0 as c_int;
         };
         let in_data = std::slice::from_raw_parts(
-            ((*host).receivedData).offset(headerSize as isize),
+            ((*host).receivedData).add(headerSize),
             ((*host).receivedDataLength).wrapping_sub(headerSize),
         );
         let out = std::slice::from_raw_parts_mut(
             ((*host).packetData[1 as c_int as usize])
                 .as_mut_ptr()
-                .offset(headerSize as isize),
+                .add(headerSize),
             (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize),
         );
-        originalSize = compressor.decompress(in_data, out);
+        let originalSize = compressor.decompress(in_data, out);
         if originalSize <= 0 as c_int as size_t
             || originalSize
                 > (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize)
@@ -5716,9 +5454,9 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         (*host).receivedDataLength = headerSize.wrapping_add(originalSize);
     }
     if let Some(checksum_fn) = (*host).checksum.assume_init_ref() {
-        let mut checksum_addr: *mut enet_uint8 = &mut *((*host).receivedData).offset(
-            headerSize.wrapping_sub(::core::mem::size_of::<enet_uint32>() as size_t) as isize,
-        ) as *mut enet_uint8;
+        let checksum_addr: *mut enet_uint8 = &mut *((*host).receivedData)
+            .add(headerSize.wrapping_sub(::core::mem::size_of::<enet_uint32>() as size_t))
+            as *mut enet_uint8;
         let mut desiredChecksum: enet_uint32 = 0;
         _enet_memcpy(
             &mut desiredChecksum as *mut enet_uint32 as *mut c_void,
@@ -5726,7 +5464,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             ::core::mem::size_of::<enet_uint32>(),
         );
         let mut buffer: ENetBuffer = ENetBuffer {
-            data: 0 as *mut c_void,
+            data: std::ptr::null_mut(),
             dataLength: 0,
         };
         let checksum = if !peer.is_null() {
@@ -5762,35 +5500,30 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             .wrapping_add((*host).receivedDataLength)
             as enet_uint32 as enet_uint32;
     }
-    currentData = ((*host).receivedData).offset(headerSize as isize);
+    currentData = ((*host).receivedData).add(headerSize);
     while currentData
-        < &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-            as *mut enet_uint8
+        < &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
     {
-        let mut commandNumber: enet_uint8 = 0;
-        let mut commandSize: size_t = 0;
         command = currentData as *mut ENetProtocol;
         if currentData
             .offset(::core::mem::size_of::<ENetProtocolCommandHeader>() as c_ulong as isize)
-            > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-                as *mut enet_uint8
+            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
         {
             break;
         }
-        commandNumber = ((*command).header.command as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int)
-            as enet_uint8;
+        let commandNumber = ((*command).header.command as c_int
+            & ENET_PROTOCOL_COMMAND_MASK as c_int) as enet_uint8;
         if commandNumber as c_int >= ENET_PROTOCOL_COMMAND_COUNT as c_int {
             break;
         }
-        commandSize = commandSizes[commandNumber as usize];
+        let commandSize = COMMAND_SIZES[commandNumber as usize];
         if commandSize == 0 as c_int as size_t
-            || currentData.offset(commandSize as isize)
-                > &mut *((*host).receivedData).offset((*host).receivedDataLength as isize)
-                    as *mut enet_uint8
+            || currentData.add(commandSize)
+                > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
         {
             break;
         }
-        currentData = currentData.offset(commandSize as isize);
+        currentData = currentData.add(commandSize);
         if peer.is_null() && commandNumber as c_int != ENET_PROTOCOL_COMMAND_CONNECT as c_int {
             break;
         }
@@ -5872,17 +5605,16 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
                 break;
             }
         }
-        if !(!peer.is_null()
-            && (*command).header.command as c_int & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int
-                != 0 as c_int)
+        if peer.is_null()
+            || (*command).header.command as c_int & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int
+                == 0 as c_int
         {
             continue;
         }
-        let mut sentTime: enet_uint16 = 0;
         if flags as c_int & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as c_int == 0 {
             break;
         }
-        sentTime = ntohs((*header).sentTime);
+        let sentTime = ntohs((*header).sentTime);
         match (*peer).state as c_uint {
             7 | 2 | 0 | 9 => {}
             8 => {
@@ -5900,25 +5632,24 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
     if !event.is_null() && (*event).type_0 as c_uint != ENET_EVENT_TYPE_NONE as c_int as c_uint {
         return 1 as c_int;
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
 ) -> c_int {
-    let mut packets: c_int = 0;
+    let mut packets: c_int;
     let mut current_block_17: u64;
     packets = 0 as c_int;
     while packets < 256 as c_int {
-        let mut receivedLength: c_int = 0;
         let mut buffer: ENetBuffer = ENetBuffer {
-            data: 0 as *mut c_void,
+            data: std::ptr::null_mut(),
             dataLength: 0,
         };
         buffer.data = ((*host).packetData[0 as c_int as usize]).as_mut_ptr() as *mut c_void;
         const MTU: usize = 4096;
         buffer.dataLength = ::core::mem::size_of::<[enet_uint8; MTU]>() as size_t;
-        receivedLength = match (*host)
+        let receivedLength = match (*host)
             .socket
             .assume_init_mut()
             .receive(buffer.dataLength as usize)
@@ -6004,23 +5735,19 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
         }
         packets += 1;
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
 ) {
-    let mut command: *mut ENetProtocol = &mut *((*host).commands)
-        .as_mut_ptr()
-        .offset((*host).commandCount as isize)
-        as *mut ENetProtocol;
-    let mut buffer: *mut ENetBuffer = &mut *((*host).buffers)
-        .as_mut_ptr()
-        .offset((*host).bufferCount as isize)
-        as *mut ENetBuffer;
-    let mut acknowledgement: *mut ENetAcknowledgement = 0 as *mut ENetAcknowledgement;
-    let mut currentAcknowledgement: ENetListIterator = 0 as *mut ENetListNode;
-    let mut reliableSequenceNumber: enet_uint16 = 0;
+    let mut command: *mut ENetProtocol =
+        &mut *((*host).commands).as_mut_ptr().add((*host).commandCount) as *mut ENetProtocol;
+    let mut buffer: *mut ENetBuffer =
+        &mut *((*host).buffers).as_mut_ptr().add((*host).bufferCount) as *mut ENetBuffer;
+    let mut acknowledgement: *mut ENetAcknowledgement;
+    let mut currentAcknowledgement: ENetListIterator;
+    let mut reliableSequenceNumber: enet_uint16;
     currentAcknowledgement = (*peer).acknowledgements.sentinel.next;
     while currentAcknowledgement != &mut (*peer).acknowledgements.sentinel as *mut ENetListNode {
         if command
@@ -6072,17 +5799,15 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
     (*host).bufferCount = buffer.offset_from(((*host).buffers).as_mut_ptr()) as c_long as size_t;
 }
 unsafe fn enet_protocol_check_timeouts<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    event: *mut ENetEvent<S>,
 ) -> c_int {
-    let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut insertPosition: ENetListIterator = 0 as *mut ENetListNode;
-    let mut insertSendReliablePosition: ENetListIterator = 0 as *mut ENetListNode;
+    let mut outgoingCommand: *mut ENetOutgoingCommand;
+    let mut currentCommand: ENetListIterator;
     currentCommand = (*peer).sentReliableCommands.sentinel.next;
-    insertPosition = (*peer).outgoingCommands.sentinel.next;
-    insertSendReliablePosition = (*peer).outgoingSendReliableCommands.sentinel.next;
+    let insertPosition = (*peer).outgoingCommands.sentinel.next;
+    let insertSendReliablePosition = (*peer).outgoingSendReliableCommands.sentinel.next;
     while currentCommand != &mut (*peer).sentReliableCommands.sentinel as *mut ENetListNode {
         outgoingCommand = currentCommand as *mut ENetOutgoingCommand;
         currentCommand = (*currentCommand).next;
@@ -6110,7 +5835,7 @@ unsafe fn enet_protocol_check_timeouts<S: Socket>(
             } else {
                 ((*host).serviceTime).wrapping_sub((*peer).earliestTimeout)
             }) >= (*peer).timeoutMaximum
-                || ((1 as c_int) << (*outgoingCommand).sendAttempts as c_int - 1 as c_int)
+                || ((1 as c_int) << ((*outgoingCommand).sendAttempts as c_int - 1 as c_int))
                     as c_uint
                     >= (*peer).timeoutLimit
                     && (if ((*host).serviceTime).wrapping_sub((*peer).earliestTimeout)
@@ -6143,35 +5868,31 @@ unsafe fn enet_protocol_check_timeouts<S: Socket>(
             );
         }
         if currentCommand == (*peer).sentReliableCommands.sentinel.next
-            && !((*peer).sentReliableCommands.sentinel.next
-                == &mut (*peer).sentReliableCommands.sentinel as *mut ENetListNode)
+            && ((*peer).sentReliableCommands.sentinel.next
+                != &mut (*peer).sentReliableCommands.sentinel as *mut ENetListNode)
         {
             outgoingCommand = currentCommand as *mut ENetOutgoingCommand;
             (*peer).nextTimeout =
                 ((*outgoingCommand).sentTime).wrapping_add((*outgoingCommand).roundTripTimeout);
         }
     }
-    return 0 as c_int;
+    0 as c_int
 }
 unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut peer: *mut ENetPeer<S>,
-    mut sentUnreliableCommands: *mut ENetList,
+    host: *mut ENetHost<S>,
+    peer: *mut ENetPeer<S>,
+    sentUnreliableCommands: *mut ENetList,
 ) -> c_int {
-    let mut command: *mut ENetProtocol = &mut *((*host).commands)
-        .as_mut_ptr()
-        .offset((*host).commandCount as isize)
-        as *mut ENetProtocol;
-    let mut buffer: *mut ENetBuffer = &mut *((*host).buffers)
-        .as_mut_ptr()
-        .offset((*host).bufferCount as isize)
-        as *mut ENetBuffer;
-    let mut outgoingCommand: *mut ENetOutgoingCommand = 0 as *mut ENetOutgoingCommand;
-    let mut currentCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut currentSendReliableCommand: ENetListIterator = 0 as *mut ENetListNode;
-    let mut channel: *mut ENetChannel = 0 as *mut ENetChannel;
+    let mut command: *mut ENetProtocol =
+        &mut *((*host).commands).as_mut_ptr().add((*host).commandCount) as *mut ENetProtocol;
+    let mut buffer: *mut ENetBuffer =
+        &mut *((*host).buffers).as_mut_ptr().add((*host).bufferCount) as *mut ENetBuffer;
+    let mut outgoingCommand: *mut ENetOutgoingCommand = std::ptr::null_mut();
+    let mut currentCommand: ENetListIterator;
+    let mut currentSendReliableCommand: ENetListIterator;
+    let mut channel: *mut ENetChannel = std::ptr::null_mut();
     let mut reliableWindow: enet_uint16 = 0 as c_int as enet_uint16;
-    let mut commandSize: size_t = 0;
+    let mut commandSize: size_t;
     let mut windowWrap: c_int = 0 as c_int;
     let mut canPing: c_int = 1 as c_int;
     currentCommand = (*peer).outgoingCommands.sentinel.next;
@@ -6192,19 +5913,16 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 current_block_55 = 1856101646708284338;
             }
         } else {
-            if !(currentSendReliableCommand
-                != &mut (*peer).outgoingSendReliableCommands.sentinel as *mut ENetListNode)
+            if currentSendReliableCommand
+                == &mut (*peer).outgoingSendReliableCommands.sentinel as *mut ENetListNode
             {
                 break;
             }
             current_block_55 = 13678975718891345113;
         }
-        match current_block_55 {
-            13678975718891345113 => {
-                outgoingCommand = currentSendReliableCommand as *mut ENetOutgoingCommand;
-                currentSendReliableCommand = (*currentSendReliableCommand).next;
-            }
-            _ => {}
+        if let 13678975718891345113 = current_block_55 {
+            outgoingCommand = currentSendReliableCommand as *mut ENetOutgoingCommand;
+            currentSendReliableCommand = (*currentSendReliableCommand).next;
         }
         if (*outgoingCommand).command.header.command as c_int
             & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int
@@ -6216,7 +5934,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                         .offset((*outgoingCommand).command.header.channelID as isize)
                         as *mut ENetChannel
                 } else {
-                    0 as *mut ENetChannel
+                    std::ptr::null_mut()
                 };
             reliableWindow = ((*outgoingCommand).reliableSequenceNumber as c_int
                 / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
@@ -6237,14 +5955,14 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                         >= ENET_PEER_RELIABLE_WINDOW_SIZE as c_int
                         || (*channel).usedReliableWindows as c_int
                             & ((((1 as c_int)
-                                << ENET_PEER_FREE_RELIABLE_WINDOWS as c_int + 2 as c_int)
+                                << (ENET_PEER_FREE_RELIABLE_WINDOWS as c_int + 2 as c_int))
                                 - 1 as c_int)
                                 << reliableWindow as c_int
-                                | ((1 as c_int)
-                                    << ENET_PEER_FREE_RELIABLE_WINDOWS as c_int + 2 as c_int)
-                                    - 1 as c_int
-                                    >> ENET_PEER_RELIABLE_WINDOWS as c_int
-                                        - reliableWindow as c_int)
+                                | (((1 as c_int)
+                                    << (ENET_PEER_FREE_RELIABLE_WINDOWS as c_int + 2 as c_int))
+                                    - 1 as c_int)
+                                    >> (ENET_PEER_RELIABLE_WINDOWS as c_int
+                                        - reliableWindow as c_int))
                             != 0)
                 {
                     windowWrap = 1 as c_int;
@@ -6253,7 +5971,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 }
             }
             if !((*outgoingCommand).packet).is_null() {
-                let mut windowSize: enet_uint32 = ((*peer).packetThrottle)
+                let windowSize: enet_uint32 = ((*peer).packetThrottle)
                     .wrapping_mul((*peer).windowSize)
                     .wrapping_div(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint);
                 if ((*peer).reliableDataInTransit)
@@ -6270,7 +5988,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             }
             canPing = 0 as c_int;
         }
-        commandSize = commandSizes[((*outgoingCommand).command.header.command as c_int
+        commandSize = COMMAND_SIZES[((*outgoingCommand).command.header.command as c_int
             & ENET_PROTOCOL_COMMAND_MASK as c_int) as usize];
         if command
             >= &mut *((*host).commands).as_mut_ptr().offset(
@@ -6342,9 +6060,9 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                         as enet_uint32
                         as enet_uint32;
                     if (*peer).packetThrottleCounter > (*peer).packetThrottle {
-                        let mut reliableSequenceNumber: enet_uint16 =
+                        let reliableSequenceNumber: enet_uint16 =
                             (*outgoingCommand).reliableSequenceNumber;
-                        let mut unreliableSequenceNumber: enet_uint16 =
+                        let unreliableSequenceNumber: enet_uint16 =
                             (*outgoingCommand).unreliableSequenceNumber;
                         loop {
                             (*(*outgoingCommand).packet).referenceCount =
@@ -6414,21 +6132,21 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
     {
         enet_peer_disconnect(peer, (*peer).eventData);
     }
-    return canPing;
+    canPing
 }
 unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
-    mut checkForTimeouts: c_int,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
+    checkForTimeouts: c_int,
 ) -> c_int {
     let mut headerData: [enet_uint8; 8] = [0; 8];
-    let mut header: *mut ENetProtocolHeader = headerData.as_mut_ptr() as *mut ENetProtocolHeader;
-    let mut sentLength: c_int = 0 as c_int;
-    let mut shouldCompress: size_t = 0 as c_int as size_t;
+    let header: *mut ENetProtocolHeader = headerData.as_mut_ptr() as *mut ENetProtocolHeader;
+    let mut sentLength: c_int;
+    let mut shouldCompress: size_t;
     let mut sentUnreliableCommands: ENetList = ENetList {
         sentinel: ENetListNode {
-            next: 0 as *mut _ENetListNode,
-            previous: 0 as *mut _ENetListNode,
+            next: std::ptr::null_mut(),
+            previous: std::ptr::null_mut(),
         },
     };
     enet_list_clear(&mut sentUnreliableCommands);
@@ -6436,9 +6154,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
     let mut continueSending: c_int = 0 as c_int;
     while sendPass <= continueSending {
         let mut currentPeer: *mut ENetPeer<S> = (*host).peers;
-        while currentPeer
-            < &mut *((*host).peers).offset((*host).peerCount as isize) as *mut ENetPeer<S>
-        {
+        while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
             if !((*currentPeer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
                 || (*currentPeer).state as c_uint == ENET_PEER_STATE_ZOMBIE as c_int as c_uint
                 || sendPass > 0 as c_int
@@ -6452,16 +6168,16 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                 (*host).commandCount = 0 as c_int as size_t;
                 (*host).bufferCount = 1 as c_int as size_t;
                 (*host).packetSize = ::core::mem::size_of::<ENetProtocolHeader>() as size_t;
-                if !((*currentPeer).acknowledgements.sentinel.next
-                    == &mut (*currentPeer).acknowledgements.sentinel as *mut ENetListNode)
+                if (*currentPeer).acknowledgements.sentinel.next
+                    != &mut (*currentPeer).acknowledgements.sentinel as *mut ENetListNode
                 {
                     enet_protocol_send_acknowledgements(host, currentPeer);
                 }
                 if checkForTimeouts != 0 as c_int
-                    && !((*currentPeer).sentReliableCommands.sentinel.next
-                        == &mut (*currentPeer).sentReliableCommands.sentinel as *mut ENetListNode)
-                    && !(((*host).serviceTime).wrapping_sub((*currentPeer).nextTimeout)
-                        >= 86400000 as c_int as c_uint)
+                    && ((*currentPeer).sentReliableCommands.sentinel.next
+                        != &mut (*currentPeer).sentReliableCommands.sentinel as *mut ENetListNode)
+                    && (((*host).serviceTime).wrapping_sub((*currentPeer).nextTimeout)
+                        < 86400000 as c_int as c_uint)
                     && enet_protocol_check_timeouts(host, currentPeer, event) == 1 as c_int
                 {
                     if !event.is_null()
@@ -6500,7 +6216,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             &mut sentUnreliableCommands,
                         );
                     }
-                    if !((*host).commandCount == 0 as c_int as size_t) {
+                    if (*host).commandCount != 0 as c_int as size_t {
                         if (*currentPeer).packetLossEpoch == 0 as c_int as c_uint {
                             (*currentPeer).packetLossEpoch = (*host).serviceTime;
                         } else if (if ((*host).serviceTime)
@@ -6513,7 +6229,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         }) >= ENET_PEER_PACKET_LOSS_INTERVAL as c_int as c_uint
                             && (*currentPeer).packetsSent > 0 as c_int as c_uint
                         {
-                            let mut packetLoss: enet_uint32 = ((*currentPeer).packetsLost)
+                            let packetLoss: enet_uint32 = ((*currentPeer).packetsLost)
                                 .wrapping_mul(ENET_PEER_PACKET_LOSS_SCALE as c_int as c_uint)
                                 .wrapping_div((*currentPeer).packetsSent);
                             (*currentPeer).packetLossVariance = ((*currentPeer).packetLossVariance)
@@ -6532,7 +6248,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             (*currentPeer).packetsSent = 0 as c_int as enet_uint32;
                             (*currentPeer).packetsLost = 0 as c_int as enet_uint32;
                         }
-                        let ref mut fresh34 = (*((*host).buffers).as_mut_ptr()).data;
+                        let fresh34 = &mut (*((*host).buffers).as_mut_ptr()).data;
                         *fresh34 = headerData.as_mut_ptr() as *mut c_void;
                         if (*host).headerFlags as c_int
                             & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as c_int
@@ -6548,7 +6264,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         }
                         shouldCompress = 0 as c_int as size_t;
                         if let Some(compressor) = (*host).compressor.assume_init_mut() {
-                            let mut originalSize: size_t =
+                            let originalSize: size_t =
                                 ((*host).packetSize).wrapping_sub(::core::mem::size_of::<
                                     ENetProtocolHeader,
                                 >(
@@ -6562,7 +6278,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                     (*buffer).dataLength,
                                 ));
                             }
-                            let mut compressedSize: size_t = compressor.compress(
+                            let compressedSize: size_t = compressor.compress(
                                 inBuffers,
                                 originalSize,
                                 std::slice::from_raw_parts_mut(
@@ -6592,9 +6308,9 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                 as uint16_t,
                         );
                         if let Some(checksum_fn) = (*host).checksum.assume_init_ref() {
-                            let mut checksum_addr: *mut enet_uint8 = &mut *headerData
+                            let checksum_addr: *mut enet_uint8 = &mut *headerData
                                 .as_mut_ptr()
-                                .offset((*((*host).buffers).as_mut_ptr()).dataLength as isize)
+                                .add((*((*host).buffers).as_mut_ptr()).dataLength)
                                 as *mut enet_uint8;
                             let mut checksum = if ((*currentPeer).outgoingPeerID as c_int)
                                 < ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int
@@ -6608,7 +6324,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                 &checksum as *const enet_uint32 as *const c_void,
                                 ::core::mem::size_of::<enet_uint32>(),
                             );
-                            let ref mut fresh35 = (*((*host).buffers).as_mut_ptr()).dataLength;
+                            let fresh35 = &mut (*((*host).buffers).as_mut_ptr()).dataLength;
                             *fresh35 =
                                 (*fresh35 as c_ulong)
                                     .wrapping_add(::core::mem::size_of::<enet_uint32>() as c_ulong)
@@ -6638,10 +6354,10 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         (*currentPeer).lastSendTime = (*host).serviceTime;
                         let mut conglomerate_buffer = vec![];
                         for buffer_index in 0..(*host).bufferCount {
-                            let buffer = &(*host).buffers[buffer_index as usize];
+                            let buffer = &(*host).buffers[buffer_index];
                             conglomerate_buffer.extend_from_slice(std::slice::from_raw_parts(
                                 buffer.data as *mut u8,
-                                buffer.dataLength as usize,
+                                buffer.dataLength,
                             ));
                         }
                         sentLength = match (*host).socket.assume_init_mut().send(
@@ -6677,32 +6393,32 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
         }
         sendPass += 1;
     }
-    return 0 as c_int;
+    0 as c_int
 }
-pub(crate) unsafe fn enet_host_flush<S: Socket>(mut host: *mut ENetHost<S>) {
+pub(crate) unsafe fn enet_host_flush<S: Socket>(host: *mut ENetHost<S>) {
     (*host).serviceTime = enet_time_get(host);
-    enet_protocol_send_outgoing_commands(host, 0 as *mut ENetEvent<S>, 0 as c_int);
+    enet_protocol_send_outgoing_commands(host, std::ptr::null_mut(), 0 as c_int);
 }
 pub(crate) unsafe fn enet_host_check_events<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
 ) -> c_int {
     if event.is_null() {
         return -(1 as c_int);
     }
     (*event).type_0 = ENET_EVENT_TYPE_NONE;
-    (*event).peer = 0 as *mut ENetPeer<S>;
-    (*event).packet = 0 as *mut ENetPacket;
-    return enet_protocol_dispatch_incoming_commands(host, event);
+    (*event).peer = std::ptr::null_mut();
+    (*event).packet = std::ptr::null_mut();
+    enet_protocol_dispatch_incoming_commands(host, event)
 }
 pub(crate) unsafe fn enet_host_service<S: Socket>(
-    mut host: *mut ENetHost<S>,
-    mut event: *mut ENetEvent<S>,
+    host: *mut ENetHost<S>,
+    event: *mut ENetEvent<S>,
 ) -> c_int {
     if !event.is_null() {
         (*event).type_0 = ENET_EVENT_TYPE_NONE;
-        (*event).peer = 0 as *mut ENetPeer<S>;
-        (*event).packet = 0 as *mut ENetPacket;
+        (*event).peer = std::ptr::null_mut();
+        (*event).packet = std::ptr::null_mut();
         match enet_protocol_dispatch_incoming_commands(host, event) {
             1 => return 1 as c_int,
             -1 => return -(1 as c_int),
@@ -6742,10 +6458,7 @@ pub(crate) unsafe fn enet_host_service<S: Socket>(
             _ => {}
         }
     }
-    return 0 as c_int;
-}
-pub(crate) unsafe fn enet_host_random_seed<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
-    enet_time_get(host)
+    0 as c_int
 }
 pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
     ((*host).time.assume_init_ref()().as_millis() % u32::MAX as u128) as enet_uint32

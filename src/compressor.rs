@@ -21,6 +21,12 @@ impl RangeCoder {
     }
 }
 
+impl Default for RangeCoder {
+    fn default() -> Self {
+        RangeCoder::new()
+    }
+}
+
 impl Compressor for RangeCoder {
     fn compress(&mut self, in_buffers: Vec<&[u8]>, in_limit: usize, out: &mut [u8]) -> usize {
         unsafe {

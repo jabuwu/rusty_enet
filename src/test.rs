@@ -1,16 +1,17 @@
 use crate as enet;
 
+#[allow(dead_code)]
 mod network;
 use network::*;
 
 #[test]
 fn events() {
     let mut network = Network::new();
-    let mut host1 = network.create_host(enet::HostSettings {
+    let host1 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });
-    let mut host2 = network.create_host(enet::HostSettings {
+    let host2 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });
@@ -56,11 +57,11 @@ fn events() {
 #[test]
 fn resend_reliable_packet() {
     let mut network = Network::new();
-    let mut host1 = network.create_host(enet::HostSettings {
+    let host1 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });
-    let mut host2 = network.create_host(enet::HostSettings {
+    let host2 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });
@@ -134,11 +135,11 @@ fn resend_reliable_packet() {
 #[test]
 fn round_trip_time() {
     let mut network = Network::new();
-    let mut host1 = network.create_host(enet::HostSettings {
+    let host1 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });
-    let mut host2 = network.create_host(enet::HostSettings {
+    let host2 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });
@@ -162,11 +163,11 @@ fn round_trip_time() {
 #[test]
 fn timeout() {
     let mut network = Network::new();
-    let mut host1 = network.create_host(enet::HostSettings {
+    let host1 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });
-    let mut host2 = network.create_host(enet::HostSettings {
+    let host2 = network.create_host(enet::HostSettings {
         peer_limit: 1,
         ..Default::default()
     });

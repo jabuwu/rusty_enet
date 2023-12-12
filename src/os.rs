@@ -11,9 +11,7 @@ pub(crate) enum c_void {
     __variant2,
 }
 
-pub(crate) type c_char = std::ffi::c_char;
 pub(crate) type c_uchar = u8;
-pub(crate) type c_short = i16;
 pub(crate) type c_ushort = u16;
 pub(crate) type c_int = i32;
 pub(crate) type c_uint = u32;
@@ -27,8 +25,6 @@ pub(crate) type __time_t = c_long;
 pub(crate) type __suseconds_t = c_long;
 pub(crate) type __ssize_t = c_long;
 pub(crate) type __socklen_t = c_uint;
-pub(crate) type ssize_t = __ssize_t;
-pub(crate) type time_t = __time_t;
 pub(crate) type uint16_t = __uint16_t;
 pub(crate) type uint32_t = __uint32_t;
 
@@ -88,7 +84,7 @@ impl Allocator {
 pub(crate) unsafe extern "C" fn _enet_malloc(size: size_t) -> *mut c_void {
     let singleton = Allocator::singleton();
     let mut allocator = singleton.lock().unwrap();
-    allocator.malloc(size as usize)
+    allocator.malloc(size)
 }
 
 pub(crate) unsafe extern "C" fn _enet_free(ptr: *mut c_void) {
@@ -105,7 +101,7 @@ pub(crate) unsafe extern "C" fn _enet_abort() -> ! {
 
 pub(crate) unsafe extern "C" fn _enet_memset(s: *mut c_void, c: c_int, n: size_t) -> *mut c_void {
     for offset in 0..n {
-        (*(s.cast::<u8>()).add(offset as usize)) = c as u8;
+        (*(s.cast::<u8>()).add(offset)) = c as u8;
     }
     s
 }
@@ -115,6 +111,6 @@ pub(crate) unsafe extern "C" fn _enet_memcpy(
     source: *const c_void,
     num: size_t,
 ) -> *mut c_void {
-    copy_nonoverlapping(source, destination, num as usize);
+    copy_nonoverlapping(source, destination, num);
     destination
 }

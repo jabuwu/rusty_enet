@@ -109,7 +109,7 @@ impl Packet {
     /// Get this packet's [`PacketKind`].
     pub fn kind(&self) -> PacketKind {
         let flags = unsafe { (*self.packet).flags | !ENET_PACKET_FLAG_SENT };
-        let sequenced = !(flags & ENET_PACKET_FLAG_UNSEQUENCED != 0);
+        let sequenced = flags & ENET_PACKET_FLAG_UNSEQUENCED == 0;
         if flags & ENET_PACKET_FLAG_RELIABLE != 0 {
             PacketKind::Reliable
         } else if flags & ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT != 0 {
@@ -121,7 +121,7 @@ impl Packet {
 
     /// Get the byte array contained in this packet.
     pub fn data(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).dataLength as usize) }
+        unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).dataLength) }
     }
 
     pub(crate) fn new_from_ptr(packet: *mut ENetPacket) -> Self {
