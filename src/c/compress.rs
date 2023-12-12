@@ -1,15 +1,13 @@
 use crate::{enet_free, enet_malloc, os::c_void, ENetBuffer};
 
-pub(crate) type ENetRangeCoder = _ENetRangeCoder;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub(crate) struct _ENetRangeCoder {
+pub(crate) struct ENetRangeCoder {
     pub(crate) symbols: [ENetSymbol; 4096],
 }
-pub(crate) type ENetSymbol = _ENetSymbol;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub(crate) struct _ENetSymbol {
+pub(crate) struct ENetSymbol {
     pub(crate) value: u8,
     pub(crate) count: u8,
     pub(crate) under: u16,
@@ -20,15 +18,14 @@ pub(crate) struct _ENetSymbol {
     pub(crate) total: u16,
     pub(crate) parent: u16,
 }
-pub(crate) const ENET_CONTEXT_SYMBOL_MINIMUM: C2RustUnnamed_3 = 1;
-pub(crate) const ENET_CONTEXT_ESCAPE_MINIMUM: C2RustUnnamed_3 = 1;
-pub(crate) const ENET_SUBCONTEXT_ORDER: C2RustUnnamed_3 = 2;
-pub(crate) const ENET_RANGE_CODER_BOTTOM: C2RustUnnamed_3 = 65536;
-pub(crate) const ENET_SUBCONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 2;
-pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: C2RustUnnamed_3 = 5;
-pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: C2RustUnnamed_3 = 3;
-pub(crate) const ENET_RANGE_CODER_TOP: C2RustUnnamed_3 = 16777216;
-pub(crate) type C2RustUnnamed_3 = u32;
+pub(crate) const ENET_CONTEXT_SYMBOL_MINIMUM: u32 = 1;
+pub(crate) const ENET_CONTEXT_ESCAPE_MINIMUM: u32 = 1;
+pub(crate) const ENET_SUBCONTEXT_ORDER: u32 = 2;
+pub(crate) const ENET_RANGE_CODER_BOTTOM: u32 = 65536;
+pub(crate) const ENET_SUBCONTEXT_SYMBOL_DELTA: u32 = 2;
+pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: u32 = 5;
+pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: u32 = 3;
+pub(crate) const ENET_RANGE_CODER_TOP: u32 = 16777216;
 pub(crate) unsafe fn enet_range_coder_create() -> *mut c_void {
     let rangeCoder: *mut ENetRangeCoder =
         enet_malloc(::core::mem::size_of::<ENetRangeCoder>()) as *mut ENetRangeCoder;

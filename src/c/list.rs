@@ -2,18 +2,16 @@ use crate::os::c_void;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub(crate) struct _ENetListNode {
-    pub(crate) next: *mut _ENetListNode,
-    pub(crate) previous: *mut _ENetListNode,
+pub(crate) struct ENetListNode {
+    pub(crate) next: *mut ENetListNode,
+    pub(crate) previous: *mut ENetListNode,
 }
-pub(crate) type ENetListNode = _ENetListNode;
 pub(crate) type ENetListIterator = *mut ENetListNode;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub(crate) struct _ENetList {
+pub(crate) struct ENetList {
     pub(crate) sentinel: ENetListNode,
 }
-pub(crate) type ENetList = _ENetList;
 pub(crate) unsafe fn enet_list_clear(list: *mut ENetList) {
     (*list).sentinel.next = &mut (*list).sentinel;
     (*list).sentinel.previous = &mut (*list).sentinel;

@@ -2,20 +2,22 @@ use std::mem::MaybeUninit;
 
 use crate::{
     consts::*,
+    enet_free, enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move,
+    enet_list_remove, enet_malloc, enet_packet_create, enet_packet_destroy,
+    enet_protocol_command_size,
     os::{_enet_memset, c_void},
-    ENetChannel, ENetIncomingCommand, ENetList, ENetListIterator, ENetListNode,
-    ENetOutgoingCommand, ENetPacket, ENetProtocol, ENetProtocolCommandHeader, ENetProtocolHeader,
-    ENetProtocolSendFragment, Socket, _ENetHost, _ENetListNode, _ENetProtocol, enet_free,
-    enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move, enet_list_remove,
-    enet_malloc, enet_packet_create, enet_packet_destroy, enet_protocol_command_size,
-    ENetAcknowledgement, ENetProtocolAcknowledge, ENET_PACKET_FLAG_RELIABLE,
-    ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
+    ENetAcknowledgement, ENetChannel, ENetIncomingCommand, ENetList, ENetListIterator,
+    ENetListNode, ENetOutgoingCommand, ENetPacket, ENetProtocol, ENetProtocolAcknowledge,
+    ENetProtocolCommandHeader, ENetProtocolHeader, ENetProtocolSendFragment, Socket,
+    ENET_PACKET_FLAG_RELIABLE, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
     ENET_PROTOCOL_COMMAND_DISCONNECT, ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE,
     ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED, ENET_PROTOCOL_COMMAND_MASK, ENET_PROTOCOL_COMMAND_PING,
     ENET_PROTOCOL_COMMAND_SEND_FRAGMENT, ENET_PROTOCOL_COMMAND_SEND_RELIABLE,
     ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE, ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT,
     ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED, ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE,
 };
+
+use super::ENetHost;
 
 pub(crate) type ENetPeerState = _ENetPeerState;
 pub(crate) type _ENetPeerState = u32;
@@ -32,11 +34,10 @@ pub(crate) const ENET_PEER_STATE_DISCONNECTED: _ENetPeerState = 0;
 pub(crate) type _ENetPeerFlag = u32;
 pub(crate) const ENET_PEER_FLAG_CONTINUE_SENDING: _ENetPeerFlag = 2;
 pub(crate) const ENET_PEER_FLAG_NEEDS_DISPATCH: _ENetPeerFlag = 1;
-pub(crate) type ENetPeer<S> = _ENetPeer<S>;
 #[repr(C)]
-pub(crate) struct _ENetPeer<S: Socket> {
+pub(crate) struct ENetPeer<S: Socket> {
     pub(crate) dispatchList: ENetListNode,
-    pub(crate) host: *mut _ENetHost<S>,
+    pub(crate) host: *mut ENetHost<S>,
     pub(crate) outgoingPeerID: u16,
     pub(crate) incomingPeerID: u16,
     pub(crate) connectID: u32,
@@ -102,7 +103,7 @@ pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     acceleration: u32,
     deceleration: u32,
 ) {
-    let mut command: ENetProtocol = _ENetProtocol {
+    let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,
@@ -157,7 +158,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     channelID: u8,
     packet: *mut ENetPacket,
 ) -> i32 {
-    let mut command: ENetProtocol = _ENetProtocol {
+    let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,
@@ -461,7 +462,7 @@ pub(crate) unsafe fn enet_peer_reset<S: Socket>(peer: *mut ENetPeer<S>) {
     enet_peer_reset_queues(peer);
 }
 pub(crate) unsafe fn enet_peer_ping<S: Socket>(peer: *mut ENetPeer<S>) {
-    let mut command: ENetProtocol = _ENetProtocol {
+    let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,
@@ -512,7 +513,7 @@ pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
     };
 }
 pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(peer: *mut ENetPeer<S>, data: u32) {
-    let mut command: ENetProtocol = _ENetProtocol {
+    let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,
@@ -542,7 +543,7 @@ pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(peer: *mut ENetPeer<S>,
     enet_peer_reset(peer);
 }
 pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, data: u32) {
-    let mut command: ENetProtocol = _ENetProtocol {
+    let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,
@@ -924,12 +925,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     let mut current_block: u64;
     static mut DUMMY_COMMAND: ENetIncomingCommand = ENetIncomingCommand {
         incomingCommandList: ENetListNode {
-            next: 0 as *mut _ENetListNode,
-            previous: 0 as *mut _ENetListNode,
+            next: 0 as *mut ENetListNode,
+            previous: 0 as *mut ENetListNode,
         },
         reliableSequenceNumber: 0,
         unreliableSequenceNumber: 0,
-        command: _ENetProtocol {
+        command: ENetProtocol {
             header: ENetProtocolCommandHeader {
                 command: 0,
                 channelID: 0,

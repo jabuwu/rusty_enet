@@ -58,30 +58,27 @@ pub(crate) const ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED: _ENetProtocolFlag = 64;
 pub(crate) const ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE: _ENetProtocolFlag = 128;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolHeader {
+pub(crate) struct ENetProtocolHeader {
     pub(crate) peerID: u16,
     pub(crate) sentTime: u16,
 }
-pub(crate) type ENetProtocolHeader = _ENetProtocolHeader;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolCommandHeader {
+pub(crate) struct ENetProtocolCommandHeader {
     pub(crate) command: u8,
     pub(crate) channelID: u8,
     pub(crate) reliableSequenceNumber: u16,
 }
-pub(crate) type ENetProtocolCommandHeader = _ENetProtocolCommandHeader;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolAcknowledge {
+pub(crate) struct ENetProtocolAcknowledge {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) receivedReliableSequenceNumber: u16,
     pub(crate) receivedSentTime: u16,
 }
-pub(crate) type ENetProtocolAcknowledge = _ENetProtocolAcknowledge;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolConnect {
+pub(crate) struct ENetProtocolConnect {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) outgoingPeerID: u16,
     pub(crate) incomingSessionID: u8,
@@ -97,10 +94,9 @@ pub(crate) struct _ENetProtocolConnect {
     pub(crate) connectID: u32,
     pub(crate) data: u32,
 }
-pub(crate) type ENetProtocolConnect = _ENetProtocolConnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolVerifyConnect {
+pub(crate) struct ENetProtocolVerifyConnect {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) outgoingPeerID: u16,
     pub(crate) incomingSessionID: u8,
@@ -115,63 +111,55 @@ pub(crate) struct _ENetProtocolVerifyConnect {
     pub(crate) packetThrottleDeceleration: u32,
     pub(crate) connectID: u32,
 }
-pub(crate) type ENetProtocolVerifyConnect = _ENetProtocolVerifyConnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolBandwidthLimit {
+pub(crate) struct ENetProtocolBandwidthLimit {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) incomingBandwidth: u32,
     pub(crate) outgoingBandwidth: u32,
 }
-pub(crate) type ENetProtocolBandwidthLimit = _ENetProtocolBandwidthLimit;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolThrottleConfigure {
+pub(crate) struct ENetProtocolThrottleConfigure {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) packetThrottleInterval: u32,
     pub(crate) packetThrottleAcceleration: u32,
     pub(crate) packetThrottleDeceleration: u32,
 }
-pub(crate) type ENetProtocolThrottleConfigure = _ENetProtocolThrottleConfigure;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolDisconnect {
+pub(crate) struct ENetProtocolDisconnect {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) data: u32,
 }
-pub(crate) type ENetProtocolDisconnect = _ENetProtocolDisconnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolPing {
+pub(crate) struct ENetProtocolPing {
     pub(crate) header: ENetProtocolCommandHeader,
 }
-pub(crate) type ENetProtocolPing = _ENetProtocolPing;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolSendReliable {
+pub(crate) struct ENetProtocolSendReliable {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) dataLength: u16,
 }
-pub(crate) type ENetProtocolSendReliable = _ENetProtocolSendReliable;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolSendUnreliable {
+pub(crate) struct ENetProtocolSendUnreliable {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) unreliableSequenceNumber: u16,
     pub(crate) dataLength: u16,
 }
-pub(crate) type ENetProtocolSendUnreliable = _ENetProtocolSendUnreliable;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolSendUnsequenced {
+pub(crate) struct ENetProtocolSendUnsequenced {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) unsequencedGroup: u16,
     pub(crate) dataLength: u16,
 }
-pub(crate) type ENetProtocolSendUnsequenced = _ENetProtocolSendUnsequenced;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) struct _ENetProtocolSendFragment {
+pub(crate) struct ENetProtocolSendFragment {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) startSequenceNumber: u16,
     pub(crate) dataLength: u16,
@@ -180,10 +168,9 @@ pub(crate) struct _ENetProtocolSendFragment {
     pub(crate) totalLength: u32,
     pub(crate) fragmentOffset: u32,
 }
-pub(crate) type ENetProtocolSendFragment = _ENetProtocolSendFragment;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
-pub(crate) union _ENetProtocol {
+pub(crate) union ENetProtocol {
     pub(crate) header: ENetProtocolCommandHeader,
     pub(crate) acknowledge: ENetProtocolAcknowledge,
     pub(crate) connect: ENetProtocolConnect,
@@ -197,8 +184,6 @@ pub(crate) union _ENetProtocol {
     pub(crate) bandwidthLimit: ENetProtocolBandwidthLimit,
     pub(crate) throttleConfigure: ENetProtocolThrottleConfigure,
 }
-pub(crate) type ENetProtocol = _ENetProtocol;
-
 static mut COMMAND_SIZES: [usize; 13] = [
     0_i32 as usize,
     ::core::mem::size_of::<ENetProtocolAcknowledge>(),
@@ -500,7 +485,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     let mut duplicatePeers: usize = 0_i32 as usize;
     let mut currentPeer: *mut ENetPeer<S>;
     let mut peer: *mut ENetPeer<S> = std::ptr::null_mut();
-    let mut verifyCommand: ENetProtocol = _ENetProtocol {
+    let mut verifyCommand: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,

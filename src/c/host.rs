@@ -2,18 +2,18 @@ use std::{mem::MaybeUninit, time::Duration};
 
 use crate::{
     consts::*,
-    enet_free, enet_list_clear, enet_malloc, enet_peer_reset, enet_time_get,
+    enet_free, enet_list_clear, enet_malloc, enet_packet_destroy, enet_peer_queue_outgoing_command,
+    enet_peer_reset, enet_peer_send, enet_time_get,
     os::{_enet_memset, c_void},
-    Compressor, ENetBuffer, ENetChannel, ENetList, ENetPeer, ENetProtocol,
-    ENetProtocolCommandHeader, Socket, SocketOptions, _ENetProtocol, enet_packet_destroy,
-    enet_peer_queue_outgoing_command, enet_peer_send, ENetPacket, ENET_PEER_STATE_CONNECTED,
+    Compressor, ENetBuffer, ENetChannel, ENetList, ENetPacket, ENetPeer, ENetProtocol,
+    ENetProtocolCommandHeader, Socket, SocketOptions, ENET_PEER_STATE_CONNECTED,
     ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_DISCONNECTED, ENET_PEER_STATE_DISCONNECT_LATER,
     ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT, ENET_PROTOCOL_COMMAND_CONNECT,
     ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE,
 };
 
 #[allow(clippy::type_complexity)]
-pub(crate) struct _ENetHost<S: Socket> {
+pub(crate) struct ENetHost<S: Socket> {
     pub(crate) socket: MaybeUninit<S>,
     pub(crate) incomingBandwidth: u32,
     pub(crate) outgoingBandwidth: u32,
@@ -50,7 +50,6 @@ pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) maximumPacketSize: usize,
     pub(crate) maximumWaitingData: usize,
 }
-pub(crate) type ENetHost<S> = _ENetHost<S>;
 pub(crate) unsafe fn enet_host_create<S: Socket>(
     mut socket: S,
     peerCount: usize,
@@ -180,7 +179,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
 ) -> *mut ENetPeer<S> {
     let mut currentPeer: *mut ENetPeer<S>;
     let mut channel: *mut ENetChannel;
-    let mut command: ENetProtocol = _ENetProtocol {
+    let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,
@@ -323,7 +322,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
         0_i32
     };
     let mut peer: *mut ENetPeer<S>;
-    let mut command: ENetProtocol = _ENetProtocol {
+    let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
             channelID: 0,

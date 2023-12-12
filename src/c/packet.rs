@@ -1,9 +1,8 @@
 use crate::{_enet_memcpy, enet_free, enet_malloc, os::c_void, ENET_PACKET_FLAG_NO_ALLOCATE};
 
-pub(crate) type ENetPacket = _ENetPacket;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub(crate) struct _ENetPacket {
+pub(crate) struct ENetPacket {
     pub(crate) referenceCount: usize,
     pub(crate) flags: u32,
     pub(crate) data: *mut u8,
