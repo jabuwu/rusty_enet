@@ -153,11 +153,8 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[repr(C)]
 pub(crate) struct ENetBuffer {
     pub(crate) data: *mut c_void,
-    pub(crate) dataLength: size_t,
+    pub(crate) dataLength: usize,
 }
-pub(crate) type enet_uint8 = c_uchar;
-pub(crate) type enet_uint16 = c_ushort;
-pub(crate) type enet_uint32 = c_uint;
 pub(crate) type _ENetProtocolCommand = c_uint;
 pub(crate) const ENET_PROTOCOL_COMMAND_MASK: _ENetProtocolCommand = 15;
 pub(crate) const ENET_PROTOCOL_COMMAND_COUNT: _ENetProtocolCommand = 13;
@@ -186,85 +183,85 @@ pub(crate) const ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE: _ENetProtocolFlag = 128
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolHeader {
-    pub(crate) peerID: enet_uint16,
-    pub(crate) sentTime: enet_uint16,
+    pub(crate) peerID: u16,
+    pub(crate) sentTime: u16,
 }
 pub(crate) type ENetProtocolHeader = _ENetProtocolHeader;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolCommandHeader {
-    pub(crate) command: enet_uint8,
-    pub(crate) channelID: enet_uint8,
-    pub(crate) reliableSequenceNumber: enet_uint16,
+    pub(crate) command: u8,
+    pub(crate) channelID: u8,
+    pub(crate) reliableSequenceNumber: u16,
 }
 pub(crate) type ENetProtocolCommandHeader = _ENetProtocolCommandHeader;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolAcknowledge {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) receivedReliableSequenceNumber: enet_uint16,
-    pub(crate) receivedSentTime: enet_uint16,
+    pub(crate) receivedReliableSequenceNumber: u16,
+    pub(crate) receivedSentTime: u16,
 }
 pub(crate) type ENetProtocolAcknowledge = _ENetProtocolAcknowledge;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolConnect {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) outgoingPeerID: enet_uint16,
-    pub(crate) incomingSessionID: enet_uint8,
-    pub(crate) outgoingSessionID: enet_uint8,
-    pub(crate) mtu: enet_uint32,
-    pub(crate) windowSize: enet_uint32,
-    pub(crate) channelCount: enet_uint32,
-    pub(crate) incomingBandwidth: enet_uint32,
-    pub(crate) outgoingBandwidth: enet_uint32,
-    pub(crate) packetThrottleInterval: enet_uint32,
-    pub(crate) packetThrottleAcceleration: enet_uint32,
-    pub(crate) packetThrottleDeceleration: enet_uint32,
-    pub(crate) connectID: enet_uint32,
-    pub(crate) data: enet_uint32,
+    pub(crate) outgoingPeerID: u16,
+    pub(crate) incomingSessionID: u8,
+    pub(crate) outgoingSessionID: u8,
+    pub(crate) mtu: u32,
+    pub(crate) windowSize: u32,
+    pub(crate) channelCount: u32,
+    pub(crate) incomingBandwidth: u32,
+    pub(crate) outgoingBandwidth: u32,
+    pub(crate) packetThrottleInterval: u32,
+    pub(crate) packetThrottleAcceleration: u32,
+    pub(crate) packetThrottleDeceleration: u32,
+    pub(crate) connectID: u32,
+    pub(crate) data: u32,
 }
 pub(crate) type ENetProtocolConnect = _ENetProtocolConnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolVerifyConnect {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) outgoingPeerID: enet_uint16,
-    pub(crate) incomingSessionID: enet_uint8,
-    pub(crate) outgoingSessionID: enet_uint8,
-    pub(crate) mtu: enet_uint32,
-    pub(crate) windowSize: enet_uint32,
-    pub(crate) channelCount: enet_uint32,
-    pub(crate) incomingBandwidth: enet_uint32,
-    pub(crate) outgoingBandwidth: enet_uint32,
-    pub(crate) packetThrottleInterval: enet_uint32,
-    pub(crate) packetThrottleAcceleration: enet_uint32,
-    pub(crate) packetThrottleDeceleration: enet_uint32,
-    pub(crate) connectID: enet_uint32,
+    pub(crate) outgoingPeerID: u16,
+    pub(crate) incomingSessionID: u8,
+    pub(crate) outgoingSessionID: u8,
+    pub(crate) mtu: u32,
+    pub(crate) windowSize: u32,
+    pub(crate) channelCount: u32,
+    pub(crate) incomingBandwidth: u32,
+    pub(crate) outgoingBandwidth: u32,
+    pub(crate) packetThrottleInterval: u32,
+    pub(crate) packetThrottleAcceleration: u32,
+    pub(crate) packetThrottleDeceleration: u32,
+    pub(crate) connectID: u32,
 }
 pub(crate) type ENetProtocolVerifyConnect = _ENetProtocolVerifyConnect;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolBandwidthLimit {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) incomingBandwidth: enet_uint32,
-    pub(crate) outgoingBandwidth: enet_uint32,
+    pub(crate) incomingBandwidth: u32,
+    pub(crate) outgoingBandwidth: u32,
 }
 pub(crate) type ENetProtocolBandwidthLimit = _ENetProtocolBandwidthLimit;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolThrottleConfigure {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) packetThrottleInterval: enet_uint32,
-    pub(crate) packetThrottleAcceleration: enet_uint32,
-    pub(crate) packetThrottleDeceleration: enet_uint32,
+    pub(crate) packetThrottleInterval: u32,
+    pub(crate) packetThrottleAcceleration: u32,
+    pub(crate) packetThrottleDeceleration: u32,
 }
 pub(crate) type ENetProtocolThrottleConfigure = _ENetProtocolThrottleConfigure;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolDisconnect {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) data: enet_uint32,
+    pub(crate) data: u32,
 }
 pub(crate) type ENetProtocolDisconnect = _ENetProtocolDisconnect;
 #[derive(Copy, Clone)]
@@ -277,35 +274,35 @@ pub(crate) type ENetProtocolPing = _ENetProtocolPing;
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolSendReliable {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) dataLength: enet_uint16,
+    pub(crate) dataLength: u16,
 }
 pub(crate) type ENetProtocolSendReliable = _ENetProtocolSendReliable;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolSendUnreliable {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) unreliableSequenceNumber: enet_uint16,
-    pub(crate) dataLength: enet_uint16,
+    pub(crate) unreliableSequenceNumber: u16,
+    pub(crate) dataLength: u16,
 }
 pub(crate) type ENetProtocolSendUnreliable = _ENetProtocolSendUnreliable;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolSendUnsequenced {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) unsequencedGroup: enet_uint16,
-    pub(crate) dataLength: enet_uint16,
+    pub(crate) unsequencedGroup: u16,
+    pub(crate) dataLength: u16,
 }
 pub(crate) type ENetProtocolSendUnsequenced = _ENetProtocolSendUnsequenced;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub(crate) struct _ENetProtocolSendFragment {
     pub(crate) header: ENetProtocolCommandHeader,
-    pub(crate) startSequenceNumber: enet_uint16,
-    pub(crate) dataLength: enet_uint16,
-    pub(crate) fragmentCount: enet_uint32,
-    pub(crate) fragmentNumber: enet_uint32,
-    pub(crate) totalLength: enet_uint32,
-    pub(crate) fragmentOffset: enet_uint32,
+    pub(crate) startSequenceNumber: u16,
+    pub(crate) dataLength: u16,
+    pub(crate) fragmentCount: u32,
+    pub(crate) fragmentNumber: u32,
+    pub(crate) totalLength: u32,
+    pub(crate) fragmentOffset: u32,
 }
 pub(crate) type ENetProtocolSendFragment = _ENetProtocolSendFragment;
 #[derive(Copy, Clone)]
@@ -342,50 +339,50 @@ pub(crate) type ENetList = _ENetList;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct _ENetCallbacks {
-    pub(crate) malloc: Option<unsafe extern "C" fn(size_t) -> *mut c_void>,
+    pub(crate) malloc: Option<unsafe extern "C" fn(usize) -> *mut c_void>,
     pub(crate) free: Option<unsafe extern "C" fn(*mut c_void) -> ()>,
     pub(crate) no_memory: Option<unsafe extern "C" fn() -> ()>,
 }
 pub(crate) type ENetCallbacks = _ENetCallbacks;
-pub(crate) type ENetVersion = enet_uint32;
+pub(crate) type ENetVersion = u32;
 #[allow(clippy::type_complexity)]
 pub(crate) struct _ENetHost<S: Socket> {
     pub(crate) socket: MaybeUninit<S>,
-    pub(crate) incomingBandwidth: enet_uint32,
-    pub(crate) outgoingBandwidth: enet_uint32,
-    pub(crate) bandwidthThrottleEpoch: enet_uint32,
-    pub(crate) mtu: enet_uint32,
-    pub(crate) randomSeed: enet_uint32,
+    pub(crate) incomingBandwidth: u32,
+    pub(crate) outgoingBandwidth: u32,
+    pub(crate) bandwidthThrottleEpoch: u32,
+    pub(crate) mtu: u32,
+    pub(crate) randomSeed: u32,
     pub(crate) recalculateBandwidthLimits: c_int,
     pub(crate) peers: *mut ENetPeer<S>,
-    pub(crate) peerCount: size_t,
-    pub(crate) channelLimit: size_t,
-    pub(crate) serviceTime: enet_uint32,
+    pub(crate) peerCount: usize,
+    pub(crate) channelLimit: usize,
+    pub(crate) serviceTime: u32,
     pub(crate) dispatchQueue: ENetList,
-    pub(crate) totalQueued: enet_uint32,
-    pub(crate) packetSize: size_t,
-    pub(crate) headerFlags: enet_uint16,
+    pub(crate) totalQueued: u32,
+    pub(crate) packetSize: usize,
+    pub(crate) headerFlags: u16,
     pub(crate) commands: [ENetProtocol; 32],
-    pub(crate) commandCount: size_t,
+    pub(crate) commandCount: usize,
     pub(crate) buffers: [ENetBuffer; 65],
-    pub(crate) bufferCount: size_t,
+    pub(crate) bufferCount: usize,
     pub(crate) checksum: MaybeUninit<Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>>,
     pub(crate) time: MaybeUninit<Box<dyn Fn() -> Duration>>,
     pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
-    pub(crate) packetData: [[enet_uint8; 4096]; 2],
+    pub(crate) packetData: [[u8; 4096]; 2],
     pub(crate) receivedAddress: MaybeUninit<Option<S::PeerAddress>>,
-    pub(crate) receivedData: *mut enet_uint8,
-    pub(crate) receivedDataLength: size_t,
-    pub(crate) totalSentData: enet_uint32,
-    pub(crate) totalSentPackets: enet_uint32,
-    pub(crate) totalReceivedData: enet_uint32,
-    pub(crate) totalReceivedPackets: enet_uint32,
+    pub(crate) receivedData: *mut u8,
+    pub(crate) receivedDataLength: usize,
+    pub(crate) totalSentData: u32,
+    pub(crate) totalSentPackets: u32,
+    pub(crate) totalReceivedData: u32,
+    pub(crate) totalReceivedPackets: u32,
     pub(crate) intercept: ENetInterceptCallback<S>,
-    pub(crate) connectedPeers: size_t,
-    pub(crate) bandwidthLimitedPeers: size_t,
-    pub(crate) duplicatePeers: size_t,
-    pub(crate) maximumPacketSize: size_t,
-    pub(crate) maximumWaitingData: size_t,
+    pub(crate) connectedPeers: usize,
+    pub(crate) bandwidthLimitedPeers: usize,
+    pub(crate) duplicatePeers: usize,
+    pub(crate) maximumPacketSize: usize,
+    pub(crate) maximumWaitingData: usize,
 }
 pub(crate) type ENetInterceptCallback<S> =
     Option<unsafe extern "C" fn(*mut _ENetHost<S>, *mut _ENetEvent<S>) -> c_int>;
@@ -394,18 +391,18 @@ pub(crate) type ENetInterceptCallback<S> =
 pub(crate) struct _ENetEvent<S: Socket> {
     pub(crate) type_0: ENetEventType,
     pub(crate) peer: *mut ENetPeer<S>,
-    pub(crate) channelID: enet_uint8,
-    pub(crate) data: enet_uint32,
+    pub(crate) channelID: u8,
+    pub(crate) data: u32,
     pub(crate) packet: *mut ENetPacket,
 }
 pub(crate) type ENetPacket = _ENetPacket;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct _ENetPacket {
-    pub(crate) referenceCount: size_t,
-    pub(crate) flags: enet_uint32,
-    pub(crate) data: *mut enet_uint8,
-    pub(crate) dataLength: size_t,
+    pub(crate) referenceCount: usize,
+    pub(crate) flags: u32,
+    pub(crate) data: *mut u8,
+    pub(crate) dataLength: usize,
     pub(crate) freeCallback: ENetPacketFreeCallback,
     pub(crate) userData: *mut c_void,
 }
@@ -415,75 +412,75 @@ pub(crate) type ENetPeer<S> = _ENetPeer<S>;
 pub(crate) struct _ENetPeer<S: Socket> {
     pub(crate) dispatchList: ENetListNode,
     pub(crate) host: *mut _ENetHost<S>,
-    pub(crate) outgoingPeerID: enet_uint16,
-    pub(crate) incomingPeerID: enet_uint16,
-    pub(crate) connectID: enet_uint32,
-    pub(crate) outgoingSessionID: enet_uint8,
-    pub(crate) incomingSessionID: enet_uint8,
+    pub(crate) outgoingPeerID: u16,
+    pub(crate) incomingPeerID: u16,
+    pub(crate) connectID: u32,
+    pub(crate) outgoingSessionID: u8,
+    pub(crate) incomingSessionID: u8,
     pub(crate) address: MaybeUninit<Option<S::PeerAddress>>,
     pub(crate) data: *mut c_void,
     pub(crate) state: ENetPeerState,
     pub(crate) channels: *mut ENetChannel,
-    pub(crate) channelCount: size_t,
-    pub(crate) incomingBandwidth: enet_uint32,
-    pub(crate) outgoingBandwidth: enet_uint32,
-    pub(crate) incomingBandwidthThrottleEpoch: enet_uint32,
-    pub(crate) outgoingBandwidthThrottleEpoch: enet_uint32,
-    pub(crate) incomingDataTotal: enet_uint32,
-    pub(crate) outgoingDataTotal: enet_uint32,
-    pub(crate) lastSendTime: enet_uint32,
-    pub(crate) lastReceiveTime: enet_uint32,
-    pub(crate) nextTimeout: enet_uint32,
-    pub(crate) earliestTimeout: enet_uint32,
-    pub(crate) packetLossEpoch: enet_uint32,
-    pub(crate) packetsSent: enet_uint32,
-    pub(crate) packetsLost: enet_uint32,
-    pub(crate) packetLoss: enet_uint32,
-    pub(crate) packetLossVariance: enet_uint32,
-    pub(crate) packetThrottle: enet_uint32,
-    pub(crate) packetThrottleLimit: enet_uint32,
-    pub(crate) packetThrottleCounter: enet_uint32,
-    pub(crate) packetThrottleEpoch: enet_uint32,
-    pub(crate) packetThrottleAcceleration: enet_uint32,
-    pub(crate) packetThrottleDeceleration: enet_uint32,
-    pub(crate) packetThrottleInterval: enet_uint32,
-    pub(crate) pingInterval: enet_uint32,
-    pub(crate) timeoutLimit: enet_uint32,
-    pub(crate) timeoutMinimum: enet_uint32,
-    pub(crate) timeoutMaximum: enet_uint32,
-    pub(crate) lastRoundTripTime: enet_uint32,
-    pub(crate) lowestRoundTripTime: enet_uint32,
-    pub(crate) lastRoundTripTimeVariance: enet_uint32,
-    pub(crate) highestRoundTripTimeVariance: enet_uint32,
-    pub(crate) roundTripTime: enet_uint32,
-    pub(crate) roundTripTimeVariance: enet_uint32,
-    pub(crate) mtu: enet_uint32,
-    pub(crate) windowSize: enet_uint32,
-    pub(crate) reliableDataInTransit: enet_uint32,
-    pub(crate) outgoingReliableSequenceNumber: enet_uint16,
+    pub(crate) channelCount: usize,
+    pub(crate) incomingBandwidth: u32,
+    pub(crate) outgoingBandwidth: u32,
+    pub(crate) incomingBandwidthThrottleEpoch: u32,
+    pub(crate) outgoingBandwidthThrottleEpoch: u32,
+    pub(crate) incomingDataTotal: u32,
+    pub(crate) outgoingDataTotal: u32,
+    pub(crate) lastSendTime: u32,
+    pub(crate) lastReceiveTime: u32,
+    pub(crate) nextTimeout: u32,
+    pub(crate) earliestTimeout: u32,
+    pub(crate) packetLossEpoch: u32,
+    pub(crate) packetsSent: u32,
+    pub(crate) packetsLost: u32,
+    pub(crate) packetLoss: u32,
+    pub(crate) packetLossVariance: u32,
+    pub(crate) packetThrottle: u32,
+    pub(crate) packetThrottleLimit: u32,
+    pub(crate) packetThrottleCounter: u32,
+    pub(crate) packetThrottleEpoch: u32,
+    pub(crate) packetThrottleAcceleration: u32,
+    pub(crate) packetThrottleDeceleration: u32,
+    pub(crate) packetThrottleInterval: u32,
+    pub(crate) pingInterval: u32,
+    pub(crate) timeoutLimit: u32,
+    pub(crate) timeoutMinimum: u32,
+    pub(crate) timeoutMaximum: u32,
+    pub(crate) lastRoundTripTime: u32,
+    pub(crate) lowestRoundTripTime: u32,
+    pub(crate) lastRoundTripTimeVariance: u32,
+    pub(crate) highestRoundTripTimeVariance: u32,
+    pub(crate) roundTripTime: u32,
+    pub(crate) roundTripTimeVariance: u32,
+    pub(crate) mtu: u32,
+    pub(crate) windowSize: u32,
+    pub(crate) reliableDataInTransit: u32,
+    pub(crate) outgoingReliableSequenceNumber: u16,
     pub(crate) acknowledgements: ENetList,
     pub(crate) sentReliableCommands: ENetList,
     pub(crate) outgoingSendReliableCommands: ENetList,
     pub(crate) outgoingCommands: ENetList,
     pub(crate) dispatchedCommands: ENetList,
-    pub(crate) flags: enet_uint16,
-    pub(crate) reserved: enet_uint16,
-    pub(crate) incomingUnsequencedGroup: enet_uint16,
-    pub(crate) outgoingUnsequencedGroup: enet_uint16,
-    pub(crate) unsequencedWindow: [enet_uint32; 32],
-    pub(crate) eventData: enet_uint32,
-    pub(crate) totalWaitingData: size_t,
+    pub(crate) flags: u16,
+    pub(crate) reserved: u16,
+    pub(crate) incomingUnsequencedGroup: u16,
+    pub(crate) outgoingUnsequencedGroup: u16,
+    pub(crate) unsequencedWindow: [u32; 32],
+    pub(crate) eventData: u32,
+    pub(crate) totalWaitingData: usize,
 }
 pub(crate) type ENetChannel = _ENetChannel;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct _ENetChannel {
-    pub(crate) outgoingReliableSequenceNumber: enet_uint16,
-    pub(crate) outgoingUnreliableSequenceNumber: enet_uint16,
-    pub(crate) usedReliableWindows: enet_uint16,
-    pub(crate) reliableWindows: [enet_uint16; 16],
-    pub(crate) incomingReliableSequenceNumber: enet_uint16,
-    pub(crate) incomingUnreliableSequenceNumber: enet_uint16,
+    pub(crate) outgoingReliableSequenceNumber: u16,
+    pub(crate) outgoingUnreliableSequenceNumber: u16,
+    pub(crate) usedReliableWindows: u16,
+    pub(crate) reliableWindows: [u16; 16],
+    pub(crate) incomingReliableSequenceNumber: u16,
+    pub(crate) incomingUnreliableSequenceNumber: u16,
     pub(crate) incomingReliableCommands: ENetList,
     pub(crate) incomingUnreliableCommands: ENetList,
 }
@@ -515,7 +512,7 @@ pub(crate) const ENET_PACKET_FLAG_RELIABLE: _ENetPacketFlag = 1;
 #[repr(C)]
 pub(crate) struct _ENetAcknowledgement {
     pub(crate) acknowledgementList: ENetListNode,
-    pub(crate) sentTime: enet_uint32,
+    pub(crate) sentTime: u32,
     pub(crate) command: ENetProtocol,
 }
 pub(crate) type ENetAcknowledgement = _ENetAcknowledgement;
@@ -523,14 +520,14 @@ pub(crate) type ENetAcknowledgement = _ENetAcknowledgement;
 #[repr(C)]
 pub(crate) struct _ENetOutgoingCommand {
     pub(crate) outgoingCommandList: ENetListNode,
-    pub(crate) reliableSequenceNumber: enet_uint16,
-    pub(crate) unreliableSequenceNumber: enet_uint16,
-    pub(crate) sentTime: enet_uint32,
-    pub(crate) roundTripTimeout: enet_uint32,
-    pub(crate) queueTime: enet_uint32,
-    pub(crate) fragmentOffset: enet_uint32,
-    pub(crate) fragmentLength: enet_uint16,
-    pub(crate) sendAttempts: enet_uint16,
+    pub(crate) reliableSequenceNumber: u16,
+    pub(crate) unreliableSequenceNumber: u16,
+    pub(crate) sentTime: u32,
+    pub(crate) roundTripTimeout: u32,
+    pub(crate) queueTime: u32,
+    pub(crate) fragmentOffset: u32,
+    pub(crate) fragmentLength: u16,
+    pub(crate) sendAttempts: u16,
     pub(crate) command: ENetProtocol,
     pub(crate) packet: *mut ENetPacket,
 }
@@ -539,12 +536,12 @@ pub(crate) type ENetOutgoingCommand = _ENetOutgoingCommand;
 #[repr(C)]
 pub(crate) struct _ENetIncomingCommand {
     pub(crate) incomingCommandList: ENetListNode,
-    pub(crate) reliableSequenceNumber: enet_uint16,
-    pub(crate) unreliableSequenceNumber: enet_uint16,
+    pub(crate) reliableSequenceNumber: u16,
+    pub(crate) unreliableSequenceNumber: u16,
     pub(crate) command: ENetProtocol,
-    pub(crate) fragmentCount: enet_uint32,
-    pub(crate) fragmentsRemaining: enet_uint32,
-    pub(crate) fragments: *mut enet_uint32,
+    pub(crate) fragmentCount: u32,
+    pub(crate) fragmentsRemaining: u32,
+    pub(crate) fragments: *mut u32,
     pub(crate) packet: *mut ENetPacket,
 }
 pub(crate) type ENetIncomingCommand = _ENetIncomingCommand;
@@ -563,15 +560,15 @@ pub(crate) type ENetSymbol = _ENetSymbol;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct _ENetSymbol {
-    pub(crate) value: enet_uint8,
-    pub(crate) count: enet_uint8,
-    pub(crate) under: enet_uint16,
-    pub(crate) left: enet_uint16,
-    pub(crate) right: enet_uint16,
-    pub(crate) symbols: enet_uint16,
-    pub(crate) escapes: enet_uint16,
-    pub(crate) total: enet_uint16,
-    pub(crate) parent: enet_uint16,
+    pub(crate) value: u8,
+    pub(crate) count: u8,
+    pub(crate) under: u16,
+    pub(crate) left: u16,
+    pub(crate) right: u16,
+    pub(crate) symbols: u16,
+    pub(crate) escapes: u16,
+    pub(crate) total: u16,
+    pub(crate) parent: u16,
 }
 pub(crate) const ENET_CONTEXT_SYMBOL_MINIMUM: C2RustUnnamed_3 = 1;
 pub(crate) const ENET_CONTEXT_ESCAPE_MINIMUM: C2RustUnnamed_3 = 1;
@@ -584,7 +581,7 @@ pub(crate) const ENET_RANGE_CODER_TOP: C2RustUnnamed_3 = 16777216;
 pub(crate) type C2RustUnnamed_3 = c_uint;
 static mut CALLBACKS: ENetCallbacks = unsafe {
     _ENetCallbacks {
-        malloc: Some(_enet_malloc as unsafe extern "C" fn(size_t) -> *mut c_void),
+        malloc: Some(_enet_malloc as unsafe extern "C" fn(usize) -> *mut c_void),
         free: Some(_enet_free as unsafe extern "C" fn(*mut c_void) -> ()),
         no_memory: ::core::mem::transmute::<
             Option<unsafe extern "C" fn() -> !>,
@@ -596,7 +593,7 @@ pub(crate) unsafe fn enet_linked_version() -> ENetVersion {
     ((1 as c_int) << 16 as c_int | (3 as c_int) << 8 as c_int | 17 as c_int) as ENetVersion
 }
 #[no_mangle]
-pub(crate) unsafe extern "C" fn enet_malloc(size: size_t) -> *mut c_void {
+pub(crate) unsafe extern "C" fn enet_malloc(size: usize) -> *mut c_void {
     let memory: *mut c_void = (CALLBACKS.malloc).expect("non-null function pointer")(size);
     if memory.is_null() {
         (CALLBACKS.no_memory).expect("non-null function pointer")();
@@ -610,7 +607,7 @@ pub(crate) unsafe extern "C" fn enet_free(memory: *mut c_void) {
 #[no_mangle]
 pub(crate) unsafe extern "C" fn enet_range_coder_create() -> *mut c_void {
     let rangeCoder: *mut ENetRangeCoder =
-        enet_malloc(::core::mem::size_of::<ENetRangeCoder>() as size_t) as *mut ENetRangeCoder;
+        enet_malloc(::core::mem::size_of::<ENetRangeCoder>()) as *mut ENetRangeCoder;
     if rangeCoder.is_null() {
         return std::ptr::null_mut();
     }
@@ -624,18 +621,18 @@ pub(crate) unsafe extern "C" fn enet_range_coder_destroy(context: *mut c_void) {
     }
     enet_free(rangeCoder as *mut c_void);
 }
-unsafe extern "C" fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> enet_uint16 {
-    let mut total: enet_uint16 = 0 as c_int as enet_uint16;
+unsafe extern "C" fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
+    let mut total: u16 = 0 as c_int as u16;
     loop {
         (*symbol).count =
-            ((*symbol).count as c_int - ((*symbol).count as c_int >> 1 as c_int)) as enet_uint8;
-        (*symbol).under = (*symbol).count as enet_uint16;
+            ((*symbol).count as c_int - ((*symbol).count as c_int >> 1 as c_int)) as u8;
+        (*symbol).under = (*symbol).count as u16;
         if (*symbol).left != 0 {
             (*symbol).under = ((*symbol).under as c_int
                 + enet_symbol_rescale(symbol.offset((*symbol).left as c_int as isize)) as c_int)
-                as enet_uint16;
+                as u16;
         }
-        total = (total as c_int + (*symbol).under as c_int) as enet_uint16;
+        total = (total as c_int + (*symbol).under as c_int) as u16;
         if (*symbol).right == 0 {
             break;
         }
@@ -647,62 +644,62 @@ unsafe extern "C" fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> enet_ui
 pub(crate) unsafe extern "C" fn enet_range_coder_compress(
     context: *mut c_void,
     mut inBuffers: *const ENetBuffer,
-    mut inBufferCount: size_t,
-    inLimit: size_t,
-    mut outData: *mut enet_uint8,
-    outLimit: size_t,
-) -> size_t {
+    mut inBufferCount: usize,
+    inLimit: usize,
+    mut outData: *mut u8,
+    outLimit: usize,
+) -> usize {
     let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
-    let outStart: *mut enet_uint8 = outData;
-    let outEnd: *mut enet_uint8 = &mut *outData.add(outLimit) as *mut enet_uint8;
-    let mut inData: *const enet_uint8;
-    let mut inEnd: *const enet_uint8;
-    let mut encodeLow: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut encodeRange: enet_uint32 = !(0 as c_int) as enet_uint32;
+    let outStart: *mut u8 = outData;
+    let outEnd: *mut u8 = &mut *outData.add(outLimit) as *mut u8;
+    let mut inData: *const u8;
+    let mut inEnd: *const u8;
+    let mut encodeLow: u32 = 0 as c_int as u32;
+    let mut encodeRange: u32 = !(0 as c_int) as u32;
     let mut root: *mut ENetSymbol;
-    let mut predicted: enet_uint16 = 0 as c_int as enet_uint16;
-    let mut order: size_t = 0 as c_int as size_t;
-    let mut nextSymbol: size_t = 0 as c_int as size_t;
+    let mut predicted: u16 = 0 as c_int as u16;
+    let mut order: usize = 0 as c_int as usize;
+    let mut nextSymbol: usize = 0 as c_int as usize;
     if rangeCoder.is_null()
-        || inBufferCount <= 0 as c_int as size_t
-        || inLimit <= 0 as c_int as size_t
+        || inBufferCount <= 0 as c_int as usize
+        || inLimit <= 0 as c_int as usize
     {
-        return 0 as c_int as size_t;
+        return 0 as c_int as usize;
     }
-    inData = (*inBuffers).data as *const enet_uint8;
-    inEnd = &*inData.add((*inBuffers).dataLength) as *const enet_uint8;
+    inData = (*inBuffers).data as *const u8;
+    inEnd = &*inData.add((*inBuffers).dataLength) as *const u8;
     inBuffers = inBuffers.offset(1);
     inBufferCount = inBufferCount.wrapping_sub(1);
     let fresh0 = nextSymbol;
     nextSymbol = nextSymbol.wrapping_add(1);
     root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh0) as *mut ENetSymbol;
-    (*root).value = 0 as c_int as enet_uint8;
-    (*root).count = 0 as c_int as enet_uint8;
-    (*root).under = 0 as c_int as enet_uint16;
-    (*root).left = 0 as c_int as enet_uint16;
-    (*root).right = 0 as c_int as enet_uint16;
-    (*root).symbols = 0 as c_int as enet_uint16;
-    (*root).escapes = 0 as c_int as enet_uint16;
-    (*root).total = 0 as c_int as enet_uint16;
-    (*root).parent = 0 as c_int as enet_uint16;
-    (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as enet_uint16;
+    (*root).value = 0 as c_int as u8;
+    (*root).count = 0 as c_int as u8;
+    (*root).under = 0 as c_int as u16;
+    (*root).left = 0 as c_int as u16;
+    (*root).right = 0 as c_int as u16;
+    (*root).symbols = 0 as c_int as u16;
+    (*root).escapes = 0 as c_int as u16;
+    (*root).total = 0 as c_int as u16;
+    (*root).parent = 0 as c_int as u16;
+    (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as u16;
     (*root).total = (ENET_CONTEXT_ESCAPE_MINIMUM as c_int
-        + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint16;
-    (*root).symbols = 0 as c_int as enet_uint16;
+        + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as u16;
+    (*root).symbols = 0 as c_int as u16;
     let mut current_block_237: u64;
     loop {
         let mut subcontext: *mut ENetSymbol;
         let mut symbol: *mut ENetSymbol;
-        let mut count: enet_uint16;
-        let mut under: enet_uint16;
-        let mut parent: *mut enet_uint16 = &mut predicted;
-        let mut total: enet_uint16;
+        let mut count: u16;
+        let mut under: u16;
+        let mut parent: *mut u16 = &mut predicted;
+        let mut total: u16;
         if inData >= inEnd {
-            if inBufferCount <= 0 as c_int as size_t {
+            if inBufferCount <= 0 as c_int as usize {
                 break;
             }
-            inData = (*inBuffers).data as *const enet_uint8;
-            inEnd = &*inData.add((*inBuffers).dataLength) as *const enet_uint8;
+            inData = (*inBuffers).data as *const u8;
+            inEnd = &*inData.add((*inBuffers).dataLength) as *const u8;
             inBuffers = inBuffers.offset(1);
             inBufferCount = inBufferCount.wrapping_sub(1);
         }
@@ -717,30 +714,29 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                 current_block_237 = 2463987395154258233;
                 break;
             }
-            under = (value as c_int * 0 as c_int) as enet_uint16;
-            count = 0 as c_int as enet_uint16;
+            under = (value as c_int * 0 as c_int) as u16;
+            count = 0 as c_int as u16;
             if (*subcontext).symbols == 0 {
                 let fresh2 = nextSymbol;
                 nextSymbol = nextSymbol.wrapping_add(1);
                 symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh2) as *mut ENetSymbol;
                 (*symbol).value = value;
-                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                (*symbol).left = 0 as c_int as enet_uint16;
-                (*symbol).right = 0 as c_int as enet_uint16;
-                (*symbol).symbols = 0 as c_int as enet_uint16;
-                (*symbol).escapes = 0 as c_int as enet_uint16;
-                (*symbol).total = 0 as c_int as enet_uint16;
-                (*symbol).parent = 0 as c_int as enet_uint16;
-                (*subcontext).symbols = symbol.offset_from(subcontext) as c_long as enet_uint16;
+                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u8;
+                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u16;
+                (*symbol).left = 0 as c_int as u16;
+                (*symbol).right = 0 as c_int as u16;
+                (*symbol).symbols = 0 as c_int as u16;
+                (*symbol).escapes = 0 as c_int as u16;
+                (*symbol).total = 0 as c_int as u16;
+                (*symbol).parent = 0 as c_int as u16;
+                (*subcontext).symbols = symbol.offset_from(subcontext) as c_long as u16;
             } else {
                 let mut node: *mut ENetSymbol =
                     subcontext.offset((*subcontext).symbols as c_int as isize);
                 loop {
                     if (value as c_int) < (*node).value as c_int {
-                        (*node).under = ((*node).under as c_int
-                            + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint16;
+                        (*node).under =
+                            ((*node).under as c_int + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int) as u16;
                         if (*node).left != 0 {
                             node = node.offset((*node).left as c_int as isize);
                         } else {
@@ -749,19 +745,19 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                             symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh3)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                            (*symbol).left = 0 as c_int as enet_uint16;
-                            (*symbol).right = 0 as c_int as enet_uint16;
-                            (*symbol).symbols = 0 as c_int as enet_uint16;
-                            (*symbol).escapes = 0 as c_int as enet_uint16;
-                            (*symbol).total = 0 as c_int as enet_uint16;
-                            (*symbol).parent = 0 as c_int as enet_uint16;
-                            (*node).left = symbol.offset_from(node) as c_long as enet_uint16;
+                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u8;
+                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u16;
+                            (*symbol).left = 0 as c_int as u16;
+                            (*symbol).right = 0 as c_int as u16;
+                            (*symbol).symbols = 0 as c_int as u16;
+                            (*symbol).escapes = 0 as c_int as u16;
+                            (*symbol).total = 0 as c_int as u16;
+                            (*symbol).parent = 0 as c_int as u16;
+                            (*node).left = symbol.offset_from(node) as c_long as u16;
                             break;
                         }
                     } else if value as c_int > (*node).value as c_int {
-                        under = (under as c_int + (*node).under as c_int) as enet_uint16;
+                        under = (under as c_int + (*node).under as c_int) as u16;
                         if (*node).right != 0 {
                             node = node.offset((*node).right as c_int as isize);
                         } else {
@@ -770,45 +766,40 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                             symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh4)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                            (*symbol).left = 0 as c_int as enet_uint16;
-                            (*symbol).right = 0 as c_int as enet_uint16;
-                            (*symbol).symbols = 0 as c_int as enet_uint16;
-                            (*symbol).escapes = 0 as c_int as enet_uint16;
-                            (*symbol).total = 0 as c_int as enet_uint16;
-                            (*symbol).parent = 0 as c_int as enet_uint16;
-                            (*node).right = symbol.offset_from(node) as c_long as enet_uint16;
+                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u8;
+                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u16;
+                            (*symbol).left = 0 as c_int as u16;
+                            (*symbol).right = 0 as c_int as u16;
+                            (*symbol).symbols = 0 as c_int as u16;
+                            (*symbol).escapes = 0 as c_int as u16;
+                            (*symbol).total = 0 as c_int as u16;
+                            (*symbol).parent = 0 as c_int as u16;
+                            (*node).right = symbol.offset_from(node) as c_long as u16;
                             break;
                         }
                     } else {
-                        count = (count as c_int + (*node).count as c_int) as enet_uint16;
+                        count = (count as c_int + (*node).count as c_int) as u16;
                         under = (under as c_int + ((*node).under as c_int - (*node).count as c_int))
-                            as enet_uint16;
-                        (*node).under = ((*node).under as c_int
-                            + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint16;
-                        (*node).count = ((*node).count as c_int
-                            + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint8;
+                            as u16;
+                        (*node).under =
+                            ((*node).under as c_int + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int) as u16;
+                        (*node).count =
+                            ((*node).count as c_int + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int) as u8;
                         symbol = node;
                         break;
                     }
                 }
             }
-            *parent =
-                symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as enet_uint16;
+            *parent = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as u16;
             parent = &mut (*symbol).parent;
             total = (*subcontext).total;
             if count as c_int > 0 as c_int {
-                encodeRange = (encodeRange as c_uint).wrapping_div(total as c_uint) as enet_uint32
-                    as enet_uint32;
+                encodeRange = (encodeRange as c_uint).wrapping_div(total as c_uint);
                 encodeLow = (encodeLow as c_uint).wrapping_add(
                     (((*subcontext).escapes as c_int + under as c_int) as c_uint)
                         .wrapping_mul(encodeRange),
-                ) as enet_uint32 as enet_uint32;
-                encodeRange = (encodeRange as c_uint).wrapping_mul(count as c_uint) as enet_uint32
-                    as enet_uint32;
+                );
+                encodeRange = (encodeRange as c_uint).wrapping_mul(count as c_uint);
                 loop {
                     if encodeLow ^ encodeLow.wrapping_add(encodeRange)
                         >= ENET_RANGE_CODER_TOP as c_int as c_uint
@@ -820,11 +811,11 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                             & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
                     }
                     if outData >= outEnd {
-                        return 0 as c_int as size_t;
+                        return 0 as c_int as usize;
                     }
                     let fresh5 = outData;
                     outData = outData.offset(1);
-                    *fresh5 = (encodeLow >> 24 as c_int) as enet_uint8;
+                    *fresh5 = (encodeLow >> 24 as c_int) as u8;
                     encodeRange <<= 8 as c_int;
                     encodeLow <<= 8 as c_int;
                 }
@@ -832,14 +823,11 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                 if (*subcontext).escapes as c_int > 0 as c_int
                     && ((*subcontext).escapes as c_int) < total as c_int
                 {
-                    encodeRange = (encodeRange as c_uint).wrapping_div(total as c_uint)
-                        as enet_uint32 as enet_uint32;
+                    encodeRange = (encodeRange as c_uint).wrapping_div(total as c_uint);
                     encodeLow = (encodeLow as c_uint)
-                        .wrapping_add((0 as c_int as c_uint).wrapping_mul(encodeRange))
-                        as enet_uint32 as enet_uint32;
-                    encodeRange = (encodeRange as c_uint)
-                        .wrapping_mul((*subcontext).escapes as c_uint)
-                        as enet_uint32 as enet_uint32;
+                        .wrapping_add((0 as c_int as c_uint).wrapping_mul(encodeRange));
+                    encodeRange =
+                        (encodeRange as c_uint).wrapping_mul((*subcontext).escapes as c_uint);
                     loop {
                         if encodeLow ^ encodeLow.wrapping_add(encodeRange)
                             >= ENET_RANGE_CODER_TOP as c_int as c_uint
@@ -851,25 +839,22 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                                 & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
                         }
                         if outData >= outEnd {
-                            return 0 as c_int as size_t;
+                            return 0 as c_int as usize;
                         }
                         let fresh6 = outData;
                         outData = outData.offset(1);
-                        *fresh6 = (encodeLow >> 24 as c_int) as enet_uint8;
+                        *fresh6 = (encodeLow >> 24 as c_int) as u8;
                         encodeRange <<= 8 as c_int;
                         encodeLow <<= 8 as c_int;
                     }
                 }
-                (*subcontext).escapes = ((*subcontext).escapes as c_int
-                    + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int)
-                    as enet_uint16;
-                (*subcontext).total = ((*subcontext).total as c_int
-                    + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int)
-                    as enet_uint16;
+                (*subcontext).escapes =
+                    ((*subcontext).escapes as c_int + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int) as u16;
+                (*subcontext).total =
+                    ((*subcontext).total as c_int + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int) as u16;
             }
-            (*subcontext).total = ((*subcontext).total as c_int
-                + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                as enet_uint16;
+            (*subcontext).total =
+                ((*subcontext).total as c_int + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int) as u16;
             if count as c_int > 0xff as c_int - 2 as c_int * ENET_SUBCONTEXT_SYMBOL_DELTA as c_int
                 || (*subcontext).total as c_int > ENET_RANGE_CODER_BOTTOM as c_int - 0x100 as c_int
             {
@@ -878,13 +863,13 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                         as c_int
                 } else {
                     0 as c_int
-                }) as enet_uint16;
+                }) as u16;
                 (*subcontext).escapes = ((*subcontext).escapes as c_int
                     - ((*subcontext).escapes as c_int >> 1 as c_int))
-                    as enet_uint16;
+                    as u16;
                 (*subcontext).total = ((*subcontext).total as c_int
                     + ((*subcontext).escapes as c_int + 256 as c_int * 0 as c_int))
-                    as enet_uint16;
+                    as u16;
             }
             if count as c_int > 0 as c_int {
                 current_block_237 = 836937598693885467;
@@ -895,29 +880,28 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                 .offset((*subcontext).parent as isize) as *mut ENetSymbol;
         }
         if let 2463987395154258233 = current_block_237 {
-            under = (value as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint16;
-            count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as enet_uint16;
+            under = (value as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as u16;
+            count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as u16;
             if (*root).symbols == 0 {
                 let fresh7 = nextSymbol;
                 nextSymbol = nextSymbol.wrapping_add(1);
                 symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh7) as *mut ENetSymbol;
                 (*symbol).value = value;
-                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                (*symbol).left = 0 as c_int as enet_uint16;
-                (*symbol).right = 0 as c_int as enet_uint16;
-                (*symbol).symbols = 0 as c_int as enet_uint16;
-                (*symbol).escapes = 0 as c_int as enet_uint16;
-                (*symbol).total = 0 as c_int as enet_uint16;
-                (*symbol).parent = 0 as c_int as enet_uint16;
-                (*root).symbols = symbol.offset_from(root) as c_long as enet_uint16;
+                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as u8;
+                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as u16;
+                (*symbol).left = 0 as c_int as u16;
+                (*symbol).right = 0 as c_int as u16;
+                (*symbol).symbols = 0 as c_int as u16;
+                (*symbol).escapes = 0 as c_int as u16;
+                (*symbol).total = 0 as c_int as u16;
+                (*symbol).parent = 0 as c_int as u16;
+                (*root).symbols = symbol.offset_from(root) as c_long as u16;
             } else {
                 let mut node_0: *mut ENetSymbol = root.offset((*root).symbols as c_int as isize);
                 loop {
                     if (value as c_int) < (*node_0).value as c_int {
-                        (*node_0).under = ((*node_0).under as c_int
-                            + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint16;
+                        (*node_0).under =
+                            ((*node_0).under as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as u16;
                         if (*node_0).left != 0 {
                             node_0 = node_0.offset((*node_0).left as c_int as isize);
                         } else {
@@ -926,19 +910,19 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                             symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh8)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
-                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                            (*symbol).left = 0 as c_int as enet_uint16;
-                            (*symbol).right = 0 as c_int as enet_uint16;
-                            (*symbol).symbols = 0 as c_int as enet_uint16;
-                            (*symbol).escapes = 0 as c_int as enet_uint16;
-                            (*symbol).total = 0 as c_int as enet_uint16;
-                            (*symbol).parent = 0 as c_int as enet_uint16;
-                            (*node_0).left = symbol.offset_from(node_0) as c_long as enet_uint16;
+                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as u8;
+                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as u16;
+                            (*symbol).left = 0 as c_int as u16;
+                            (*symbol).right = 0 as c_int as u16;
+                            (*symbol).symbols = 0 as c_int as u16;
+                            (*symbol).escapes = 0 as c_int as u16;
+                            (*symbol).total = 0 as c_int as u16;
+                            (*symbol).parent = 0 as c_int as u16;
+                            (*node_0).left = symbol.offset_from(node_0) as c_long as u16;
                             break;
                         }
                     } else if value as c_int > (*node_0).value as c_int {
-                        under = (under as c_int + (*node_0).under as c_int) as enet_uint16;
+                        under = (under as c_int + (*node_0).under as c_int) as u16;
                         if (*node_0).right != 0 {
                             node_0 = node_0.offset((*node_0).right as c_int as isize);
                         } else {
@@ -947,43 +931,38 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                             symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh9)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
-                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                            (*symbol).left = 0 as c_int as enet_uint16;
-                            (*symbol).right = 0 as c_int as enet_uint16;
-                            (*symbol).symbols = 0 as c_int as enet_uint16;
-                            (*symbol).escapes = 0 as c_int as enet_uint16;
-                            (*symbol).total = 0 as c_int as enet_uint16;
-                            (*symbol).parent = 0 as c_int as enet_uint16;
-                            (*node_0).right = symbol.offset_from(node_0) as c_long as enet_uint16;
+                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as u8;
+                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as u16;
+                            (*symbol).left = 0 as c_int as u16;
+                            (*symbol).right = 0 as c_int as u16;
+                            (*symbol).symbols = 0 as c_int as u16;
+                            (*symbol).escapes = 0 as c_int as u16;
+                            (*symbol).total = 0 as c_int as u16;
+                            (*symbol).parent = 0 as c_int as u16;
+                            (*node_0).right = symbol.offset_from(node_0) as c_long as u16;
                             break;
                         }
                     } else {
-                        count = (count as c_int + (*node_0).count as c_int) as enet_uint16;
+                        count = (count as c_int + (*node_0).count as c_int) as u16;
                         under = (under as c_int
                             + ((*node_0).under as c_int - (*node_0).count as c_int))
-                            as enet_uint16;
-                        (*node_0).under = ((*node_0).under as c_int
-                            + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint16;
-                        (*node_0).count = ((*node_0).count as c_int
-                            + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint8;
+                            as u16;
+                        (*node_0).under =
+                            ((*node_0).under as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as u16;
+                        (*node_0).count =
+                            ((*node_0).count as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as u8;
                         symbol = node_0;
                         break;
                     }
                 }
             }
-            *parent =
-                symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as enet_uint16;
+            *parent = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as u16;
             total = (*root).total;
-            encodeRange =
-                (encodeRange as c_uint).wrapping_div(total as c_uint) as enet_uint32 as enet_uint32;
+            encodeRange = (encodeRange as c_uint).wrapping_div(total as c_uint);
             encodeLow = (encodeLow as c_uint).wrapping_add(
                 (((*root).escapes as c_int + under as c_int) as c_uint).wrapping_mul(encodeRange),
-            ) as enet_uint32 as enet_uint32;
-            encodeRange =
-                (encodeRange as c_uint).wrapping_mul(count as c_uint) as enet_uint32 as enet_uint32;
+            );
+            encodeRange = (encodeRange as c_uint).wrapping_mul(count as c_uint);
             loop {
                 if encodeLow ^ encodeLow.wrapping_add(encodeRange)
                     >= ENET_RANGE_CODER_TOP as c_int as c_uint
@@ -995,16 +974,15 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                         & (ENET_RANGE_CODER_BOTTOM as c_int - 1 as c_int) as c_uint;
                 }
                 if outData >= outEnd {
-                    return 0 as c_int as size_t;
+                    return 0 as c_int as usize;
                 }
                 let fresh10 = outData;
                 outData = outData.offset(1);
-                *fresh10 = (encodeLow >> 24 as c_int) as enet_uint8;
+                *fresh10 = (encodeLow >> 24 as c_int) as u8;
                 encodeRange <<= 8 as c_int;
                 encodeLow <<= 8 as c_int;
             }
-            (*root).total =
-                ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as enet_uint16;
+            (*root).total = ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as u16;
             if count as c_int
                 > 0xff as c_int - 2 as c_int * ENET_CONTEXT_SYMBOL_DELTA as c_int
                     + ENET_CONTEXT_SYMBOL_MINIMUM as c_int
@@ -1014,97 +992,96 @@ pub(crate) unsafe extern "C" fn enet_range_coder_compress(
                     enet_symbol_rescale(root.offset((*root).symbols as c_int as isize)) as c_int
                 } else {
                     0 as c_int
-                }) as enet_uint16;
-                (*root).escapes = ((*root).escapes as c_int
-                    - ((*root).escapes as c_int >> 1 as c_int))
-                    as enet_uint16;
+                }) as u16;
+                (*root).escapes =
+                    ((*root).escapes as c_int - ((*root).escapes as c_int >> 1 as c_int)) as u16;
                 (*root).total = ((*root).total as c_int
                     + ((*root).escapes as c_int
                         + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int))
-                    as enet_uint16;
+                    as u16;
             }
         }
-        if order >= ENET_SUBCONTEXT_ORDER as c_int as size_t {
+        if order >= ENET_SUBCONTEXT_ORDER as c_int as usize {
             predicted = (*rangeCoder).symbols[predicted as usize].parent;
         } else {
             order = order.wrapping_add(1);
         }
         if nextSymbol
-            >= (::core::mem::size_of::<[ENetSymbol; 4096]>() as size_t)
-                .wrapping_div(::core::mem::size_of::<ENetSymbol>() as size_t)
-                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as size_t)
+            >= ::core::mem::size_of::<[ENetSymbol; 4096]>()
+                .wrapping_div(::core::mem::size_of::<ENetSymbol>())
+                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as usize)
         {
-            nextSymbol = 0 as c_int as size_t;
+            nextSymbol = 0 as c_int as usize;
             let fresh11 = nextSymbol;
             nextSymbol = nextSymbol.wrapping_add(1);
             root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh11) as *mut ENetSymbol;
-            (*root).value = 0 as c_int as enet_uint8;
-            (*root).count = 0 as c_int as enet_uint8;
-            (*root).under = 0 as c_int as enet_uint16;
-            (*root).left = 0 as c_int as enet_uint16;
-            (*root).right = 0 as c_int as enet_uint16;
-            (*root).symbols = 0 as c_int as enet_uint16;
-            (*root).escapes = 0 as c_int as enet_uint16;
-            (*root).total = 0 as c_int as enet_uint16;
-            (*root).parent = 0 as c_int as enet_uint16;
-            (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as enet_uint16;
+            (*root).value = 0 as c_int as u8;
+            (*root).count = 0 as c_int as u8;
+            (*root).under = 0 as c_int as u16;
+            (*root).left = 0 as c_int as u16;
+            (*root).right = 0 as c_int as u16;
+            (*root).symbols = 0 as c_int as u16;
+            (*root).escapes = 0 as c_int as u16;
+            (*root).total = 0 as c_int as u16;
+            (*root).parent = 0 as c_int as u16;
+            (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as u16;
             (*root).total = (ENET_CONTEXT_ESCAPE_MINIMUM as c_int
                 + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                as enet_uint16;
-            (*root).symbols = 0 as c_int as enet_uint16;
-            predicted = 0 as c_int as enet_uint16;
-            order = 0 as c_int as size_t;
+                as u16;
+            (*root).symbols = 0 as c_int as u16;
+            predicted = 0 as c_int as u16;
+            order = 0 as c_int as usize;
         }
     }
     while encodeLow != 0 {
         if outData >= outEnd {
-            return 0 as c_int as size_t;
+            return 0 as c_int as usize;
         }
         let fresh12 = outData;
         outData = outData.offset(1);
-        *fresh12 = (encodeLow >> 24 as c_int) as enet_uint8;
+        *fresh12 = (encodeLow >> 24 as c_int) as u8;
         encodeLow <<= 8 as c_int;
     }
-    outData.offset_from(outStart) as c_long as size_t
+    outData.offset_from(outStart) as c_long as usize
 }
 #[no_mangle]
 pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
     context: *mut c_void,
-    mut inData: *const enet_uint8,
-    inLimit: size_t,
-    mut outData: *mut enet_uint8,
-    outLimit: size_t,
-) -> size_t {
+    mut inData: *const u8,
+    inLimit: usize,
+    mut outData: *mut u8,
+    outLimit: usize,
+) -> usize {
     let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
-    let outStart: *mut enet_uint8 = outData;
-    let outEnd: *mut enet_uint8 = &mut *outData.add(outLimit) as *mut enet_uint8;
-    let inEnd: *const enet_uint8 = &*inData.add(inLimit) as *const enet_uint8;
-    let mut decodeLow: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut decodeCode: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut decodeRange: enet_uint32 = !(0 as c_int) as enet_uint32;
+    let outStart: *mut u8 = outData;
+    let outEnd: *mut u8 = &mut *outData.add(outLimit) as *mut u8;
+    let inEnd: *const u8 = &*inData.add(inLimit) as *const u8;
+    let mut decodeLow: u32 = 0 as c_int as u32;
+    let mut decodeCode: u32 = 0 as c_int as u32;
+    let mut decodeRange: u32 = !(0 as c_int) as u32;
     let mut root: *mut ENetSymbol;
-    let mut predicted: enet_uint16 = 0 as c_int as enet_uint16;
-    let mut order: size_t = 0 as c_int as size_t;
-    let mut nextSymbol: size_t = 0 as c_int as size_t;
-    if rangeCoder.is_null() || inLimit <= 0 as c_int as size_t {
-        return 0 as c_int as size_t;
+    let mut predicted: u16 = 0 as c_int as u16;
+    let mut order: usize = 0 as c_int as usize;
+    let mut nextSymbol: usize = 0 as c_int as usize;
+    if rangeCoder.is_null() || inLimit <= 0 as c_int as usize {
+        return 0 as c_int as usize;
     }
     let fresh13 = nextSymbol;
     nextSymbol = nextSymbol.wrapping_add(1);
     root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh13) as *mut ENetSymbol;
-    (*root).value = 0 as c_int as enet_uint8;
-    (*root).count = 0 as c_int as enet_uint8;
-    (*root).under = 0 as c_int as enet_uint16;
-    (*root).left = 0 as c_int as enet_uint16;
-    (*root).right = 0 as c_int as enet_uint16;
-    (*root).symbols = 0 as c_int as enet_uint16;
-    (*root).escapes = 0 as c_int as enet_uint16;
-    (*root).total = 0 as c_int as enet_uint16;
-    (*root).parent = 0 as c_int as enet_uint16;
-    (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as enet_uint16;
+    (*root).value = 0 as c_int as u8;
+    (*root).count = 0 as c_int as u8;
+    (*root).under = 0 as c_int as u16;
+    (*root).left = 0 as c_int as u16;
+    (*root).right = 0 as c_int as u16;
+    (*root).symbols = 0 as c_int as u16;
+    (*root).escapes = 0 as c_int as u16;
+    (*root).total = 0 as c_int as u16;
+    (*root).parent = 0 as c_int as u16;
+    (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as u16;
     (*root).total = (ENET_CONTEXT_ESCAPE_MINIMUM as c_int
-        + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint16;
-    (*root).symbols = 0 as c_int as enet_uint16;
+        + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as u16;
+    (*root).symbols = 0 as c_int as u16;
     if inData < inEnd {
         let fresh14 = inData;
         inData = inData.offset(1);
@@ -1130,13 +1107,13 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
         let mut subcontext: *mut ENetSymbol;
         let mut symbol: *mut ENetSymbol;
         let mut patch: *mut ENetSymbol;
-        let mut value: enet_uint8 = 0 as c_int as enet_uint8;
-        let mut code: enet_uint16;
-        let mut under: enet_uint16;
-        let mut count: enet_uint16;
-        let mut bottom: enet_uint16 = 0;
-        let mut parent: *mut enet_uint16 = &mut predicted;
-        let mut total: enet_uint16;
+        let mut value: u8 = 0 as c_int as u8;
+        let mut code: u16;
+        let mut under: u16;
+        let mut count: u16;
+        let mut bottom: u16 = 0;
+        let mut parent: *mut u16 = &mut predicted;
+        let mut total: u16;
         subcontext = &mut *((*rangeCoder).symbols)
             .as_mut_ptr()
             .offset(predicted as isize) as *mut ENetSymbol;
@@ -1148,17 +1125,13 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
             if (*subcontext).escapes as c_int > 0 as c_int {
                 total = (*subcontext).total;
                 if ((*subcontext).escapes as c_int) < total as c_int {
-                    decodeRange = (decodeRange as c_uint).wrapping_div(total as c_uint)
-                        as enet_uint32 as enet_uint32;
-                    code =
-                        decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as enet_uint16;
+                    decodeRange = (decodeRange as c_uint).wrapping_div(total as c_uint);
+                    code = decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as u16;
                     if (code as c_int) < (*subcontext).escapes as c_int {
                         decodeLow = (decodeLow as c_uint)
-                            .wrapping_add((0 as c_int as c_uint).wrapping_mul(decodeRange))
-                            as enet_uint32 as enet_uint32;
-                        decodeRange = (decodeRange as c_uint)
-                            .wrapping_mul((*subcontext).escapes as c_uint)
-                            as enet_uint32 as enet_uint32;
+                            .wrapping_add((0 as c_int as c_uint).wrapping_mul(decodeRange));
+                        decodeRange =
+                            (decodeRange as c_uint).wrapping_mul((*subcontext).escapes as c_uint);
                         loop {
                             if decodeLow ^ decodeLow.wrapping_add(decodeRange)
                                 >= ENET_RANGE_CODER_TOP as c_int as c_uint
@@ -1179,62 +1152,58 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                             decodeLow <<= 8 as c_int;
                         }
                     } else {
-                        code = (code as c_int - (*subcontext).escapes as c_int) as enet_uint16;
-                        under = 0 as c_int as enet_uint16;
-                        count = 0 as c_int as enet_uint16;
+                        code = (code as c_int - (*subcontext).escapes as c_int) as u16;
+                        under = 0 as c_int as u16;
+                        count = 0 as c_int as u16;
                         if (*subcontext).symbols == 0 {
-                            return 0 as c_int as size_t;
+                            return 0 as c_int as usize;
                         } else {
                             let mut node: *mut ENetSymbol =
                                 subcontext.offset((*subcontext).symbols as c_int as isize);
                             loop {
-                                let after: enet_uint16 = (under as c_int
+                                let after: u16 = (under as c_int
                                     + (*node).under as c_int
                                     + ((*node).value as c_int + 1 as c_int) * 0 as c_int)
-                                    as enet_uint16;
-                                let before: enet_uint16 =
-                                    ((*node).count as c_int + 0 as c_int) as enet_uint16;
+                                    as u16;
+                                let before: u16 = ((*node).count as c_int + 0 as c_int) as u16;
                                 if code as c_int >= after as c_int {
-                                    under =
-                                        (under as c_int + (*node).under as c_int) as enet_uint16;
+                                    under = (under as c_int + (*node).under as c_int) as u16;
                                     if (*node).right != 0 {
                                         node = node.offset((*node).right as c_int as isize);
                                     } else {
-                                        return 0 as c_int as size_t;
+                                        return 0 as c_int as usize;
                                     }
                                 } else if (code as c_int) < after as c_int - before as c_int {
                                     (*node).under = ((*node).under as c_int
                                         + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                                        as enet_uint16;
+                                        as u16;
                                     if (*node).left != 0 {
                                         node = node.offset((*node).left as c_int as isize);
                                     } else {
-                                        return 0 as c_int as size_t;
+                                        return 0 as c_int as usize;
                                     }
                                 } else {
                                     value = (*node).value;
-                                    count =
-                                        (count as c_int + (*node).count as c_int) as enet_uint16;
-                                    under = (after as c_int - before as c_int) as enet_uint16;
+                                    count = (count as c_int + (*node).count as c_int) as u16;
+                                    under = (after as c_int - before as c_int) as u16;
                                     (*node).under = ((*node).under as c_int
                                         + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                                        as enet_uint16;
+                                        as u16;
                                     (*node).count = ((*node).count as c_int
                                         + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                                        as enet_uint8;
+                                        as u8;
                                     symbol = node;
                                     break;
                                 }
                             }
                         }
                         bottom = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long
-                            as enet_uint16;
+                            as u16;
                         decodeLow = (decodeLow as c_uint).wrapping_add(
                             (((*subcontext).escapes as c_int + under as c_int) as c_uint)
                                 .wrapping_mul(decodeRange),
-                        ) as enet_uint32 as enet_uint32;
-                        decodeRange = (decodeRange as c_uint).wrapping_mul(count as c_uint)
-                            as enet_uint32 as enet_uint32;
+                        );
+                        decodeRange = (decodeRange as c_uint).wrapping_mul(count as c_uint);
                         loop {
                             if decodeLow ^ decodeLow.wrapping_add(decodeRange)
                                 >= ENET_RANGE_CODER_TOP as c_int as c_uint
@@ -1256,7 +1225,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                         }
                         (*subcontext).total = ((*subcontext).total as c_int
                             + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint16;
+                            as u16;
                         if count as c_int
                             > 0xff as c_int - 2 as c_int * ENET_SUBCONTEXT_SYMBOL_DELTA as c_int
                             || (*subcontext).total as c_int
@@ -1268,13 +1237,13 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                                 ) as c_int
                             } else {
                                 0 as c_int
-                            }) as enet_uint16;
+                            }) as u16;
                             (*subcontext).escapes = ((*subcontext).escapes as c_int
                                 - ((*subcontext).escapes as c_int >> 1 as c_int))
-                                as enet_uint16;
+                                as u16;
                             (*subcontext).total = ((*subcontext).total as c_int
                                 + ((*subcontext).escapes as c_int + 256 as c_int * 0 as c_int))
-                                as enet_uint16;
+                                as u16;
                         }
                         current_block_297 = 16234561804784670422;
                         break;
@@ -1287,15 +1256,12 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
         }
         if let 18325745679564279244 = current_block_297 {
             total = (*root).total;
-            decodeRange =
-                (decodeRange as c_uint).wrapping_div(total as c_uint) as enet_uint32 as enet_uint32;
-            code = decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as enet_uint16;
+            decodeRange = (decodeRange as c_uint).wrapping_div(total as c_uint);
+            code = decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as u16;
             if (code as c_int) < (*root).escapes as c_int {
                 decodeLow = (decodeLow as c_uint)
-                    .wrapping_add((0 as c_int as c_uint).wrapping_mul(decodeRange))
-                    as enet_uint32 as enet_uint32;
-                decodeRange = (decodeRange as c_uint).wrapping_mul((*root).escapes as c_uint)
-                    as enet_uint32 as enet_uint32;
+                    .wrapping_add((0 as c_int as c_uint).wrapping_mul(decodeRange));
+                decodeRange = (decodeRange as c_uint).wrapping_mul((*root).escapes as c_uint);
                 loop {
                     if decodeLow ^ decodeLow.wrapping_add(decodeRange)
                         >= ENET_RANGE_CODER_TOP as c_int as c_uint
@@ -1317,41 +1283,41 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                 }
                 break;
             } else {
-                code = (code as c_int - (*root).escapes as c_int) as enet_uint16;
-                under = 0 as c_int as enet_uint16;
-                count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as enet_uint16;
+                code = (code as c_int - (*root).escapes as c_int) as u16;
+                under = 0 as c_int as u16;
+                count = ENET_CONTEXT_SYMBOL_MINIMUM as c_int as u16;
                 if (*root).symbols == 0 {
-                    value = (code as c_int / ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as enet_uint8;
+                    value = (code as c_int / ENET_CONTEXT_SYMBOL_MINIMUM as c_int) as u8;
                     under = (code as c_int - code as c_int % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                        as enet_uint16;
+                        as u16;
                     let fresh21 = nextSymbol;
                     nextSymbol = nextSymbol.wrapping_add(1);
                     symbol =
                         &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh21) as *mut ENetSymbol;
                     (*symbol).value = value;
-                    (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                    (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                    (*symbol).left = 0 as c_int as enet_uint16;
-                    (*symbol).right = 0 as c_int as enet_uint16;
-                    (*symbol).symbols = 0 as c_int as enet_uint16;
-                    (*symbol).escapes = 0 as c_int as enet_uint16;
-                    (*symbol).total = 0 as c_int as enet_uint16;
-                    (*symbol).parent = 0 as c_int as enet_uint16;
-                    (*root).symbols = symbol.offset_from(root) as c_long as enet_uint16;
+                    (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as u8;
+                    (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as u16;
+                    (*symbol).left = 0 as c_int as u16;
+                    (*symbol).right = 0 as c_int as u16;
+                    (*symbol).symbols = 0 as c_int as u16;
+                    (*symbol).escapes = 0 as c_int as u16;
+                    (*symbol).total = 0 as c_int as u16;
+                    (*symbol).parent = 0 as c_int as u16;
+                    (*root).symbols = symbol.offset_from(root) as c_long as u16;
                 } else {
                     let mut node_0: *mut ENetSymbol =
                         root.offset((*root).symbols as c_int as isize);
                     loop {
-                        let after_0: enet_uint16 = (under as c_int
+                        let after_0: u16 = (under as c_int
                             + (*node_0).under as c_int
                             + ((*node_0).value as c_int + 1 as c_int)
                                 * ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                            as enet_uint16;
-                        let before_0: enet_uint16 = ((*node_0).count as c_int
+                            as u16;
+                        let before_0: u16 = ((*node_0).count as c_int
                             + ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                            as enet_uint16;
+                            as u16;
                         if code as c_int >= after_0 as c_int {
-                            under = (under as c_int + (*node_0).under as c_int) as enet_uint16;
+                            under = (under as c_int + (*node_0).under as c_int) as u16;
                             if (*node_0).right != 0 {
                                 node_0 = node_0.offset((*node_0).right as c_int as isize);
                             } else {
@@ -1359,32 +1325,31 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                                     + 1 as c_int
                                     + (code as c_int - after_0 as c_int)
                                         / ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                    as enet_uint8;
+                                    as u8;
                                 under = (code as c_int
                                     - (code as c_int - after_0 as c_int)
                                         % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                    as enet_uint16;
+                                    as u16;
                                 let fresh22 = nextSymbol;
                                 nextSymbol = nextSymbol.wrapping_add(1);
                                 symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh22)
                                     as *mut ENetSymbol;
                                 (*symbol).value = value;
-                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                                (*symbol).left = 0 as c_int as enet_uint16;
-                                (*symbol).right = 0 as c_int as enet_uint16;
-                                (*symbol).symbols = 0 as c_int as enet_uint16;
-                                (*symbol).escapes = 0 as c_int as enet_uint16;
-                                (*symbol).total = 0 as c_int as enet_uint16;
-                                (*symbol).parent = 0 as c_int as enet_uint16;
-                                (*node_0).right =
-                                    symbol.offset_from(node_0) as c_long as enet_uint16;
+                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as u8;
+                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as u16;
+                                (*symbol).left = 0 as c_int as u16;
+                                (*symbol).right = 0 as c_int as u16;
+                                (*symbol).symbols = 0 as c_int as u16;
+                                (*symbol).escapes = 0 as c_int as u16;
+                                (*symbol).total = 0 as c_int as u16;
+                                (*symbol).parent = 0 as c_int as u16;
+                                (*node_0).right = symbol.offset_from(node_0) as c_long as u16;
                                 break;
                             }
                         } else if (code as c_int) < after_0 as c_int - before_0 as c_int {
                             (*node_0).under = ((*node_0).under as c_int
                                 + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                as enet_uint16;
+                                as u16;
                             if (*node_0).left != 0 {
                                 node_0 = node_0.offset((*node_0).left as c_int as isize);
                             } else {
@@ -1395,54 +1360,51 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                                         - code as c_int
                                         - 1 as c_int)
                                         / ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                    as enet_uint8;
+                                    as u8;
                                 under = (code as c_int
                                     - (after_0 as c_int
                                         - before_0 as c_int
                                         - code as c_int
                                         - 1 as c_int)
                                         % ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                                    as enet_uint16;
+                                    as u16;
                                 let fresh23 = nextSymbol;
                                 nextSymbol = nextSymbol.wrapping_add(1);
                                 symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh23)
                                     as *mut ENetSymbol;
                                 (*symbol).value = value;
-                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                                (*symbol).left = 0 as c_int as enet_uint16;
-                                (*symbol).right = 0 as c_int as enet_uint16;
-                                (*symbol).symbols = 0 as c_int as enet_uint16;
-                                (*symbol).escapes = 0 as c_int as enet_uint16;
-                                (*symbol).total = 0 as c_int as enet_uint16;
-                                (*symbol).parent = 0 as c_int as enet_uint16;
-                                (*node_0).left =
-                                    symbol.offset_from(node_0) as c_long as enet_uint16;
+                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as c_int as u8;
+                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as c_int as u16;
+                                (*symbol).left = 0 as c_int as u16;
+                                (*symbol).right = 0 as c_int as u16;
+                                (*symbol).symbols = 0 as c_int as u16;
+                                (*symbol).escapes = 0 as c_int as u16;
+                                (*symbol).total = 0 as c_int as u16;
+                                (*symbol).parent = 0 as c_int as u16;
+                                (*node_0).left = symbol.offset_from(node_0) as c_long as u16;
                                 break;
                             }
                         } else {
                             value = (*node_0).value;
-                            count = (count as c_int + (*node_0).count as c_int) as enet_uint16;
-                            under = (after_0 as c_int - before_0 as c_int) as enet_uint16;
+                            count = (count as c_int + (*node_0).count as c_int) as u16;
+                            under = (after_0 as c_int - before_0 as c_int) as u16;
                             (*node_0).under = ((*node_0).under as c_int
                                 + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                as enet_uint16;
+                                as u16;
                             (*node_0).count = ((*node_0).count as c_int
                                 + ENET_CONTEXT_SYMBOL_DELTA as c_int)
-                                as enet_uint8;
+                                as u8;
                             symbol = node_0;
                             break;
                         }
                     }
                 }
-                bottom = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long
-                    as enet_uint16;
+                bottom = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as u16;
                 decodeLow = (decodeLow as c_uint).wrapping_add(
                     (((*root).escapes as c_int + under as c_int) as c_uint)
                         .wrapping_mul(decodeRange),
-                ) as enet_uint32 as enet_uint32;
-                decodeRange = (decodeRange as c_uint).wrapping_mul(count as c_uint) as enet_uint32
-                    as enet_uint32;
+                );
+                decodeRange = (decodeRange as c_uint).wrapping_mul(count as c_uint);
                 loop {
                     if decodeLow ^ decodeLow.wrapping_add(decodeRange)
                         >= ENET_RANGE_CODER_TOP as c_int as c_uint
@@ -1463,7 +1425,7 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                     decodeLow <<= 8 as c_int;
                 }
                 (*root).total =
-                    ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as enet_uint16;
+                    ((*root).total as c_int + ENET_CONTEXT_SYMBOL_DELTA as c_int) as u16;
                 if count as c_int
                     > 0xff as c_int - 2 as c_int * ENET_CONTEXT_SYMBOL_DELTA as c_int
                         + ENET_CONTEXT_SYMBOL_MINIMUM as c_int
@@ -1473,14 +1435,14 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                         enet_symbol_rescale(root.offset((*root).symbols as c_int as isize)) as c_int
                     } else {
                         0 as c_int
-                    }) as enet_uint16;
+                    }) as u16;
                     (*root).escapes = ((*root).escapes as c_int
                         - ((*root).escapes as c_int >> 1 as c_int))
-                        as enet_uint16;
+                        as u16;
                     (*root).total = ((*root).total as c_int
                         + ((*root).escapes as c_int
                             + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int))
-                        as enet_uint16;
+                        as u16;
                 }
             }
         }
@@ -1488,29 +1450,29 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
             .as_mut_ptr()
             .offset(predicted as isize) as *mut ENetSymbol;
         while patch != subcontext {
-            under = (value as c_int * 0 as c_int) as enet_uint16;
-            count = 0 as c_int as enet_uint16;
+            under = (value as c_int * 0 as c_int) as u16;
+            count = 0 as c_int as u16;
             if (*patch).symbols == 0 {
                 let fresh25 = nextSymbol;
                 nextSymbol = nextSymbol.wrapping_add(1);
                 symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh25) as *mut ENetSymbol;
                 (*symbol).value = value;
-                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                (*symbol).left = 0 as c_int as enet_uint16;
-                (*symbol).right = 0 as c_int as enet_uint16;
-                (*symbol).symbols = 0 as c_int as enet_uint16;
-                (*symbol).escapes = 0 as c_int as enet_uint16;
-                (*symbol).total = 0 as c_int as enet_uint16;
-                (*symbol).parent = 0 as c_int as enet_uint16;
-                (*patch).symbols = symbol.offset_from(patch) as c_long as enet_uint16;
+                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u8;
+                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u16;
+                (*symbol).left = 0 as c_int as u16;
+                (*symbol).right = 0 as c_int as u16;
+                (*symbol).symbols = 0 as c_int as u16;
+                (*symbol).escapes = 0 as c_int as u16;
+                (*symbol).total = 0 as c_int as u16;
+                (*symbol).parent = 0 as c_int as u16;
+                (*patch).symbols = symbol.offset_from(patch) as c_long as u16;
             } else {
                 let mut node_1: *mut ENetSymbol = patch.offset((*patch).symbols as c_int as isize);
                 loop {
                     if (value as c_int) < (*node_1).value as c_int {
                         (*node_1).under = ((*node_1).under as c_int
                             + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint16;
+                            as u16;
                         if (*node_1).left != 0 {
                             node_1 = node_1.offset((*node_1).left as c_int as isize);
                         } else {
@@ -1519,19 +1481,19 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                             symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh26)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                            (*symbol).left = 0 as c_int as enet_uint16;
-                            (*symbol).right = 0 as c_int as enet_uint16;
-                            (*symbol).symbols = 0 as c_int as enet_uint16;
-                            (*symbol).escapes = 0 as c_int as enet_uint16;
-                            (*symbol).total = 0 as c_int as enet_uint16;
-                            (*symbol).parent = 0 as c_int as enet_uint16;
-                            (*node_1).left = symbol.offset_from(node_1) as c_long as enet_uint16;
+                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u8;
+                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u16;
+                            (*symbol).left = 0 as c_int as u16;
+                            (*symbol).right = 0 as c_int as u16;
+                            (*symbol).symbols = 0 as c_int as u16;
+                            (*symbol).escapes = 0 as c_int as u16;
+                            (*symbol).total = 0 as c_int as u16;
+                            (*symbol).parent = 0 as c_int as u16;
+                            (*node_1).left = symbol.offset_from(node_1) as c_long as u16;
                             break;
                         }
                     } else if value as c_int > (*node_1).value as c_int {
-                        under = (under as c_int + (*node_1).under as c_int) as enet_uint16;
+                        under = (under as c_int + (*node_1).under as c_int) as u16;
                         if (*node_1).right != 0 {
                             node_1 = node_1.offset((*node_1).right as c_int as isize);
                         } else {
@@ -1540,42 +1502,40 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                             symbol = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh27)
                                 as *mut ENetSymbol;
                             (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as enet_uint16;
-                            (*symbol).left = 0 as c_int as enet_uint16;
-                            (*symbol).right = 0 as c_int as enet_uint16;
-                            (*symbol).symbols = 0 as c_int as enet_uint16;
-                            (*symbol).escapes = 0 as c_int as enet_uint16;
-                            (*symbol).total = 0 as c_int as enet_uint16;
-                            (*symbol).parent = 0 as c_int as enet_uint16;
-                            (*node_1).right = symbol.offset_from(node_1) as c_long as enet_uint16;
+                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u8;
+                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as c_int as u16;
+                            (*symbol).left = 0 as c_int as u16;
+                            (*symbol).right = 0 as c_int as u16;
+                            (*symbol).symbols = 0 as c_int as u16;
+                            (*symbol).escapes = 0 as c_int as u16;
+                            (*symbol).total = 0 as c_int as u16;
+                            (*symbol).parent = 0 as c_int as u16;
+                            (*node_1).right = symbol.offset_from(node_1) as c_long as u16;
                             break;
                         }
                     } else {
-                        count = (count as c_int + (*node_1).count as c_int) as enet_uint16;
+                        count = (count as c_int + (*node_1).count as c_int) as u16;
                         (*node_1).under = ((*node_1).under as c_int
                             + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint16;
+                            as u16;
                         (*node_1).count = ((*node_1).count as c_int
                             + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int)
-                            as enet_uint8;
+                            as u8;
                         symbol = node_1;
                         break;
                     }
                 }
             }
-            *parent =
-                symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as enet_uint16;
+            *parent = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as c_long as u16;
             parent = &mut (*symbol).parent;
             if count as c_int <= 0 as c_int {
-                (*patch).escapes = ((*patch).escapes as c_int
-                    + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int)
-                    as enet_uint16;
-                (*patch).total = ((*patch).total as c_int + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int)
-                    as enet_uint16;
+                (*patch).escapes =
+                    ((*patch).escapes as c_int + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int) as u16;
+                (*patch).total =
+                    ((*patch).total as c_int + ENET_SUBCONTEXT_ESCAPE_DELTA as c_int) as u16;
             }
             (*patch).total =
-                ((*patch).total as c_int + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int) as enet_uint16;
+                ((*patch).total as c_int + ENET_SUBCONTEXT_SYMBOL_DELTA as c_int) as u16;
             if count as c_int > 0xff as c_int - 2 as c_int * ENET_SUBCONTEXT_SYMBOL_DELTA as c_int
                 || (*patch).total as c_int > ENET_RANGE_CODER_BOTTOM as c_int - 0x100 as c_int
             {
@@ -1583,13 +1543,12 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
                     enet_symbol_rescale(patch.offset((*patch).symbols as c_int as isize)) as c_int
                 } else {
                     0 as c_int
-                }) as enet_uint16;
-                (*patch).escapes = ((*patch).escapes as c_int
-                    - ((*patch).escapes as c_int >> 1 as c_int))
-                    as enet_uint16;
+                }) as u16;
+                (*patch).escapes =
+                    ((*patch).escapes as c_int - ((*patch).escapes as c_int >> 1 as c_int)) as u16;
                 (*patch).total = ((*patch).total as c_int
                     + ((*patch).escapes as c_int + 256 as c_int * 0 as c_int))
-                    as enet_uint16;
+                    as u16;
             }
             patch = &mut *((*rangeCoder).symbols)
                 .as_mut_ptr()
@@ -1597,70 +1556,69 @@ pub(crate) unsafe extern "C" fn enet_range_coder_decompress(
         }
         *parent = bottom;
         if outData >= outEnd {
-            return 0 as c_int as size_t;
+            return 0 as c_int as usize;
         }
         let fresh28 = outData;
         outData = outData.offset(1);
         *fresh28 = value;
-        if order >= ENET_SUBCONTEXT_ORDER as c_int as size_t {
+        if order >= ENET_SUBCONTEXT_ORDER as c_int as usize {
             predicted = (*rangeCoder).symbols[predicted as usize].parent;
         } else {
             order = order.wrapping_add(1);
         }
         if nextSymbol
-            >= (::core::mem::size_of::<[ENetSymbol; 4096]>() as size_t)
-                .wrapping_div(::core::mem::size_of::<ENetSymbol>() as size_t)
-                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as size_t)
+            >= ::core::mem::size_of::<[ENetSymbol; 4096]>()
+                .wrapping_div(::core::mem::size_of::<ENetSymbol>())
+                .wrapping_sub(ENET_SUBCONTEXT_ORDER as c_int as usize)
         {
-            nextSymbol = 0 as c_int as size_t;
+            nextSymbol = 0 as c_int as usize;
             let fresh29 = nextSymbol;
             nextSymbol = nextSymbol.wrapping_add(1);
             root = &mut *((*rangeCoder).symbols).as_mut_ptr().add(fresh29) as *mut ENetSymbol;
-            (*root).value = 0 as c_int as enet_uint8;
-            (*root).count = 0 as c_int as enet_uint8;
-            (*root).under = 0 as c_int as enet_uint16;
-            (*root).left = 0 as c_int as enet_uint16;
-            (*root).right = 0 as c_int as enet_uint16;
-            (*root).symbols = 0 as c_int as enet_uint16;
-            (*root).escapes = 0 as c_int as enet_uint16;
-            (*root).total = 0 as c_int as enet_uint16;
-            (*root).parent = 0 as c_int as enet_uint16;
-            (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as enet_uint16;
+            (*root).value = 0 as c_int as u8;
+            (*root).count = 0 as c_int as u8;
+            (*root).under = 0 as c_int as u16;
+            (*root).left = 0 as c_int as u16;
+            (*root).right = 0 as c_int as u16;
+            (*root).symbols = 0 as c_int as u16;
+            (*root).escapes = 0 as c_int as u16;
+            (*root).total = 0 as c_int as u16;
+            (*root).parent = 0 as c_int as u16;
+            (*root).escapes = ENET_CONTEXT_ESCAPE_MINIMUM as c_int as u16;
             (*root).total = (ENET_CONTEXT_ESCAPE_MINIMUM as c_int
                 + 256 as c_int * ENET_CONTEXT_SYMBOL_MINIMUM as c_int)
-                as enet_uint16;
-            (*root).symbols = 0 as c_int as enet_uint16;
-            predicted = 0 as c_int as enet_uint16;
-            order = 0 as c_int as size_t;
+                as u16;
+            (*root).symbols = 0 as c_int as u16;
+            predicted = 0 as c_int as u16;
+            order = 0 as c_int as usize;
         }
     }
-    outData.offset_from(outStart) as c_long as size_t
+    outData.offset_from(outStart) as c_long as usize
 }
 pub(crate) unsafe fn enet_host_create<S: Socket>(
     mut socket: S,
-    peerCount: size_t,
-    mut channelLimit: size_t,
-    incomingBandwidth: enet_uint32,
-    outgoingBandwidth: enet_uint32,
+    peerCount: usize,
+    mut channelLimit: usize,
+    incomingBandwidth: u32,
+    outgoingBandwidth: u32,
     time: Box<dyn Fn() -> Duration>,
     seed: Option<u32>,
 ) -> *mut ENetHost<S> {
     let mut currentPeer: *mut ENetPeer<S>;
-    if peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as size_t {
+    if peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as usize {
         return std::ptr::null_mut();
     }
-    let host = enet_malloc(::core::mem::size_of::<ENetHost<S>>() as size_t) as *mut ENetHost<S>;
+    let host = enet_malloc(::core::mem::size_of::<ENetHost<S>>()) as *mut ENetHost<S>;
     if host.is_null() {
         return std::ptr::null_mut();
     }
     _enet_memset(
         host as *mut c_void,
         0 as c_int,
-        ::core::mem::size_of::<ENetHost<S>>() as size_t,
+        ::core::mem::size_of::<ENetHost<S>>(),
     );
-    (*host).peers =
-        enet_malloc(peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as size_t))
-            as *mut ENetPeer<S>;
+    (*host).peers = enet_malloc(peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>()))
+        as *mut ENetPeer<S>;
     if ((*host).peers).is_null() {
         enet_free(host as *mut c_void);
         return std::ptr::null_mut();
@@ -1668,59 +1626,58 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     _enet_memset(
         (*host).peers as *mut c_void,
         0 as c_int,
-        peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>() as size_t),
+        peerCount.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>()),
     );
     _ = socket.init(SocketOptions {
         receive_buffer: ENET_HOST_RECEIVE_BUFFER_SIZE as usize,
         send_buffer: ENET_HOST_SEND_BUFFER_SIZE as usize,
     });
     (*host).socket.write(socket);
-    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t {
-        channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
-    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t {
-        channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
+    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize {
+        channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize;
+    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize {
+        channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize;
     }
     (*host).time.write(time);
     if let Some(seed) = seed {
         (*host).randomSeed = seed;
     } else {
-        (*host).randomSeed = host as size_t as enet_uint32;
-        (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(enet_time_get(host))
-            as enet_uint32 as enet_uint32;
+        (*host).randomSeed = host as usize as u32;
+        (*host).randomSeed =
+            ((*host).randomSeed as c_uint).wrapping_add(enet_time_get(host)) as u32 as u32;
         (*host).randomSeed = (*host).randomSeed << 16 as c_int | (*host).randomSeed >> 16 as c_int;
     }
     (*host).channelLimit = channelLimit;
     (*host).incomingBandwidth = incomingBandwidth;
     (*host).outgoingBandwidth = outgoingBandwidth;
-    (*host).bandwidthThrottleEpoch = 0 as c_int as enet_uint32;
+    (*host).bandwidthThrottleEpoch = 0 as c_int as u32;
     (*host).recalculateBandwidthLimits = 0 as c_int;
-    (*host).mtu = ENET_HOST_DEFAULT_MTU as c_int as enet_uint32;
+    (*host).mtu = ENET_HOST_DEFAULT_MTU as c_int as u32;
     (*host).peerCount = peerCount;
-    (*host).commandCount = 0 as c_int as size_t;
-    (*host).bufferCount = 0 as c_int as size_t;
+    (*host).commandCount = 0 as c_int as usize;
+    (*host).bufferCount = 0 as c_int as usize;
     (*host).checksum.write(None);
     (*host).receivedAddress.write(None);
     (*host).receivedData = std::ptr::null_mut();
-    (*host).receivedDataLength = 0 as c_int as size_t;
-    (*host).totalSentData = 0 as c_int as enet_uint32;
-    (*host).totalSentPackets = 0 as c_int as enet_uint32;
-    (*host).totalReceivedData = 0 as c_int as enet_uint32;
-    (*host).totalReceivedPackets = 0 as c_int as enet_uint32;
-    (*host).totalQueued = 0 as c_int as enet_uint32;
-    (*host).connectedPeers = 0 as c_int as size_t;
-    (*host).bandwidthLimitedPeers = 0 as c_int as size_t;
-    (*host).duplicatePeers = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as size_t;
-    (*host).maximumPacketSize = ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE as c_int as size_t;
-    (*host).maximumWaitingData = ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA as c_int as size_t;
+    (*host).receivedDataLength = 0 as c_int as usize;
+    (*host).totalSentData = 0 as c_int as u32;
+    (*host).totalSentPackets = 0 as c_int as u32;
+    (*host).totalReceivedData = 0 as c_int as u32;
+    (*host).totalReceivedPackets = 0 as c_int as u32;
+    (*host).totalQueued = 0 as c_int as u32;
+    (*host).connectedPeers = 0 as c_int as usize;
+    (*host).bandwidthLimitedPeers = 0 as c_int as usize;
+    (*host).duplicatePeers = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as usize;
+    (*host).maximumPacketSize = ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE as c_int as usize;
+    (*host).maximumWaitingData = ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA as c_int as usize;
     (*host).compressor.write(None);
     (*host).intercept = None;
     enet_list_clear(&mut (*host).dispatchQueue);
     currentPeer = (*host).peers;
     while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
         (*currentPeer).host = host;
-        (*currentPeer).incomingPeerID =
-            currentPeer.offset_from((*host).peers) as c_long as enet_uint16;
-        (*currentPeer).incomingSessionID = 0xff as c_int as enet_uint8;
+        (*currentPeer).incomingPeerID = currentPeer.offset_from((*host).peers) as c_long as u16;
+        (*currentPeer).incomingSessionID = 0xff as c_int as u8;
         (*currentPeer).outgoingSessionID = (*currentPeer).incomingSessionID;
         (*currentPeer).address.write(None);
         (*currentPeer).data = std::ptr::null_mut();
@@ -1753,10 +1710,9 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(host: *mut ENetHost<S>) {
     enet_free((*host).peers as *mut c_void);
     enet_free(host as *mut c_void);
 }
-pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
-    (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(0x6d2b79f5 as c_uint)
-        as enet_uint32 as enet_uint32;
-    let mut n: enet_uint32 = (*host).randomSeed;
+pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> u32 {
+    (*host).randomSeed = ((*host).randomSeed as c_uint).wrapping_add(0x6d2b79f5 as c_uint);
+    let mut n: u32 = (*host).randomSeed;
     n = (n ^ n >> 15 as c_int).wrapping_mul(n | 1 as c_uint);
     n ^= n.wrapping_add((n ^ n >> 7 as c_int).wrapping_mul(n | 61 as c_uint));
     n ^ n >> 14 as c_int
@@ -1764,8 +1720,8 @@ pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> enet
 pub(crate) unsafe fn enet_host_connect<S: Socket>(
     host: *mut ENetHost<S>,
     address: S::PeerAddress,
-    mut channelCount: size_t,
-    data: enet_uint32,
+    mut channelCount: usize,
+    data: u32,
 ) -> *mut ENetPeer<S> {
     let mut currentPeer: *mut ENetPeer<S>;
     let mut channel: *mut ENetChannel;
@@ -1776,10 +1732,10 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
             reliableSequenceNumber: 0,
         },
     };
-    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t {
-        channelCount = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
-    } else if channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t {
-        channelCount = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
+    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize {
+        channelCount = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize;
+    } else if channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize {
+        channelCount = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize;
     }
     currentPeer = (*host).peers;
     while currentPeer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
@@ -1792,7 +1748,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         return std::ptr::null_mut();
     }
     (*currentPeer).channels =
-        enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as size_t))
+        enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>()))
             as *mut ENetChannel;
     if ((*currentPeer).channels).is_null() {
         return std::ptr::null_mut();
@@ -1803,43 +1759,42 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
     (*currentPeer).connectID = enet_host_random(host);
     (*currentPeer).mtu = (*host).mtu;
     if (*host).outgoingBandwidth == 0 as c_int as c_uint {
-        (*currentPeer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*currentPeer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     } else {
         (*currentPeer).windowSize = ((*host).outgoingBandwidth)
             .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as c_int as c_uint)
             .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint);
     }
     if (*currentPeer).windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint {
-        (*currentPeer).windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*currentPeer).windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as u32;
     } else if (*currentPeer).windowSize > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as c_uint {
-        (*currentPeer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*currentPeer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     }
     channel = (*currentPeer).channels;
     while channel < &mut *((*currentPeer).channels).add(channelCount) as *mut ENetChannel {
-        (*channel).outgoingReliableSequenceNumber = 0 as c_int as enet_uint16;
-        (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
-        (*channel).incomingReliableSequenceNumber = 0 as c_int as enet_uint16;
-        (*channel).incomingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
+        (*channel).outgoingReliableSequenceNumber = 0 as c_int as u16;
+        (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as u16;
+        (*channel).incomingReliableSequenceNumber = 0 as c_int as u16;
+        (*channel).incomingUnreliableSequenceNumber = 0 as c_int as u16;
         enet_list_clear(&mut (*channel).incomingReliableCommands);
         enet_list_clear(&mut (*channel).incomingUnreliableCommands);
-        (*channel).usedReliableWindows = 0 as c_int as enet_uint16;
+        (*channel).usedReliableWindows = 0 as c_int as u16;
         _enet_memset(
             ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
             0 as c_int,
-            ::core::mem::size_of::<[enet_uint16; 16]>() as size_t,
+            ::core::mem::size_of::<[u16; 16]>(),
         );
         channel = channel.offset(1);
     }
     command.header.command = (ENET_PROTOCOL_COMMAND_CONNECT as c_int
-        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-        as enet_uint8;
-    command.header.channelID = 0xff as c_int as enet_uint8;
+        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int) as u8;
+    command.header.channelID = 0xff as c_int as u8;
     command.connect.outgoingPeerID = htons((*currentPeer).incomingPeerID);
     command.connect.incomingSessionID = (*currentPeer).incomingSessionID;
     command.connect.outgoingSessionID = (*currentPeer).outgoingSessionID;
     command.connect.mtu = htonl((*currentPeer).mtu);
     command.connect.windowSize = htonl((*currentPeer).windowSize);
-    command.connect.channelCount = htonl(channelCount as uint32_t);
+    command.connect.channelCount = htonl(channelCount as u32);
     command.connect.incomingBandwidth = htonl((*host).incomingBandwidth);
     command.connect.outgoingBandwidth = htonl((*host).outgoingBandwidth);
     command.connect.packetThrottleInterval = htonl((*currentPeer).packetThrottleInterval);
@@ -1851,14 +1806,14 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         currentPeer,
         &command,
         std::ptr::null_mut(),
-        0 as c_int as enet_uint32,
-        0 as c_int as enet_uint16,
+        0 as c_int as u32,
+        0 as c_int as u16,
     );
     currentPeer
 }
 pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
     host: *mut ENetHost<S>,
-    channelID: enet_uint8,
+    channelID: u8,
     packet: *mut ENetPacket,
 ) {
     let mut currentPeer: *mut ENetPeer<S>;
@@ -1869,7 +1824,7 @@ pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
         }
         currentPeer = currentPeer.offset(1);
     }
-    if (*packet).referenceCount == 0 as c_int as size_t {
+    if (*packet).referenceCount == 0 as c_int as usize {
         enet_packet_destroy(packet);
     }
 }
@@ -1881,33 +1836,33 @@ pub(crate) unsafe fn enet_host_compress<S: Socket>(
 }
 pub(crate) unsafe fn enet_host_channel_limit<S: Socket>(
     host: *mut ENetHost<S>,
-    mut channelLimit: size_t,
+    mut channelLimit: usize,
 ) {
-    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t {
-        channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t;
-    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t {
-        channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t;
+    if channelLimit == 0 || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize {
+        channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize;
+    } else if channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize {
+        channelLimit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize;
     }
     (*host).channelLimit = channelLimit;
 }
 pub(crate) unsafe fn enet_host_bandwidth_limit<S: Socket>(
     host: *mut ENetHost<S>,
-    incomingBandwidth: enet_uint32,
-    outgoingBandwidth: enet_uint32,
+    incomingBandwidth: u32,
+    outgoingBandwidth: u32,
 ) {
     (*host).incomingBandwidth = incomingBandwidth;
     (*host).outgoingBandwidth = outgoingBandwidth;
     (*host).recalculateBandwidthLimits = 1 as c_int;
 }
 pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost<S>) {
-    let timeCurrent: enet_uint32 = enet_time_get(host);
-    let elapsedTime: enet_uint32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
-    let mut peersRemaining: enet_uint32 = (*host).connectedPeers as enet_uint32;
-    let mut dataTotal: enet_uint32 = !(0 as c_int) as enet_uint32;
-    let mut bandwidth: enet_uint32 = !(0 as c_int) as enet_uint32;
-    let mut throttle: enet_uint32;
-    let mut bandwidthLimit: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut needsAdjustment: c_int = if (*host).bandwidthLimitedPeers > 0 as c_int as size_t {
+    let timeCurrent: u32 = enet_time_get(host);
+    let elapsedTime: u32 = timeCurrent.wrapping_sub((*host).bandwidthThrottleEpoch);
+    let mut peersRemaining: u32 = (*host).connectedPeers as u32;
+    let mut dataTotal: u32 = !(0 as c_int) as u32;
+    let mut bandwidth: u32 = !(0 as c_int) as u32;
+    let mut throttle: u32;
+    let mut bandwidthLimit: u32 = 0 as c_int as u32;
+    let mut needsAdjustment: c_int = if (*host).bandwidthLimitedPeers > 0 as c_int as usize {
         1 as c_int
     } else {
         0 as c_int
@@ -1928,7 +1883,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
         return;
     }
     if (*host).outgoingBandwidth != 0 as c_int as c_uint {
-        dataTotal = 0 as c_int as enet_uint32;
+        dataTotal = 0 as c_int as u32;
         bandwidth = ((*host).outgoingBandwidth)
             .wrapping_mul(elapsedTime)
             .wrapping_div(1000 as c_int as c_uint);
@@ -1937,8 +1892,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
             {
-                dataTotal = (dataTotal as c_uint).wrapping_add((*peer).outgoingDataTotal)
-                    as enet_uint32 as enet_uint32;
+                dataTotal = (dataTotal as c_uint).wrapping_add((*peer).outgoingDataTotal);
             }
             peer = peer.offset(1);
         }
@@ -1946,7 +1900,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
     while peersRemaining > 0 as c_int as c_uint && needsAdjustment != 0 as c_int {
         needsAdjustment = 0 as c_int;
         if dataTotal <= bandwidth {
-            throttle = ENET_PEER_PACKET_THROTTLE_SCALE as c_int as enet_uint32;
+            throttle = ENET_PEER_PACKET_THROTTLE_SCALE as c_int as u32;
         } else {
             throttle = bandwidth
                 .wrapping_mul(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint)
@@ -1954,7 +1908,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
         }
         peer = (*host).peers;
         while peer < &mut *((*host).peers).add((*host).peerCount) as *mut ENetPeer<S> {
-            let peerBandwidth: enet_uint32;
+            let peerBandwidth: u32;
             if !((*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
                 && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
                 || (*peer).incomingBandwidth == 0 as c_int as c_uint
@@ -1972,20 +1926,18 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                         .wrapping_mul(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint)
                         .wrapping_div((*peer).outgoingDataTotal);
                     if (*peer).packetThrottleLimit == 0 as c_int as c_uint {
-                        (*peer).packetThrottleLimit = 1 as c_int as enet_uint32;
+                        (*peer).packetThrottleLimit = 1 as c_int as u32;
                     }
                     if (*peer).packetThrottle > (*peer).packetThrottleLimit {
                         (*peer).packetThrottle = (*peer).packetThrottleLimit;
                     }
                     (*peer).outgoingBandwidthThrottleEpoch = timeCurrent;
-                    (*peer).incomingDataTotal = 0 as c_int as enet_uint32;
-                    (*peer).outgoingDataTotal = 0 as c_int as enet_uint32;
+                    (*peer).incomingDataTotal = 0 as c_int as u32;
+                    (*peer).outgoingDataTotal = 0 as c_int as u32;
                     needsAdjustment = 1 as c_int;
                     peersRemaining = peersRemaining.wrapping_sub(1);
-                    bandwidth = (bandwidth as c_uint).wrapping_sub(peerBandwidth) as enet_uint32
-                        as enet_uint32;
-                    dataTotal = (dataTotal as c_uint).wrapping_sub(peerBandwidth) as enet_uint32
-                        as enet_uint32;
+                    bandwidth = (bandwidth as c_uint).wrapping_sub(peerBandwidth);
+                    dataTotal = (dataTotal as c_uint).wrapping_sub(peerBandwidth);
                 }
             }
             peer = peer.offset(1);
@@ -1993,7 +1945,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
     }
     if peersRemaining > 0 as c_int as c_uint {
         if dataTotal <= bandwidth {
-            throttle = ENET_PEER_PACKET_THROTTLE_SCALE as c_int as enet_uint32;
+            throttle = ENET_PEER_PACKET_THROTTLE_SCALE as c_int as u32;
         } else {
             throttle = bandwidth
                 .wrapping_mul(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint)
@@ -2009,19 +1961,19 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                 if (*peer).packetThrottle > (*peer).packetThrottleLimit {
                     (*peer).packetThrottle = (*peer).packetThrottleLimit;
                 }
-                (*peer).incomingDataTotal = 0 as c_int as enet_uint32;
-                (*peer).outgoingDataTotal = 0 as c_int as enet_uint32;
+                (*peer).incomingDataTotal = 0 as c_int as u32;
+                (*peer).outgoingDataTotal = 0 as c_int as u32;
             }
             peer = peer.offset(1);
         }
     }
     if (*host).recalculateBandwidthLimits != 0 {
         (*host).recalculateBandwidthLimits = 0 as c_int;
-        peersRemaining = (*host).connectedPeers as enet_uint32;
+        peersRemaining = (*host).connectedPeers as u32;
         bandwidth = (*host).incomingBandwidth;
         needsAdjustment = 1 as c_int;
         if bandwidth == 0 as c_int as c_uint {
-            bandwidthLimit = 0 as c_int as enet_uint32;
+            bandwidthLimit = 0 as c_int as u32;
         } else {
             while peersRemaining > 0 as c_int as c_uint && needsAdjustment != 0 as c_int {
                 needsAdjustment = 0 as c_int;
@@ -2038,8 +1990,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                         (*peer).incomingBandwidthThrottleEpoch = timeCurrent;
                         needsAdjustment = 1 as c_int;
                         peersRemaining = peersRemaining.wrapping_sub(1);
-                        bandwidth = (bandwidth as c_uint).wrapping_sub((*peer).outgoingBandwidth)
-                            as enet_uint32 as enet_uint32;
+                        bandwidth = (bandwidth as c_uint).wrapping_sub((*peer).outgoingBandwidth);
                     }
                     peer = peer.offset(1);
                 }
@@ -2052,8 +2003,8 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
             {
                 command.header.command = (ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT as c_int
                     | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-                    as enet_uint8;
-                command.header.channelID = 0xff as c_int as enet_uint8;
+                    as u8;
+                command.header.channelID = 0xff as c_int as u8;
                 command.bandwidthLimit.outgoingBandwidth = htonl((*host).outgoingBandwidth);
                 if (*peer).incomingBandwidthThrottleEpoch == timeCurrent {
                     command.bandwidthLimit.incomingBandwidth = htonl((*peer).outgoingBandwidth);
@@ -2064,8 +2015,8 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                     peer,
                     &command,
                     std::ptr::null_mut(),
-                    0 as c_int as enet_uint32,
-                    0 as c_int as enet_uint16,
+                    0 as c_int as u32,
+                    0 as c_int as u16,
                 );
             }
             peer = peer.offset(1);
@@ -2109,20 +2060,20 @@ pub(crate) unsafe fn enet_list_move(
 }
 pub(crate) unsafe fn enet_packet_create(
     data: *const c_void,
-    dataLength: size_t,
-    flags: enet_uint32,
+    dataLength: usize,
+    flags: u32,
 ) -> *mut ENetPacket {
     let packet: *mut ENetPacket =
-        enet_malloc(::core::mem::size_of::<ENetPacket>() as size_t) as *mut ENetPacket;
+        enet_malloc(::core::mem::size_of::<ENetPacket>()) as *mut ENetPacket;
     if packet.is_null() {
         return std::ptr::null_mut();
     }
     if flags & ENET_PACKET_FLAG_NO_ALLOCATE as c_int as c_uint != 0 {
-        (*packet).data = data as *mut enet_uint8;
-    } else if dataLength <= 0 as c_int as size_t {
+        (*packet).data = data as *mut u8;
+    } else if dataLength <= 0 as c_int as usize {
         (*packet).data = std::ptr::null_mut();
     } else {
-        (*packet).data = enet_malloc(dataLength) as *mut enet_uint8;
+        (*packet).data = enet_malloc(dataLength) as *mut u8;
         if ((*packet).data).is_null() {
             enet_free(packet as *mut c_void);
             return std::ptr::null_mut();
@@ -2131,7 +2082,7 @@ pub(crate) unsafe fn enet_packet_create(
             _enet_memcpy((*packet).data as *mut c_void, data, dataLength);
         }
     }
-    (*packet).referenceCount = 0 as c_int as size_t;
+    (*packet).referenceCount = 0 as c_int as usize;
     (*packet).flags = flags;
     (*packet).dataLength = dataLength;
     (*packet).freeCallback = None;
@@ -2152,278 +2103,278 @@ pub(crate) unsafe fn enet_packet_destroy(packet: *mut ENetPacket) {
     }
     enet_free(packet as *mut c_void);
 }
-static mut CRC_TABLE: [enet_uint32; 256] = [
-    0 as c_int as enet_uint32,
-    0x77073096 as c_int as enet_uint32,
+static mut CRC_TABLE: [u32; 256] = [
+    0 as c_int as u32,
+    0x77073096 as c_int as u32,
     0xee0e612c as c_uint,
     0x990951ba as c_uint,
-    0x76dc419 as c_int as enet_uint32,
-    0x706af48f as c_int as enet_uint32,
+    0x76dc419 as c_int as u32,
+    0x706af48f as c_int as u32,
     0xe963a535 as c_uint,
     0x9e6495a3 as c_uint,
-    0xedb8832 as c_int as enet_uint32,
-    0x79dcb8a4 as c_int as enet_uint32,
+    0xedb8832 as c_int as u32,
+    0x79dcb8a4 as c_int as u32,
     0xe0d5e91e as c_uint,
     0x97d2d988 as c_uint,
-    0x9b64c2b as c_int as enet_uint32,
-    0x7eb17cbd as c_int as enet_uint32,
+    0x9b64c2b as c_int as u32,
+    0x7eb17cbd as c_int as u32,
     0xe7b82d07 as c_uint,
     0x90bf1d91 as c_uint,
-    0x1db71064 as c_int as enet_uint32,
-    0x6ab020f2 as c_int as enet_uint32,
+    0x1db71064 as c_int as u32,
+    0x6ab020f2 as c_int as u32,
     0xf3b97148 as c_uint,
     0x84be41de as c_uint,
-    0x1adad47d as c_int as enet_uint32,
-    0x6ddde4eb as c_int as enet_uint32,
+    0x1adad47d as c_int as u32,
+    0x6ddde4eb as c_int as u32,
     0xf4d4b551 as c_uint,
     0x83d385c7 as c_uint,
-    0x136c9856 as c_int as enet_uint32,
-    0x646ba8c0 as c_int as enet_uint32,
+    0x136c9856 as c_int as u32,
+    0x646ba8c0 as c_int as u32,
     0xfd62f97a as c_uint,
     0x8a65c9ec as c_uint,
-    0x14015c4f as c_int as enet_uint32,
-    0x63066cd9 as c_int as enet_uint32,
+    0x14015c4f as c_int as u32,
+    0x63066cd9 as c_int as u32,
     0xfa0f3d63 as c_uint,
     0x8d080df5 as c_uint,
-    0x3b6e20c8 as c_int as enet_uint32,
-    0x4c69105e as c_int as enet_uint32,
+    0x3b6e20c8 as c_int as u32,
+    0x4c69105e as c_int as u32,
     0xd56041e4 as c_uint,
     0xa2677172 as c_uint,
-    0x3c03e4d1 as c_int as enet_uint32,
-    0x4b04d447 as c_int as enet_uint32,
+    0x3c03e4d1 as c_int as u32,
+    0x4b04d447 as c_int as u32,
     0xd20d85fd as c_uint,
     0xa50ab56b as c_uint,
-    0x35b5a8fa as c_int as enet_uint32,
-    0x42b2986c as c_int as enet_uint32,
+    0x35b5a8fa as c_int as u32,
+    0x42b2986c as c_int as u32,
     0xdbbbc9d6 as c_uint,
     0xacbcf940 as c_uint,
-    0x32d86ce3 as c_int as enet_uint32,
-    0x45df5c75 as c_int as enet_uint32,
+    0x32d86ce3 as c_int as u32,
+    0x45df5c75 as c_int as u32,
     0xdcd60dcf as c_uint,
     0xabd13d59 as c_uint,
-    0x26d930ac as c_int as enet_uint32,
-    0x51de003a as c_int as enet_uint32,
+    0x26d930ac as c_int as u32,
+    0x51de003a as c_int as u32,
     0xc8d75180 as c_uint,
     0xbfd06116 as c_uint,
-    0x21b4f4b5 as c_int as enet_uint32,
-    0x56b3c423 as c_int as enet_uint32,
+    0x21b4f4b5 as c_int as u32,
+    0x56b3c423 as c_int as u32,
     0xcfba9599 as c_uint,
     0xb8bda50f as c_uint,
-    0x2802b89e as c_int as enet_uint32,
-    0x5f058808 as c_int as enet_uint32,
+    0x2802b89e as c_int as u32,
+    0x5f058808 as c_int as u32,
     0xc60cd9b2 as c_uint,
     0xb10be924 as c_uint,
-    0x2f6f7c87 as c_int as enet_uint32,
-    0x58684c11 as c_int as enet_uint32,
+    0x2f6f7c87 as c_int as u32,
+    0x58684c11 as c_int as u32,
     0xc1611dab as c_uint,
     0xb6662d3d as c_uint,
-    0x76dc4190 as c_int as enet_uint32,
-    0x1db7106 as c_int as enet_uint32,
+    0x76dc4190 as c_int as u32,
+    0x1db7106 as c_int as u32,
     0x98d220bc as c_uint,
     0xefd5102a as c_uint,
-    0x71b18589 as c_int as enet_uint32,
-    0x6b6b51f as c_int as enet_uint32,
+    0x71b18589 as c_int as u32,
+    0x6b6b51f as c_int as u32,
     0x9fbfe4a5 as c_uint,
     0xe8b8d433 as c_uint,
-    0x7807c9a2 as c_int as enet_uint32,
-    0xf00f934 as c_int as enet_uint32,
+    0x7807c9a2 as c_int as u32,
+    0xf00f934 as c_int as u32,
     0x9609a88e as c_uint,
     0xe10e9818 as c_uint,
-    0x7f6a0dbb as c_int as enet_uint32,
-    0x86d3d2d as c_int as enet_uint32,
+    0x7f6a0dbb as c_int as u32,
+    0x86d3d2d as c_int as u32,
     0x91646c97 as c_uint,
     0xe6635c01 as c_uint,
-    0x6b6b51f4 as c_int as enet_uint32,
-    0x1c6c6162 as c_int as enet_uint32,
+    0x6b6b51f4 as c_int as u32,
+    0x1c6c6162 as c_int as u32,
     0x856530d8 as c_uint,
     0xf262004e as c_uint,
-    0x6c0695ed as c_int as enet_uint32,
-    0x1b01a57b as c_int as enet_uint32,
+    0x6c0695ed as c_int as u32,
+    0x1b01a57b as c_int as u32,
     0x8208f4c1 as c_uint,
     0xf50fc457 as c_uint,
-    0x65b0d9c6 as c_int as enet_uint32,
-    0x12b7e950 as c_int as enet_uint32,
+    0x65b0d9c6 as c_int as u32,
+    0x12b7e950 as c_int as u32,
     0x8bbeb8ea as c_uint,
     0xfcb9887c as c_uint,
-    0x62dd1ddf as c_int as enet_uint32,
-    0x15da2d49 as c_int as enet_uint32,
+    0x62dd1ddf as c_int as u32,
+    0x15da2d49 as c_int as u32,
     0x8cd37cf3 as c_uint,
     0xfbd44c65 as c_uint,
-    0x4db26158 as c_int as enet_uint32,
-    0x3ab551ce as c_int as enet_uint32,
+    0x4db26158 as c_int as u32,
+    0x3ab551ce as c_int as u32,
     0xa3bc0074 as c_uint,
     0xd4bb30e2 as c_uint,
-    0x4adfa541 as c_int as enet_uint32,
-    0x3dd895d7 as c_int as enet_uint32,
+    0x4adfa541 as c_int as u32,
+    0x3dd895d7 as c_int as u32,
     0xa4d1c46d as c_uint,
     0xd3d6f4fb as c_uint,
-    0x4369e96a as c_int as enet_uint32,
-    0x346ed9fc as c_int as enet_uint32,
+    0x4369e96a as c_int as u32,
+    0x346ed9fc as c_int as u32,
     0xad678846 as c_uint,
     0xda60b8d0 as c_uint,
-    0x44042d73 as c_int as enet_uint32,
-    0x33031de5 as c_int as enet_uint32,
+    0x44042d73 as c_int as u32,
+    0x33031de5 as c_int as u32,
     0xaa0a4c5f as c_uint,
     0xdd0d7cc9 as c_uint,
-    0x5005713c as c_int as enet_uint32,
-    0x270241aa as c_int as enet_uint32,
+    0x5005713c as c_int as u32,
+    0x270241aa as c_int as u32,
     0xbe0b1010 as c_uint,
     0xc90c2086 as c_uint,
-    0x5768b525 as c_int as enet_uint32,
-    0x206f85b3 as c_int as enet_uint32,
+    0x5768b525 as c_int as u32,
+    0x206f85b3 as c_int as u32,
     0xb966d409 as c_uint,
     0xce61e49f as c_uint,
-    0x5edef90e as c_int as enet_uint32,
-    0x29d9c998 as c_int as enet_uint32,
+    0x5edef90e as c_int as u32,
+    0x29d9c998 as c_int as u32,
     0xb0d09822 as c_uint,
     0xc7d7a8b4 as c_uint,
-    0x59b33d17 as c_int as enet_uint32,
-    0x2eb40d81 as c_int as enet_uint32,
+    0x59b33d17 as c_int as u32,
+    0x2eb40d81 as c_int as u32,
     0xb7bd5c3b as c_uint,
     0xc0ba6cad as c_uint,
     0xedb88320 as c_uint,
     0x9abfb3b6 as c_uint,
-    0x3b6e20c as c_int as enet_uint32,
-    0x74b1d29a as c_int as enet_uint32,
+    0x3b6e20c as c_int as u32,
+    0x74b1d29a as c_int as u32,
     0xead54739 as c_uint,
     0x9dd277af as c_uint,
-    0x4db2615 as c_int as enet_uint32,
-    0x73dc1683 as c_int as enet_uint32,
+    0x4db2615 as c_int as u32,
+    0x73dc1683 as c_int as u32,
     0xe3630b12 as c_uint,
     0x94643b84 as c_uint,
-    0xd6d6a3e as c_int as enet_uint32,
-    0x7a6a5aa8 as c_int as enet_uint32,
+    0xd6d6a3e as c_int as u32,
+    0x7a6a5aa8 as c_int as u32,
     0xe40ecf0b as c_uint,
     0x9309ff9d as c_uint,
-    0xa00ae27 as c_int as enet_uint32,
-    0x7d079eb1 as c_int as enet_uint32,
+    0xa00ae27 as c_int as u32,
+    0x7d079eb1 as c_int as u32,
     0xf00f9344 as c_uint,
     0x8708a3d2 as c_uint,
-    0x1e01f268 as c_int as enet_uint32,
-    0x6906c2fe as c_int as enet_uint32,
+    0x1e01f268 as c_int as u32,
+    0x6906c2fe as c_int as u32,
     0xf762575d as c_uint,
     0x806567cb as c_uint,
-    0x196c3671 as c_int as enet_uint32,
-    0x6e6b06e7 as c_int as enet_uint32,
+    0x196c3671 as c_int as u32,
+    0x6e6b06e7 as c_int as u32,
     0xfed41b76 as c_uint,
     0x89d32be0 as c_uint,
-    0x10da7a5a as c_int as enet_uint32,
-    0x67dd4acc as c_int as enet_uint32,
+    0x10da7a5a as c_int as u32,
+    0x67dd4acc as c_int as u32,
     0xf9b9df6f as c_uint,
     0x8ebeeff9 as c_uint,
-    0x17b7be43 as c_int as enet_uint32,
-    0x60b08ed5 as c_int as enet_uint32,
+    0x17b7be43 as c_int as u32,
+    0x60b08ed5 as c_int as u32,
     0xd6d6a3e8 as c_uint,
     0xa1d1937e as c_uint,
-    0x38d8c2c4 as c_int as enet_uint32,
-    0x4fdff252 as c_int as enet_uint32,
+    0x38d8c2c4 as c_int as u32,
+    0x4fdff252 as c_int as u32,
     0xd1bb67f1 as c_uint,
     0xa6bc5767 as c_uint,
-    0x3fb506dd as c_int as enet_uint32,
-    0x48b2364b as c_int as enet_uint32,
+    0x3fb506dd as c_int as u32,
+    0x48b2364b as c_int as u32,
     0xd80d2bda as c_uint,
     0xaf0a1b4c as c_uint,
-    0x36034af6 as c_int as enet_uint32,
-    0x41047a60 as c_int as enet_uint32,
+    0x36034af6 as c_int as u32,
+    0x41047a60 as c_int as u32,
     0xdf60efc3 as c_uint,
     0xa867df55 as c_uint,
-    0x316e8eef as c_int as enet_uint32,
-    0x4669be79 as c_int as enet_uint32,
+    0x316e8eef as c_int as u32,
+    0x4669be79 as c_int as u32,
     0xcb61b38c as c_uint,
     0xbc66831a as c_uint,
-    0x256fd2a0 as c_int as enet_uint32,
-    0x5268e236 as c_int as enet_uint32,
+    0x256fd2a0 as c_int as u32,
+    0x5268e236 as c_int as u32,
     0xcc0c7795 as c_uint,
     0xbb0b4703 as c_uint,
-    0x220216b9 as c_int as enet_uint32,
-    0x5505262f as c_int as enet_uint32,
+    0x220216b9 as c_int as u32,
+    0x5505262f as c_int as u32,
     0xc5ba3bbe as c_uint,
     0xb2bd0b28 as c_uint,
-    0x2bb45a92 as c_int as enet_uint32,
-    0x5cb36a04 as c_int as enet_uint32,
+    0x2bb45a92 as c_int as u32,
+    0x5cb36a04 as c_int as u32,
     0xc2d7ffa7 as c_uint,
     0xb5d0cf31 as c_uint,
-    0x2cd99e8b as c_int as enet_uint32,
-    0x5bdeae1d as c_int as enet_uint32,
+    0x2cd99e8b as c_int as u32,
+    0x5bdeae1d as c_int as u32,
     0x9b64c2b0 as c_uint,
     0xec63f226 as c_uint,
-    0x756aa39c as c_int as enet_uint32,
-    0x26d930a as c_int as enet_uint32,
+    0x756aa39c as c_int as u32,
+    0x26d930a as c_int as u32,
     0x9c0906a9 as c_uint,
     0xeb0e363f as c_uint,
-    0x72076785 as c_int as enet_uint32,
-    0x5005713 as c_int as enet_uint32,
+    0x72076785 as c_int as u32,
+    0x5005713 as c_int as u32,
     0x95bf4a82 as c_uint,
     0xe2b87a14 as c_uint,
-    0x7bb12bae as c_int as enet_uint32,
-    0xcb61b38 as c_int as enet_uint32,
+    0x7bb12bae as c_int as u32,
+    0xcb61b38 as c_int as u32,
     0x92d28e9b as c_uint,
     0xe5d5be0d as c_uint,
-    0x7cdcefb7 as c_int as enet_uint32,
-    0xbdbdf21 as c_int as enet_uint32,
+    0x7cdcefb7 as c_int as u32,
+    0xbdbdf21 as c_int as u32,
     0x86d3d2d4 as c_uint,
     0xf1d4e242 as c_uint,
-    0x68ddb3f8 as c_int as enet_uint32,
-    0x1fda836e as c_int as enet_uint32,
+    0x68ddb3f8 as c_int as u32,
+    0x1fda836e as c_int as u32,
     0x81be16cd as c_uint,
     0xf6b9265b as c_uint,
-    0x6fb077e1 as c_int as enet_uint32,
-    0x18b74777 as c_int as enet_uint32,
+    0x6fb077e1 as c_int as u32,
+    0x18b74777 as c_int as u32,
     0x88085ae6 as c_uint,
     0xff0f6a70 as c_uint,
-    0x66063bca as c_int as enet_uint32,
-    0x11010b5c as c_int as enet_uint32,
+    0x66063bca as c_int as u32,
+    0x11010b5c as c_int as u32,
     0x8f659eff as c_uint,
     0xf862ae69 as c_uint,
-    0x616bffd3 as c_int as enet_uint32,
-    0x166ccf45 as c_int as enet_uint32,
+    0x616bffd3 as c_int as u32,
+    0x166ccf45 as c_int as u32,
     0xa00ae278 as c_uint,
     0xd70dd2ee as c_uint,
-    0x4e048354 as c_int as enet_uint32,
-    0x3903b3c2 as c_int as enet_uint32,
+    0x4e048354 as c_int as u32,
+    0x3903b3c2 as c_int as u32,
     0xa7672661 as c_uint,
     0xd06016f7 as c_uint,
-    0x4969474d as c_int as enet_uint32,
-    0x3e6e77db as c_int as enet_uint32,
+    0x4969474d as c_int as u32,
+    0x3e6e77db as c_int as u32,
     0xaed16a4a as c_uint,
     0xd9d65adc as c_uint,
-    0x40df0b66 as c_int as enet_uint32,
-    0x37d83bf0 as c_int as enet_uint32,
+    0x40df0b66 as c_int as u32,
+    0x37d83bf0 as c_int as u32,
     0xa9bcae53 as c_uint,
     0xdebb9ec5 as c_uint,
-    0x47b2cf7f as c_int as enet_uint32,
-    0x30b5ffe9 as c_int as enet_uint32,
+    0x47b2cf7f as c_int as u32,
+    0x30b5ffe9 as c_int as u32,
     0xbdbdf21c as c_uint,
     0xcabac28a as c_uint,
-    0x53b39330 as c_int as enet_uint32,
-    0x24b4a3a6 as c_int as enet_uint32,
+    0x53b39330 as c_int as u32,
+    0x24b4a3a6 as c_int as u32,
     0xbad03605 as c_uint,
     0xcdd70693 as c_uint,
-    0x54de5729 as c_int as enet_uint32,
-    0x23d967bf as c_int as enet_uint32,
+    0x54de5729 as c_int as u32,
+    0x23d967bf as c_int as u32,
     0xb3667a2e as c_uint,
     0xc4614ab8 as c_uint,
-    0x5d681b02 as c_int as enet_uint32,
-    0x2a6f2b94 as c_int as enet_uint32,
+    0x5d681b02 as c_int as u32,
+    0x2a6f2b94 as c_int as u32,
     0xb40bbe37 as c_uint,
     0xc30c8ea1 as c_uint,
-    0x5a05df1b as c_int as enet_uint32,
-    0x2d02ef8d as c_int as enet_uint32,
+    0x5a05df1b as c_int as u32,
+    0x2d02ef8d as c_int as u32,
 ];
 #[no_mangle]
 pub(crate) unsafe extern "C" fn enet_crc32(
     mut buffers: *const ENetBuffer,
-    mut bufferCount: size_t,
-) -> enet_uint32 {
-    let mut crc: enet_uint32 = 0xffffffff as c_uint;
+    mut bufferCount: usize,
+) -> u32 {
+    let mut crc: u32 = 0xffffffff as c_uint;
     loop {
         let fresh30 = bufferCount;
         bufferCount = bufferCount.wrapping_sub(1);
-        if fresh30 <= 0 as c_int as size_t {
+        if fresh30 <= 0 as c_int as usize {
             break;
         }
-        let mut data: *const enet_uint8 = (*buffers).data as *const enet_uint8;
-        let dataEnd: *const enet_uint8 = &*data.add((*buffers).dataLength) as *const enet_uint8;
+        let mut data: *const u8 = (*buffers).data as *const u8;
+        let dataEnd: *const u8 = &*data.add((*buffers).dataLength) as *const u8;
         while data < dataEnd {
             let fresh31 = data;
             data = data.offset(1);
@@ -2436,9 +2387,9 @@ pub(crate) unsafe extern "C" fn enet_crc32(
 }
 pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     peer: *mut ENetPeer<S>,
-    interval: enet_uint32,
-    acceleration: enet_uint32,
-    deceleration: enet_uint32,
+    interval: u32,
+    acceleration: u32,
+    deceleration: u32,
 ) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
@@ -2451,9 +2402,8 @@ pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     (*peer).packetThrottleAcceleration = acceleration;
     (*peer).packetThrottleDeceleration = deceleration;
     command.header.command = (ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE as c_int
-        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-        as enet_uint8;
-    command.header.channelID = 0xff as c_int as enet_uint8;
+        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int) as u8;
+    command.header.channelID = 0xff as c_int as u8;
     command.throttleConfigure.packetThrottleInterval = htonl(interval);
     command.throttleConfigure.packetThrottleAcceleration = htonl(acceleration);
     command.throttleConfigure.packetThrottleDeceleration = htonl(deceleration);
@@ -2461,20 +2411,16 @@ pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
         peer,
         &command,
         std::ptr::null_mut(),
-        0 as c_int as enet_uint32,
-        0 as c_int as enet_uint16,
+        0 as c_int as u32,
+        0 as c_int as u16,
     );
 }
-pub(crate) unsafe fn enet_peer_throttle<S: Socket>(
-    peer: *mut ENetPeer<S>,
-    rtt: enet_uint32,
-) -> c_int {
+pub(crate) unsafe fn enet_peer_throttle<S: Socket>(peer: *mut ENetPeer<S>, rtt: u32) -> c_int {
     if (*peer).lastRoundTripTime <= (*peer).lastRoundTripTimeVariance {
         (*peer).packetThrottle = (*peer).packetThrottleLimit;
     } else if rtt <= (*peer).lastRoundTripTime {
-        (*peer).packetThrottle = ((*peer).packetThrottle as c_uint)
-            .wrapping_add((*peer).packetThrottleAcceleration)
-            as enet_uint32 as enet_uint32;
+        (*peer).packetThrottle =
+            ((*peer).packetThrottle as c_uint).wrapping_add((*peer).packetThrottleAcceleration);
         if (*peer).packetThrottle > (*peer).packetThrottleLimit {
             (*peer).packetThrottle = (*peer).packetThrottleLimit;
         }
@@ -2484,11 +2430,10 @@ pub(crate) unsafe fn enet_peer_throttle<S: Socket>(
             .wrapping_add((2 as c_int as c_uint).wrapping_mul((*peer).lastRoundTripTimeVariance))
     {
         if (*peer).packetThrottle > (*peer).packetThrottleDeceleration {
-            (*peer).packetThrottle = ((*peer).packetThrottle as c_uint)
-                .wrapping_sub((*peer).packetThrottleDeceleration)
-                as enet_uint32 as enet_uint32;
+            (*peer).packetThrottle =
+                ((*peer).packetThrottle as c_uint).wrapping_sub((*peer).packetThrottleDeceleration);
         } else {
-            (*peer).packetThrottle = 0 as c_int as enet_uint32;
+            (*peer).packetThrottle = 0 as c_int as u32;
         }
         return -(1 as c_int);
     }
@@ -2496,7 +2441,7 @@ pub(crate) unsafe fn enet_peer_throttle<S: Socket>(
 }
 pub(crate) unsafe fn enet_peer_send<S: Socket>(
     peer: *mut ENetPeer<S>,
-    channelID: enet_uint8,
+    channelID: u8,
     packet: *mut ENetPacket,
 ) -> c_int {
     let mut command: ENetProtocol = _ENetProtocol {
@@ -2506,31 +2451,31 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             reliableSequenceNumber: 0,
         },
     };
-    let mut fragmentLength: size_t;
+    let mut fragmentLength: usize;
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
-        || channelID as size_t >= (*peer).channelCount
+        || channelID as usize >= (*peer).channelCount
         || (*packet).dataLength > (*(*peer).host).maximumPacketSize
     {
         return -(1 as c_int);
     }
     let channel = &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
-    fragmentLength = ((*peer).mtu as size_t)
-        .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>() as size_t)
-        .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>() as size_t);
+    fragmentLength = ((*peer).mtu as usize)
+        .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>())
+        .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>());
     if ((*(*peer).host).checksum.assume_init_ref()).is_some() {
         fragmentLength = (fragmentLength as c_ulong)
-            .wrapping_sub(::core::mem::size_of::<enet_uint32>() as c_ulong)
-            as size_t as size_t;
+            .wrapping_sub(::core::mem::size_of::<u32>() as c_ulong)
+            as usize;
     }
     if (*packet).dataLength > fragmentLength {
-        let fragmentCount: enet_uint32 = ((*packet).dataLength)
+        let fragmentCount: u32 = ((*packet).dataLength)
             .wrapping_add(fragmentLength)
-            .wrapping_sub(1 as c_int as size_t)
-            .wrapping_div(fragmentLength) as enet_uint32;
-        let mut fragmentNumber: enet_uint32;
-        let mut fragmentOffset: enet_uint32;
-        let commandNumber: enet_uint8;
-        let startSequenceNumber: enet_uint16;
+            .wrapping_sub(1 as c_int as usize)
+            .wrapping_div(fragmentLength) as u32;
+        let mut fragmentNumber: u32;
+        let mut fragmentOffset: u32;
+        let commandNumber: u8;
+        let startSequenceNumber: u16;
         let mut fragments: ENetList = ENetList {
             sentinel: ENetListNode {
                 next: std::ptr::null_mut(),
@@ -2547,26 +2492,24 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             == ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT as c_int as c_uint
             && ((*channel).outgoingUnreliableSequenceNumber as c_int) < 0xffff as c_int
         {
-            commandNumber = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT as c_int as enet_uint8;
-            startSequenceNumber = htons(
-                ((*channel).outgoingUnreliableSequenceNumber as c_int + 1 as c_int) as uint16_t,
-            );
+            commandNumber = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT as c_int as u8;
+            startSequenceNumber =
+                htons(((*channel).outgoingUnreliableSequenceNumber as c_int + 1 as c_int) as u16);
         } else {
             commandNumber = (ENET_PROTOCOL_COMMAND_SEND_FRAGMENT as c_int
                 | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-                as enet_uint8;
-            startSequenceNumber = htons(
-                ((*channel).outgoingReliableSequenceNumber as c_int + 1 as c_int) as uint16_t,
-            );
+                as u8;
+            startSequenceNumber =
+                htons(((*channel).outgoingReliableSequenceNumber as c_int + 1 as c_int) as u16);
         }
         enet_list_clear(&mut fragments);
-        fragmentNumber = 0 as c_int as enet_uint32;
-        fragmentOffset = 0 as c_int as enet_uint32;
-        while (fragmentOffset as size_t) < (*packet).dataLength {
-            if ((*packet).dataLength).wrapping_sub(fragmentOffset as size_t) < fragmentLength {
-                fragmentLength = ((*packet).dataLength).wrapping_sub(fragmentOffset as size_t);
+        fragmentNumber = 0 as c_int as u32;
+        fragmentOffset = 0 as c_int as u32;
+        while (fragmentOffset as usize) < (*packet).dataLength {
+            if ((*packet).dataLength).wrapping_sub(fragmentOffset as usize) < fragmentLength {
+                fragmentLength = ((*packet).dataLength).wrapping_sub(fragmentOffset as usize);
             }
-            fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>() as size_t)
+            fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>())
                 as *mut ENetOutgoingCommand;
             if fragment.is_null() {
                 while fragments.sentinel.next != &mut fragments.sentinel as *mut ENetListNode {
@@ -2577,24 +2520,22 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
                 return -(1 as c_int);
             }
             (*fragment).fragmentOffset = fragmentOffset;
-            (*fragment).fragmentLength = fragmentLength as enet_uint16;
+            (*fragment).fragmentLength = fragmentLength as u16;
             (*fragment).packet = packet;
             (*fragment).command.header.command = commandNumber;
             (*fragment).command.header.channelID = channelID;
             (*fragment).command.sendFragment.startSequenceNumber = startSequenceNumber;
-            (*fragment).command.sendFragment.dataLength = htons(fragmentLength as uint16_t);
+            (*fragment).command.sendFragment.dataLength = htons(fragmentLength as u16);
             (*fragment).command.sendFragment.fragmentCount = htonl(fragmentCount);
             (*fragment).command.sendFragment.fragmentNumber = htonl(fragmentNumber);
-            (*fragment).command.sendFragment.totalLength = htonl((*packet).dataLength as uint32_t);
+            (*fragment).command.sendFragment.totalLength = htonl((*packet).dataLength as u32);
             (*fragment).command.sendFragment.fragmentOffset = ntohl(fragmentOffset);
             enet_list_insert(&mut fragments.sentinel, fragment as *mut c_void);
             fragmentNumber = fragmentNumber.wrapping_add(1);
-            fragmentOffset = (fragmentOffset as size_t).wrapping_add(fragmentLength) as enet_uint32
-                as enet_uint32;
+            fragmentOffset = (fragmentOffset as usize).wrapping_add(fragmentLength) as u32;
         }
-        (*packet).referenceCount = ((*packet).referenceCount as c_ulong)
-            .wrapping_add(fragmentNumber as c_ulong) as size_t
-            as size_t;
+        (*packet).referenceCount =
+            ((*packet).referenceCount as c_ulong).wrapping_add(fragmentNumber as c_ulong) as usize;
         while fragments.sentinel.next != &mut fragments.sentinel as *mut ENetListNode {
             fragment = enet_list_remove(fragments.sentinel.next) as *mut ENetOutgoingCommand;
             enet_peer_setup_outgoing_command(peer, fragment);
@@ -2608,25 +2549,25 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     {
         command.header.command = (ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int
             | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED as c_int)
-            as enet_uint8;
-        command.sendUnsequenced.dataLength = htons((*packet).dataLength as uint16_t);
+            as u8;
+        command.sendUnsequenced.dataLength = htons((*packet).dataLength as u16);
     } else if (*packet).flags & ENET_PACKET_FLAG_RELIABLE as c_int as c_uint != 0
         || (*channel).outgoingUnreliableSequenceNumber as c_int >= 0xffff as c_int
     {
         command.header.command = (ENET_PROTOCOL_COMMAND_SEND_RELIABLE as c_int
             | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-            as enet_uint8;
-        command.sendReliable.dataLength = htons((*packet).dataLength as uint16_t);
+            as u8;
+        command.sendReliable.dataLength = htons((*packet).dataLength as u16);
     } else {
-        command.header.command = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE as c_int as enet_uint8;
-        command.sendUnreliable.dataLength = htons((*packet).dataLength as uint16_t);
+        command.header.command = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE as c_int as u8;
+        command.sendUnreliable.dataLength = htons((*packet).dataLength as u16);
     }
     if (enet_peer_queue_outgoing_command(
         peer,
         &command,
         packet,
-        0 as c_int as enet_uint32,
-        (*packet).dataLength as enet_uint16,
+        0 as c_int as u32,
+        (*packet).dataLength as u16,
     ))
     .is_null()
     {
@@ -2636,7 +2577,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
 }
 pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     peer: *mut ENetPeer<S>,
-    channelID: *mut enet_uint8,
+    channelID: *mut u8,
 ) -> *mut ENetPacket {
     if (*peer).dispatchedCommands.sentinel.next
         == &mut (*peer).dispatchedCommands.sentinel as *mut ENetListNode
@@ -2655,7 +2596,7 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     }
     enet_free(incomingCommand as *mut c_void);
     (*peer).totalWaitingData =
-        ((*peer).totalWaitingData as size_t).wrapping_sub((*packet).dataLength) as size_t as size_t;
+        (*peer).totalWaitingData.wrapping_sub((*packet).dataLength) as usize as usize;
     packet
 }
 unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
@@ -2665,7 +2606,7 @@ unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
         if !((*outgoingCommand).packet).is_null() {
             (*(*outgoingCommand).packet).referenceCount =
                 ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
+            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as usize {
                 enet_packet_destroy((*outgoingCommand).packet);
             }
         }
@@ -2690,7 +2631,7 @@ unsafe fn enet_peer_remove_incoming_commands(
         if !((*incomingCommand).packet).is_null() {
             (*(*incomingCommand).packet).referenceCount =
                 ((*(*incomingCommand).packet).referenceCount).wrapping_sub(1);
-            if (*(*incomingCommand).packet).referenceCount == 0 as c_int as size_t {
+            if (*(*incomingCommand).packet).referenceCount == 0 as c_int as usize {
                 enet_packet_destroy((*incomingCommand).packet);
             }
         }
@@ -2712,8 +2653,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
     let mut channel: *mut ENetChannel;
     if (*peer).flags as c_int & ENET_PEER_FLAG_NEEDS_DISPATCH as c_int != 0 {
         enet_list_remove(&mut (*peer).dispatchList);
-        (*peer).flags =
-            ((*peer).flags as c_int & !(ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)) as enet_uint16;
+        (*peer).flags = ((*peer).flags as c_int & !(ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)) as u16;
     }
     while (*peer).acknowledgements.sentinel.next
         != &mut (*peer).acknowledgements.sentinel as *mut ENetListNode
@@ -2724,7 +2664,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
     enet_peer_reset_outgoing_commands(&mut (*peer).outgoingCommands);
     enet_peer_reset_outgoing_commands(&mut (*peer).outgoingSendReliableCommands);
     enet_peer_reset_incoming_commands(&mut (*peer).dispatchedCommands);
-    if !((*peer).channels).is_null() && (*peer).channelCount > 0 as c_int as size_t {
+    if !((*peer).channels).is_null() && (*peer).channelCount > 0 as c_int as usize {
         channel = (*peer).channels;
         while channel < &mut *((*peer).channels).add((*peer).channelCount) as *mut ENetChannel {
             enet_peer_reset_incoming_commands(&mut (*channel).incomingReliableCommands);
@@ -2734,7 +2674,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
         enet_free((*peer).channels as *mut c_void);
     }
     (*peer).channels = std::ptr::null_mut();
-    (*peer).channelCount = 0 as c_int as size_t;
+    (*peer).channelCount = 0 as c_int as usize;
 }
 pub(crate) unsafe fn enet_peer_on_connect<S: Socket>(peer: *mut ENetPeer<S>) {
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
@@ -2760,56 +2700,54 @@ pub(crate) unsafe fn enet_peer_on_disconnect<S: Socket>(peer: *mut ENetPeer<S>) 
 }
 pub(crate) unsafe fn enet_peer_reset<S: Socket>(peer: *mut ENetPeer<S>) {
     enet_peer_on_disconnect(peer);
-    (*peer).outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as enet_uint16;
-    (*peer).connectID = 0 as c_int as enet_uint32;
+    (*peer).outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int as u16;
+    (*peer).connectID = 0 as c_int as u32;
     (*peer).state = ENET_PEER_STATE_DISCONNECTED;
-    (*peer).incomingBandwidth = 0 as c_int as enet_uint32;
-    (*peer).outgoingBandwidth = 0 as c_int as enet_uint32;
-    (*peer).incomingBandwidthThrottleEpoch = 0 as c_int as enet_uint32;
-    (*peer).outgoingBandwidthThrottleEpoch = 0 as c_int as enet_uint32;
-    (*peer).incomingDataTotal = 0 as c_int as enet_uint32;
-    (*peer).outgoingDataTotal = 0 as c_int as enet_uint32;
-    (*peer).lastSendTime = 0 as c_int as enet_uint32;
-    (*peer).lastReceiveTime = 0 as c_int as enet_uint32;
-    (*peer).nextTimeout = 0 as c_int as enet_uint32;
-    (*peer).earliestTimeout = 0 as c_int as enet_uint32;
-    (*peer).packetLossEpoch = 0 as c_int as enet_uint32;
-    (*peer).packetsSent = 0 as c_int as enet_uint32;
-    (*peer).packetsLost = 0 as c_int as enet_uint32;
-    (*peer).packetLoss = 0 as c_int as enet_uint32;
-    (*peer).packetLossVariance = 0 as c_int as enet_uint32;
-    (*peer).packetThrottle = ENET_PEER_DEFAULT_PACKET_THROTTLE as c_int as enet_uint32;
-    (*peer).packetThrottleLimit = ENET_PEER_PACKET_THROTTLE_SCALE as c_int as enet_uint32;
-    (*peer).packetThrottleCounter = 0 as c_int as enet_uint32;
-    (*peer).packetThrottleEpoch = 0 as c_int as enet_uint32;
-    (*peer).packetThrottleAcceleration =
-        ENET_PEER_PACKET_THROTTLE_ACCELERATION as c_int as enet_uint32;
-    (*peer).packetThrottleDeceleration =
-        ENET_PEER_PACKET_THROTTLE_DECELERATION as c_int as enet_uint32;
-    (*peer).packetThrottleInterval = ENET_PEER_PACKET_THROTTLE_INTERVAL as c_int as enet_uint32;
-    (*peer).pingInterval = ENET_PEER_PING_INTERVAL as c_int as enet_uint32;
-    (*peer).timeoutLimit = ENET_PEER_TIMEOUT_LIMIT as c_int as enet_uint32;
-    (*peer).timeoutMinimum = ENET_PEER_TIMEOUT_MINIMUM as c_int as enet_uint32;
-    (*peer).timeoutMaximum = ENET_PEER_TIMEOUT_MAXIMUM as c_int as enet_uint32;
-    (*peer).lastRoundTripTime = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as c_int as enet_uint32;
-    (*peer).lowestRoundTripTime = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as c_int as enet_uint32;
-    (*peer).lastRoundTripTimeVariance = 0 as c_int as enet_uint32;
-    (*peer).highestRoundTripTimeVariance = 0 as c_int as enet_uint32;
-    (*peer).roundTripTime = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as c_int as enet_uint32;
-    (*peer).roundTripTimeVariance = 0 as c_int as enet_uint32;
+    (*peer).incomingBandwidth = 0 as c_int as u32;
+    (*peer).outgoingBandwidth = 0 as c_int as u32;
+    (*peer).incomingBandwidthThrottleEpoch = 0 as c_int as u32;
+    (*peer).outgoingBandwidthThrottleEpoch = 0 as c_int as u32;
+    (*peer).incomingDataTotal = 0 as c_int as u32;
+    (*peer).outgoingDataTotal = 0 as c_int as u32;
+    (*peer).lastSendTime = 0 as c_int as u32;
+    (*peer).lastReceiveTime = 0 as c_int as u32;
+    (*peer).nextTimeout = 0 as c_int as u32;
+    (*peer).earliestTimeout = 0 as c_int as u32;
+    (*peer).packetLossEpoch = 0 as c_int as u32;
+    (*peer).packetsSent = 0 as c_int as u32;
+    (*peer).packetsLost = 0 as c_int as u32;
+    (*peer).packetLoss = 0 as c_int as u32;
+    (*peer).packetLossVariance = 0 as c_int as u32;
+    (*peer).packetThrottle = ENET_PEER_DEFAULT_PACKET_THROTTLE as c_int as u32;
+    (*peer).packetThrottleLimit = ENET_PEER_PACKET_THROTTLE_SCALE as c_int as u32;
+    (*peer).packetThrottleCounter = 0 as c_int as u32;
+    (*peer).packetThrottleEpoch = 0 as c_int as u32;
+    (*peer).packetThrottleAcceleration = ENET_PEER_PACKET_THROTTLE_ACCELERATION as c_int as u32;
+    (*peer).packetThrottleDeceleration = ENET_PEER_PACKET_THROTTLE_DECELERATION as c_int as u32;
+    (*peer).packetThrottleInterval = ENET_PEER_PACKET_THROTTLE_INTERVAL as c_int as u32;
+    (*peer).pingInterval = ENET_PEER_PING_INTERVAL as c_int as u32;
+    (*peer).timeoutLimit = ENET_PEER_TIMEOUT_LIMIT as c_int as u32;
+    (*peer).timeoutMinimum = ENET_PEER_TIMEOUT_MINIMUM as c_int as u32;
+    (*peer).timeoutMaximum = ENET_PEER_TIMEOUT_MAXIMUM as c_int as u32;
+    (*peer).lastRoundTripTime = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as c_int as u32;
+    (*peer).lowestRoundTripTime = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as c_int as u32;
+    (*peer).lastRoundTripTimeVariance = 0 as c_int as u32;
+    (*peer).highestRoundTripTimeVariance = 0 as c_int as u32;
+    (*peer).roundTripTime = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as c_int as u32;
+    (*peer).roundTripTimeVariance = 0 as c_int as u32;
     (*peer).mtu = (*(*peer).host).mtu;
-    (*peer).reliableDataInTransit = 0 as c_int as enet_uint32;
-    (*peer).outgoingReliableSequenceNumber = 0 as c_int as enet_uint16;
-    (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
-    (*peer).incomingUnsequencedGroup = 0 as c_int as enet_uint16;
-    (*peer).outgoingUnsequencedGroup = 0 as c_int as enet_uint16;
-    (*peer).eventData = 0 as c_int as enet_uint32;
-    (*peer).totalWaitingData = 0 as c_int as size_t;
-    (*peer).flags = 0 as c_int as enet_uint16;
+    (*peer).reliableDataInTransit = 0 as c_int as u32;
+    (*peer).outgoingReliableSequenceNumber = 0 as c_int as u16;
+    (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
+    (*peer).incomingUnsequencedGroup = 0 as c_int as u16;
+    (*peer).outgoingUnsequencedGroup = 0 as c_int as u16;
+    (*peer).eventData = 0 as c_int as u32;
+    (*peer).totalWaitingData = 0 as c_int as usize;
+    (*peer).flags = 0 as c_int as u16;
     _enet_memset(
         ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
         0 as c_int,
-        ::core::mem::size_of::<[enet_uint32; 32]>() as size_t,
+        ::core::mem::size_of::<[u32; 32]>(),
     );
     enet_peer_reset_queues(peer);
 }
@@ -2825,21 +2763,17 @@ pub(crate) unsafe fn enet_peer_ping<S: Socket>(peer: *mut ENetPeer<S>) {
         return;
     }
     command.header.command = (ENET_PROTOCOL_COMMAND_PING as c_int
-        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-        as enet_uint8;
-    command.header.channelID = 0xff as c_int as enet_uint8;
+        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int) as u8;
+    command.header.channelID = 0xff as c_int as u8;
     enet_peer_queue_outgoing_command(
         peer,
         &command,
         std::ptr::null_mut(),
-        0 as c_int as enet_uint32,
-        0 as c_int as enet_uint16,
+        0 as c_int as u32,
+        0 as c_int as u16,
     );
 }
-pub(crate) unsafe fn enet_peer_ping_interval<S: Socket>(
-    peer: *mut ENetPeer<S>,
-    pingInterval: enet_uint32,
-) {
+pub(crate) unsafe fn enet_peer_ping_interval<S: Socket>(peer: *mut ENetPeer<S>, pingInterval: u32) {
     (*peer).pingInterval = if pingInterval != 0 {
         pingInterval
     } else {
@@ -2848,9 +2782,9 @@ pub(crate) unsafe fn enet_peer_ping_interval<S: Socket>(
 }
 pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
     peer: *mut ENetPeer<S>,
-    timeoutLimit: enet_uint32,
-    timeoutMinimum: enet_uint32,
-    timeoutMaximum: enet_uint32,
+    timeoutLimit: u32,
+    timeoutMinimum: u32,
+    timeoutMaximum: u32,
 ) {
     (*peer).timeoutLimit = if timeoutLimit != 0 {
         timeoutLimit
@@ -2868,10 +2802,7 @@ pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
         ENET_PEER_TIMEOUT_MAXIMUM as c_int as c_uint
     };
 }
-pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(
-    peer: *mut ENetPeer<S>,
-    data: enet_uint32,
-) {
+pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(peer: *mut ENetPeer<S>, data: u32) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -2888,21 +2819,21 @@ pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(
         enet_peer_reset_queues(peer);
         command.header.command = (ENET_PROTOCOL_COMMAND_DISCONNECT as c_int
             | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED as c_int)
-            as enet_uint8;
-        command.header.channelID = 0xff as c_int as enet_uint8;
+            as u8;
+        command.header.channelID = 0xff as c_int as u8;
         command.disconnect.data = htonl(data);
         enet_peer_queue_outgoing_command(
             peer,
             &command,
             std::ptr::null_mut(),
-            0 as c_int as enet_uint32,
-            0 as c_int as enet_uint16,
+            0 as c_int as u32,
+            0 as c_int as u16,
         );
         enet_host_flush((*peer).host);
     }
     enet_peer_reset(peer);
 }
-pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, data: enet_uint32) {
+pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, data: u32) {
     let mut command: ENetProtocol = _ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -2918,26 +2849,26 @@ pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, dat
         return;
     }
     enet_peer_reset_queues(peer);
-    command.header.command = ENET_PROTOCOL_COMMAND_DISCONNECT as c_int as enet_uint8;
-    command.header.channelID = 0xff as c_int as enet_uint8;
+    command.header.command = ENET_PROTOCOL_COMMAND_DISCONNECT as c_int as u8;
+    command.header.channelID = 0xff as c_int as u8;
     command.disconnect.data = htonl(data);
     if (*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         command.header.command = (command.header.command as c_int
             | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-            as enet_uint8;
+            as u8;
     } else {
         command.header.command = (command.header.command as c_int
             | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED as c_int)
-            as enet_uint8;
+            as u8;
     }
     enet_peer_queue_outgoing_command(
         peer,
         &command,
         std::ptr::null_mut(),
-        0 as c_int as enet_uint32,
-        0 as c_int as enet_uint16,
+        0 as c_int as u32,
+        0 as c_int as u16,
     );
     if (*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
@@ -2961,10 +2892,7 @@ pub(crate) unsafe fn enet_peer_has_outgoing_commands<S: Socket>(peer: *mut ENetP
     }
     1 as c_int
 }
-pub(crate) unsafe fn enet_peer_disconnect_later<S: Socket>(
-    peer: *mut ENetPeer<S>,
-    data: enet_uint32,
-) {
+pub(crate) unsafe fn enet_peer_disconnect_later<S: Socket>(peer: *mut ENetPeer<S>, data: u32) {
     if ((*peer).state as c_uint == ENET_PEER_STATE_CONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint)
         && enet_peer_has_outgoing_commands(peer) != 0
@@ -2978,23 +2906,20 @@ pub(crate) unsafe fn enet_peer_disconnect_later<S: Socket>(
 pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
-    sentTime: enet_uint16,
+    sentTime: u16,
 ) -> *mut ENetAcknowledgement {
-    if ((*command).header.channelID as size_t) < (*peer).channelCount {
+    if ((*command).header.channelID as usize) < (*peer).channelCount {
         let channel: *mut ENetChannel = &mut *((*peer).channels)
             .offset((*command).header.channelID as isize)
             as *mut ENetChannel;
-        let mut reliableWindow: enet_uint16 = ((*command).header.reliableSequenceNumber as c_int
-            / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
-            as enet_uint16;
-        let currentWindow: enet_uint16 = ((*channel).incomingReliableSequenceNumber as c_int
-            / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
-            as enet_uint16;
+        let mut reliableWindow: u16 = ((*command).header.reliableSequenceNumber as c_int
+            / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as u16;
+        let currentWindow: u16 = ((*channel).incomingReliableSequenceNumber as c_int
+            / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as u16;
         if ((*command).header.reliableSequenceNumber as c_int)
             < (*channel).incomingReliableSequenceNumber as c_int
         {
-            reliableWindow =
-                (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as enet_uint16;
+            reliableWindow = (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as u16;
         }
         if reliableWindow as c_int
             >= currentWindow as c_int + ENET_PEER_FREE_RELIABLE_WINDOWS as c_int - 1 as c_int
@@ -3004,15 +2929,15 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
             return std::ptr::null_mut();
         }
     }
-    let acknowledgement = enet_malloc(::core::mem::size_of::<ENetAcknowledgement>() as size_t)
-        as *mut ENetAcknowledgement;
+    let acknowledgement =
+        enet_malloc(::core::mem::size_of::<ENetAcknowledgement>()) as *mut ENetAcknowledgement;
     if acknowledgement.is_null() {
         return std::ptr::null_mut();
     }
     (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as c_ulong)
         .wrapping_add(::core::mem::size_of::<ENetProtocolAcknowledge>() as c_ulong)
-        as enet_uint32 as enet_uint32;
-    (*acknowledgement).sentTime = sentTime as enet_uint32;
+        as u32 as u32;
+    (*acknowledgement).sentTime = sentTime as u32;
     (*acknowledgement).command = *command;
     enet_list_insert(
         &mut (*peer).acknowledgements.sentinel,
@@ -3024,15 +2949,15 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
     peer: *mut ENetPeer<S>,
     outgoingCommand: *mut ENetOutgoingCommand,
 ) {
-    (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as size_t).wrapping_add(
+    (*peer).outgoingDataTotal = ((*peer).outgoingDataTotal as usize).wrapping_add(
         (enet_protocol_command_size((*outgoingCommand).command.header.command))
-            .wrapping_add((*outgoingCommand).fragmentLength as size_t),
-    ) as enet_uint32 as enet_uint32;
+            .wrapping_add((*outgoingCommand).fragmentLength as usize),
+    ) as u32 as u32;
     if (*outgoingCommand).command.header.channelID as c_int == 0xff as c_int {
         (*peer).outgoingReliableSequenceNumber =
             ((*peer).outgoingReliableSequenceNumber).wrapping_add(1);
         (*outgoingCommand).reliableSequenceNumber = (*peer).outgoingReliableSequenceNumber;
-        (*outgoingCommand).unreliableSequenceNumber = 0 as c_int as enet_uint16;
+        (*outgoingCommand).unreliableSequenceNumber = 0 as c_int as u16;
     } else {
         let channel: *mut ENetChannel = &mut *((*peer).channels)
             .offset((*outgoingCommand).command.header.channelID as isize)
@@ -3043,16 +2968,16 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
         {
             (*channel).outgoingReliableSequenceNumber =
                 ((*channel).outgoingReliableSequenceNumber).wrapping_add(1);
-            (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
+            (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as u16;
             (*outgoingCommand).reliableSequenceNumber = (*channel).outgoingReliableSequenceNumber;
-            (*outgoingCommand).unreliableSequenceNumber = 0 as c_int as enet_uint16;
+            (*outgoingCommand).unreliableSequenceNumber = 0 as c_int as u16;
         } else if (*outgoingCommand).command.header.command as c_int
             & ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED as c_int
             != 0
         {
             (*peer).outgoingUnsequencedGroup = ((*peer).outgoingUnsequencedGroup).wrapping_add(1);
-            (*outgoingCommand).reliableSequenceNumber = 0 as c_int as enet_uint16;
-            (*outgoingCommand).unreliableSequenceNumber = 0 as c_int as enet_uint16;
+            (*outgoingCommand).reliableSequenceNumber = 0 as c_int as u16;
+            (*outgoingCommand).unreliableSequenceNumber = 0 as c_int as u16;
         } else {
             if (*outgoingCommand).fragmentOffset == 0 as c_int as c_uint {
                 (*channel).outgoingUnreliableSequenceNumber =
@@ -3063,9 +2988,9 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
                 (*channel).outgoingUnreliableSequenceNumber;
         }
     }
-    (*outgoingCommand).sendAttempts = 0 as c_int as enet_uint16;
-    (*outgoingCommand).sentTime = 0 as c_int as enet_uint32;
-    (*outgoingCommand).roundTripTimeout = 0 as c_int as enet_uint32;
+    (*outgoingCommand).sendAttempts = 0 as c_int as u16;
+    (*outgoingCommand).sentTime = 0 as c_int as u32;
+    (*outgoingCommand).roundTripTimeout = 0 as c_int as u32;
     (*outgoingCommand).command.header.reliableSequenceNumber =
         htons((*outgoingCommand).reliableSequenceNumber);
     (*(*peer).host).totalQueued = ((*(*peer).host).totalQueued).wrapping_add(1);
@@ -3103,12 +3028,11 @@ pub(crate) unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
     packet: *mut ENetPacket,
-    offset: enet_uint32,
-    length: enet_uint16,
+    offset: u32,
+    length: u16,
 ) -> *mut ENetOutgoingCommand {
-    let outgoingCommand: *mut ENetOutgoingCommand = enet_malloc(::core::mem::size_of::<
-        ENetOutgoingCommand,
-    >() as size_t) as *mut ENetOutgoingCommand;
+    let outgoingCommand: *mut ENetOutgoingCommand =
+        enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>()) as *mut ENetOutgoingCommand;
     if outgoingCommand.is_null() {
         return std::ptr::null_mut();
     }
@@ -3161,7 +3085,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                             );
                             (*peer).flags = ((*peer).flags as c_int
                                 | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)
-                                as enet_uint16;
+                                as u16;
                         }
                         droppedCommand = currentCommand;
                     } else if droppedCommand != currentCommand {
@@ -3170,19 +3094,17 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                     current_block_22 = 13472856163611868459;
                 }
             } else {
-                let mut reliableWindow: enet_uint16 = ((*incomingCommand).reliableSequenceNumber
-                    as c_int
+                let mut reliableWindow: u16 = ((*incomingCommand).reliableSequenceNumber as c_int
                     / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
-                    as enet_uint16;
-                let currentWindow: enet_uint16 = ((*channel).incomingReliableSequenceNumber
-                    as c_int
+                    as u16;
+                let currentWindow: u16 = ((*channel).incomingReliableSequenceNumber as c_int
                     / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
-                    as enet_uint16;
+                    as u16;
                 if ((*incomingCommand).reliableSequenceNumber as c_int)
                     < (*channel).incomingReliableSequenceNumber as c_int
                 {
-                    reliableWindow = (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int)
-                        as enet_uint16;
+                    reliableWindow =
+                        (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as u16;
                 }
                 if reliableWindow as c_int >= currentWindow as c_int
                     && (reliableWindow as c_int)
@@ -3205,7 +3127,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                         );
                         (*peer).flags = ((*peer).flags as c_int
                             | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)
-                            as enet_uint16;
+                            as u16;
                     }
                 }
                 current_block_22 = 13472856163611868459;
@@ -3231,7 +3153,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                 &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
             );
             (*peer).flags =
-                ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as enet_uint16;
+                ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as u16;
         }
         droppedCommand = currentCommand;
     }
@@ -3253,24 +3175,23 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
         let incomingCommand: *mut ENetIncomingCommand = currentCommand as *mut ENetIncomingCommand;
         if (*incomingCommand).fragmentsRemaining > 0 as c_int as c_uint
             || (*incomingCommand).reliableSequenceNumber as c_int
-                != ((*channel).incomingReliableSequenceNumber as c_int + 1 as c_int) as enet_uint16
-                    as c_int
+                != ((*channel).incomingReliableSequenceNumber as c_int + 1 as c_int) as u16 as c_int
         {
             break;
         }
         (*channel).incomingReliableSequenceNumber = (*incomingCommand).reliableSequenceNumber;
         if (*incomingCommand).fragmentCount > 0 as c_int as c_uint {
-            (*channel).incomingReliableSequenceNumber =
-                ((*channel).incomingReliableSequenceNumber as c_uint).wrapping_add(
-                    ((*incomingCommand).fragmentCount).wrapping_sub(1 as c_int as c_uint),
-                ) as enet_uint16 as enet_uint16;
+            (*channel).incomingReliableSequenceNumber = ((*channel).incomingReliableSequenceNumber
+                as c_uint)
+                .wrapping_add(((*incomingCommand).fragmentCount).wrapping_sub(1 as c_int as c_uint))
+                as u16 as u16;
         }
         currentCommand = (*currentCommand).next;
     }
     if currentCommand == (*channel).incomingReliableCommands.sentinel.next {
         return;
     }
-    (*channel).incomingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
+    (*channel).incomingUnreliableSequenceNumber = 0 as c_int as u16;
     enet_list_move(
         &mut (*peer).dispatchedCommands.sentinel,
         (*channel).incomingReliableCommands.sentinel.next as *mut c_void,
@@ -3281,8 +3202,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
             &mut (*(*peer).host).dispatchQueue.sentinel,
             &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
         );
-        (*peer).flags =
-            ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as enet_uint16;
+        (*peer).flags = ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as u16;
     }
     if (*channel).incomingUnreliableCommands.sentinel.next
         != &mut (*channel).incomingUnreliableCommands.sentinel as *mut ENetListNode
@@ -3294,9 +3214,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
     data: *const c_void,
-    dataLength: size_t,
-    flags: enet_uint32,
-    fragmentCount: enet_uint32,
+    dataLength: usize,
+    flags: u32,
+    fragmentCount: u32,
 ) -> *mut ENetIncomingCommand {
     let mut current_block: u64;
     static mut DUMMY_COMMAND: ENetIncomingCommand = ENetIncomingCommand {
@@ -3315,15 +3235,15 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         },
         fragmentCount: 0,
         fragmentsRemaining: 0,
-        fragments: 0 as *const enet_uint32 as *mut enet_uint32,
+        fragments: 0 as *const u32 as *mut u32,
         packet: 0 as *const ENetPacket as *mut ENetPacket,
     };
     let channel: *mut ENetChannel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
-    let mut unreliableSequenceNumber: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut reliableSequenceNumber: enet_uint32 = 0 as c_int as enet_uint32;
-    let mut reliableWindow: enet_uint16;
-    let currentWindow: enet_uint16;
+    let mut unreliableSequenceNumber: u32 = 0 as c_int as u32;
+    let mut reliableSequenceNumber: u32 = 0 as c_int as u32;
+    let mut reliableWindow: u16;
+    let currentWindow: u16;
     let mut incomingCommand: *mut ENetIncomingCommand;
     let mut currentCommand: ENetListIterator = std::ptr::null_mut();
     let mut packet: *mut ENetPacket = std::ptr::null_mut();
@@ -3333,16 +3253,15 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         if (*command).header.command as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int
             != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as c_int
         {
-            reliableSequenceNumber = (*command).header.reliableSequenceNumber as enet_uint32;
+            reliableSequenceNumber = (*command).header.reliableSequenceNumber as u32;
             reliableWindow = reliableSequenceNumber
                 .wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as c_int as c_uint)
-                as enet_uint16;
+                as u16;
             currentWindow = ((*channel).incomingReliableSequenceNumber as c_int
-                / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
-                as enet_uint16;
+                / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as u16;
             if reliableSequenceNumber < (*channel).incomingReliableSequenceNumber as c_uint {
                 reliableWindow =
-                    (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as enet_uint16;
+                    (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as u16;
             }
             if (reliableWindow as c_int) < currentWindow as c_int
                 || reliableWindow as c_int
@@ -3423,8 +3342,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                         }
                         _ => {
                             unreliableSequenceNumber =
-                                ntohs((*command).sendUnreliable.unreliableSequenceNumber)
-                                    as enet_uint32;
+                                ntohs((*command).sendUnreliable.unreliableSequenceNumber) as u32;
                             if reliableSequenceNumber
                                 == (*channel).incomingReliableSequenceNumber as c_uint
                                 && unreliableSequenceNumber
@@ -3514,9 +3432,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incomingCommand =
-                                        enet_malloc(
-                                            ::core::mem::size_of::<ENetIncomingCommand>() as size_t
-                                        )
+                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
                                             as *mut ENetIncomingCommand;
                                     if incomingCommand.is_null() {
                                         current_block = 15492018734234176694;
@@ -3525,7 +3441,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                             (*command).header.reliableSequenceNumber;
                                         (*incomingCommand).unreliableSequenceNumber =
                                             (unreliableSequenceNumber & 0xffff as c_int as c_uint)
-                                                as enet_uint16;
+                                                as u16;
                                         (*incomingCommand).command = *command;
                                         (*incomingCommand).fragmentCount = fragmentCount;
                                         (*incomingCommand).fragmentsRemaining = fragmentCount;
@@ -3536,18 +3452,18 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int
                                                     as c_uint
                                             {
-                                                (*incomingCommand).fragments = enet_malloc(
-                                                    (fragmentCount
-                                                        .wrapping_add(31 as c_int as c_uint)
-                                                        .wrapping_div(32 as c_int as c_uint)
-                                                        as size_t)
-                                                        .wrapping_mul(::core::mem::size_of::<
-                                                            enet_uint32,
-                                                        >(
-                                                        )
-                                                            as size_t),
-                                                )
-                                                    as *mut enet_uint32;
+                                                (*incomingCommand).fragments =
+                                                    enet_malloc(
+                                                        (fragmentCount
+                                                            .wrapping_add(31 as c_int as c_uint)
+                                                            .wrapping_div(32 as c_int as c_uint)
+                                                            as usize)
+                                                            .wrapping_mul(::core::mem::size_of::<
+                                                                u32,
+                                                            >(
+                                                            )),
+                                                    )
+                                                        as *mut u32;
                                             }
                                             if ((*incomingCommand).fragments).is_null() {
                                                 enet_free(incomingCommand as *mut c_void);
@@ -3559,12 +3475,10 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as size_t)
-                                                        .wrapping_mul(::core::mem::size_of::<
-                                                            enet_uint32,
-                                                        >(
-                                                        )
-                                                            as size_t),
+                                                        as usize)
+                                                        .wrapping_mul(
+                                                            ::core::mem::size_of::<u32>(),
+                                                        ),
                                                 );
                                                 current_block = 13321564401369230990;
                                             }
@@ -3577,11 +3491,11 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 if !packet.is_null() {
                                                     (*packet).referenceCount =
                                                         ((*packet).referenceCount).wrapping_add(1);
-                                                    (*peer).totalWaitingData =
-                                                        ((*peer).totalWaitingData as size_t)
-                                                            .wrapping_add((*packet).dataLength)
-                                                            as size_t
-                                                            as size_t;
+                                                    (*peer).totalWaitingData = (*peer)
+                                                        .totalWaitingData
+                                                        .wrapping_add((*packet).dataLength)
+                                                        as usize
+                                                        as usize;
                                                 }
                                                 enet_list_insert(
                                                     (*currentCommand).next,
@@ -3678,8 +3592,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                         }
                         _ => {
                             unreliableSequenceNumber =
-                                ntohs((*command).sendUnreliable.unreliableSequenceNumber)
-                                    as enet_uint32;
+                                ntohs((*command).sendUnreliable.unreliableSequenceNumber) as u32;
                             if reliableSequenceNumber
                                 == (*channel).incomingReliableSequenceNumber as c_uint
                                 && unreliableSequenceNumber
@@ -3769,9 +3682,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incomingCommand =
-                                        enet_malloc(
-                                            ::core::mem::size_of::<ENetIncomingCommand>() as size_t
-                                        )
+                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
                                             as *mut ENetIncomingCommand;
                                     if incomingCommand.is_null() {
                                         current_block = 15492018734234176694;
@@ -3780,7 +3691,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                             (*command).header.reliableSequenceNumber;
                                         (*incomingCommand).unreliableSequenceNumber =
                                             (unreliableSequenceNumber & 0xffff as c_int as c_uint)
-                                                as enet_uint16;
+                                                as u16;
                                         (*incomingCommand).command = *command;
                                         (*incomingCommand).fragmentCount = fragmentCount;
                                         (*incomingCommand).fragmentsRemaining = fragmentCount;
@@ -3791,18 +3702,18 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int
                                                     as c_uint
                                             {
-                                                (*incomingCommand).fragments = enet_malloc(
-                                                    (fragmentCount
-                                                        .wrapping_add(31 as c_int as c_uint)
-                                                        .wrapping_div(32 as c_int as c_uint)
-                                                        as size_t)
-                                                        .wrapping_mul(::core::mem::size_of::<
-                                                            enet_uint32,
-                                                        >(
-                                                        )
-                                                            as size_t),
-                                                )
-                                                    as *mut enet_uint32;
+                                                (*incomingCommand).fragments =
+                                                    enet_malloc(
+                                                        (fragmentCount
+                                                            .wrapping_add(31 as c_int as c_uint)
+                                                            .wrapping_div(32 as c_int as c_uint)
+                                                            as usize)
+                                                            .wrapping_mul(::core::mem::size_of::<
+                                                                u32,
+                                                            >(
+                                                            )),
+                                                    )
+                                                        as *mut u32;
                                             }
                                             if ((*incomingCommand).fragments).is_null() {
                                                 enet_free(incomingCommand as *mut c_void);
@@ -3814,12 +3725,10 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as size_t)
-                                                        .wrapping_mul(::core::mem::size_of::<
-                                                            enet_uint32,
-                                                        >(
-                                                        )
-                                                            as size_t),
+                                                        as usize)
+                                                        .wrapping_mul(
+                                                            ::core::mem::size_of::<u32>(),
+                                                        ),
                                                 );
                                                 current_block = 13321564401369230990;
                                             }
@@ -3832,11 +3741,11 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 if !packet.is_null() {
                                                     (*packet).referenceCount =
                                                         ((*packet).referenceCount).wrapping_add(1);
-                                                    (*peer).totalWaitingData =
-                                                        ((*peer).totalWaitingData as size_t)
-                                                            .wrapping_add((*packet).dataLength)
-                                                            as size_t
-                                                            as size_t;
+                                                    (*peer).totalWaitingData = (*peer)
+                                                        .totalWaitingData
+                                                        .wrapping_add((*packet).dataLength)
+                                                        as usize
+                                                        as usize;
                                                 }
                                                 enet_list_insert(
                                                     (*currentCommand).next,
@@ -3933,8 +3842,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                         }
                         _ => {
                             unreliableSequenceNumber =
-                                ntohs((*command).sendUnreliable.unreliableSequenceNumber)
-                                    as enet_uint32;
+                                ntohs((*command).sendUnreliable.unreliableSequenceNumber) as u32;
                             if reliableSequenceNumber
                                 == (*channel).incomingReliableSequenceNumber as c_uint
                                 && unreliableSequenceNumber
@@ -4024,9 +3932,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incomingCommand =
-                                        enet_malloc(
-                                            ::core::mem::size_of::<ENetIncomingCommand>() as size_t
-                                        )
+                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
                                             as *mut ENetIncomingCommand;
                                     if incomingCommand.is_null() {
                                         current_block = 15492018734234176694;
@@ -4035,7 +3941,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                             (*command).header.reliableSequenceNumber;
                                         (*incomingCommand).unreliableSequenceNumber =
                                             (unreliableSequenceNumber & 0xffff as c_int as c_uint)
-                                                as enet_uint16;
+                                                as u16;
                                         (*incomingCommand).command = *command;
                                         (*incomingCommand).fragmentCount = fragmentCount;
                                         (*incomingCommand).fragmentsRemaining = fragmentCount;
@@ -4046,18 +3952,18 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int
                                                     as c_uint
                                             {
-                                                (*incomingCommand).fragments = enet_malloc(
-                                                    (fragmentCount
-                                                        .wrapping_add(31 as c_int as c_uint)
-                                                        .wrapping_div(32 as c_int as c_uint)
-                                                        as size_t)
-                                                        .wrapping_mul(::core::mem::size_of::<
-                                                            enet_uint32,
-                                                        >(
-                                                        )
-                                                            as size_t),
-                                                )
-                                                    as *mut enet_uint32;
+                                                (*incomingCommand).fragments =
+                                                    enet_malloc(
+                                                        (fragmentCount
+                                                            .wrapping_add(31 as c_int as c_uint)
+                                                            .wrapping_div(32 as c_int as c_uint)
+                                                            as usize)
+                                                            .wrapping_mul(::core::mem::size_of::<
+                                                                u32,
+                                                            >(
+                                                            )),
+                                                    )
+                                                        as *mut u32;
                                             }
                                             if ((*incomingCommand).fragments).is_null() {
                                                 enet_free(incomingCommand as *mut c_void);
@@ -4069,12 +3975,10 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     (fragmentCount
                                                         .wrapping_add(31 as c_int as c_uint)
                                                         .wrapping_div(32 as c_int as c_uint)
-                                                        as size_t)
-                                                        .wrapping_mul(::core::mem::size_of::<
-                                                            enet_uint32,
-                                                        >(
-                                                        )
-                                                            as size_t),
+                                                        as usize)
+                                                        .wrapping_mul(
+                                                            ::core::mem::size_of::<u32>(),
+                                                        ),
                                                 );
                                                 current_block = 13321564401369230990;
                                             }
@@ -4087,11 +3991,11 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 if !packet.is_null() {
                                                     (*packet).referenceCount =
                                                         ((*packet).referenceCount).wrapping_add(1);
-                                                    (*peer).totalWaitingData =
-                                                        ((*peer).totalWaitingData as size_t)
-                                                            .wrapping_add((*packet).dataLength)
-                                                            as size_t
-                                                            as size_t;
+                                                    (*peer).totalWaitingData = (*peer)
+                                                        .totalWaitingData
+                                                        .wrapping_add((*packet).dataLength)
+                                                        as usize
+                                                        as usize;
                                                 }
                                                 enet_list_insert(
                                                     (*currentCommand).next,
@@ -4132,33 +4036,33 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     }
     if let 9207730764507465628 = current_block {
         if fragmentCount <= 0 as c_int as c_uint {
-            if !packet.is_null() && (*packet).referenceCount == 0 as c_int as size_t {
+            if !packet.is_null() && (*packet).referenceCount == 0 as c_int as usize {
                 enet_packet_destroy(packet);
             }
             return &mut DUMMY_COMMAND;
         }
     }
-    if !packet.is_null() && (*packet).referenceCount == 0 as c_int as size_t {
+    if !packet.is_null() && (*packet).referenceCount == 0 as c_int as usize {
         enet_packet_destroy(packet);
     }
     std::ptr::null_mut()
 }
-static mut COMMAND_SIZES: [size_t; 13] = [
-    0 as c_int as size_t,
-    ::core::mem::size_of::<ENetProtocolAcknowledge>() as size_t,
-    ::core::mem::size_of::<ENetProtocolConnect>() as size_t,
-    ::core::mem::size_of::<ENetProtocolVerifyConnect>() as size_t,
-    ::core::mem::size_of::<ENetProtocolDisconnect>() as size_t,
-    ::core::mem::size_of::<ENetProtocolPing>() as size_t,
-    ::core::mem::size_of::<ENetProtocolSendReliable>() as size_t,
-    ::core::mem::size_of::<ENetProtocolSendUnreliable>() as size_t,
-    ::core::mem::size_of::<ENetProtocolSendFragment>() as size_t,
-    ::core::mem::size_of::<ENetProtocolSendUnsequenced>() as size_t,
-    ::core::mem::size_of::<ENetProtocolBandwidthLimit>() as size_t,
-    ::core::mem::size_of::<ENetProtocolThrottleConfigure>() as size_t,
-    ::core::mem::size_of::<ENetProtocolSendFragment>() as size_t,
+static mut COMMAND_SIZES: [usize; 13] = [
+    0 as c_int as usize,
+    ::core::mem::size_of::<ENetProtocolAcknowledge>(),
+    ::core::mem::size_of::<ENetProtocolConnect>(),
+    ::core::mem::size_of::<ENetProtocolVerifyConnect>(),
+    ::core::mem::size_of::<ENetProtocolDisconnect>(),
+    ::core::mem::size_of::<ENetProtocolPing>(),
+    ::core::mem::size_of::<ENetProtocolSendReliable>(),
+    ::core::mem::size_of::<ENetProtocolSendUnreliable>(),
+    ::core::mem::size_of::<ENetProtocolSendFragment>(),
+    ::core::mem::size_of::<ENetProtocolSendUnsequenced>(),
+    ::core::mem::size_of::<ENetProtocolBandwidthLimit>(),
+    ::core::mem::size_of::<ENetProtocolThrottleConfigure>(),
+    ::core::mem::size_of::<ENetProtocolSendFragment>(),
 ];
-pub(crate) unsafe fn enet_protocol_command_size(commandNumber: enet_uint8) -> size_t {
+pub(crate) unsafe fn enet_protocol_command_size(commandNumber: u8) -> usize {
     COMMAND_SIZES[(commandNumber as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int) as usize]
 }
 unsafe fn enet_protocol_change_state<S: Socket>(
@@ -4186,8 +4090,7 @@ unsafe fn enet_protocol_dispatch_state<S: Socket>(
             &mut (*host).dispatchQueue.sentinel,
             &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
         );
-        (*peer).flags =
-            ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as enet_uint16;
+        (*peer).flags = ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as u16;
     }
 }
 unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
@@ -4199,8 +4102,7 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
     {
         let peer: *mut ENetPeer<S> =
             enet_list_remove((*host).dispatchQueue.sentinel.next) as *mut ENetPeer<S>;
-        (*peer).flags =
-            ((*peer).flags as c_int & !(ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)) as enet_uint16;
+        (*peer).flags = ((*peer).flags as c_int & !(ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)) as u16;
         match (*peer).state as c_uint {
             3 | 4 => {
                 enet_protocol_change_state(host, peer, ENET_PEER_STATE_CONNECTED);
@@ -4232,9 +4134,8 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
                 if (*peer).dispatchedCommands.sentinel.next
                     != &mut (*peer).dispatchedCommands.sentinel as *mut ENetListNode
                 {
-                    (*peer).flags = ((*peer).flags as c_int
-                        | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int)
-                        as enet_uint16;
+                    (*peer).flags =
+                        ((*peer).flags as c_int | ENET_PEER_FLAG_NEEDS_DISPATCH as c_int) as u16;
                     enet_list_insert(
                         &mut (*host).dispatchQueue.sentinel,
                         &mut (*peer).dispatchList as *mut ENetListNode as *mut c_void,
@@ -4285,10 +4186,10 @@ unsafe fn enet_protocol_notify_disconnect<S: Socket>(
     } else if !event.is_null() {
         (*event).type_0 = ENET_EVENT_TYPE_DISCONNECT;
         (*event).peer = peer;
-        (*event).data = 0 as c_int as enet_uint32;
+        (*event).data = 0 as c_int as u32;
         enet_peer_reset(peer);
     } else {
-        (*peer).eventData = 0 as c_int as enet_uint32;
+        (*peer).eventData = 0 as c_int as u32;
         enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
     };
 }
@@ -4309,7 +4210,7 @@ unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
         if !((*outgoingCommand).packet).is_null() {
             (*(*outgoingCommand).packet).referenceCount =
                 ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
+            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as usize {
                 (*(*outgoingCommand).packet).flags |= ENET_PACKET_FLAG_SENT as c_int as c_uint;
                 enet_packet_destroy((*outgoingCommand).packet);
             }
@@ -4329,8 +4230,8 @@ unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
 }
 unsafe fn enet_protocol_find_sent_reliable_command(
     list: *mut ENetList,
-    reliableSequenceNumber: enet_uint16,
-    channelID: enet_uint8,
+    reliableSequenceNumber: u16,
+    channelID: u8,
 ) -> *mut ENetOutgoingCommand {
     let mut currentCommand: ENetListIterator;
     currentCommand = (*list).sentinel.next;
@@ -4355,8 +4256,8 @@ unsafe fn enet_protocol_find_sent_reliable_command(
 }
 unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
     peer: *mut ENetPeer<S>,
-    reliableSequenceNumber: enet_uint16,
-    channelID: enet_uint8,
+    reliableSequenceNumber: u16,
+    channelID: u8,
 ) -> ENetProtocolCommand {
     let mut outgoingCommand: *mut ENetOutgoingCommand = std::ptr::null_mut();
     let mut currentCommand: ENetListIterator;
@@ -4389,19 +4290,18 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
     if outgoingCommand.is_null() {
         return ENET_PROTOCOL_COMMAND_NONE;
     }
-    if (channelID as size_t) < (*peer).channelCount {
+    if (channelID as usize) < (*peer).channelCount {
         let channel: *mut ENetChannel =
             &mut *((*peer).channels).offset(channelID as isize) as *mut ENetChannel;
-        let reliableWindow: enet_uint16 = (reliableSequenceNumber as c_int
-            / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
-            as enet_uint16;
+        let reliableWindow: u16 =
+            (reliableSequenceNumber as c_int / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as u16;
         if (*channel).reliableWindows[reliableWindow as usize] as c_int > 0 as c_int {
             (*channel).reliableWindows[reliableWindow as usize] =
                 ((*channel).reliableWindows[reliableWindow as usize]).wrapping_sub(1);
             if (*channel).reliableWindows[reliableWindow as usize] == 0 {
                 (*channel).usedReliableWindows = ((*channel).usedReliableWindows as c_int
                     & !((1 as c_int) << reliableWindow as c_int))
-                    as enet_uint16;
+                    as u16;
             }
         }
     }
@@ -4412,11 +4312,11 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
         if wasSent != 0 {
             (*peer).reliableDataInTransit = ((*peer).reliableDataInTransit as c_uint)
                 .wrapping_sub((*outgoingCommand).fragmentLength as c_uint)
-                as enet_uint32 as enet_uint32;
+                as u32 as u32;
         }
         (*(*outgoingCommand).packet).referenceCount =
             ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-        if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
+        if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as usize {
             (*(*outgoingCommand).packet).flags |= ENET_PACKET_FLAG_SENT as c_int as c_uint;
             enet_packet_destroy((*outgoingCommand).packet);
         }
@@ -4438,13 +4338,13 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     mut _header: *mut ENetProtocolHeader,
     command: *mut ENetProtocol,
 ) -> *mut ENetPeer<S> {
-    let mut incomingSessionID: enet_uint8;
-    let mut outgoingSessionID: enet_uint8;
-    let mut mtu: enet_uint32;
-    let mut windowSize: enet_uint32;
+    let mut incomingSessionID: u8;
+    let mut outgoingSessionID: u8;
+    let mut mtu: u32;
+    let mut windowSize: u32;
     let mut channel: *mut ENetChannel;
-    let mut channelCount: size_t;
-    let mut duplicatePeers: size_t = 0 as c_int as size_t;
+    let mut channelCount: usize;
+    let mut duplicatePeers: usize = 0 as c_int as usize;
     let mut currentPeer: *mut ENetPeer<S>;
     let mut peer: *mut ENetPeer<S> = std::ptr::null_mut();
     let mut verifyCommand: ENetProtocol = _ENetProtocol {
@@ -4454,9 +4354,9 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
             reliableSequenceNumber: 0,
         },
     };
-    channelCount = ntohl((*command).connect.channelCount) as size_t;
-    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t
-        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t
+    channelCount = ntohl((*command).connect.channelCount) as usize;
+    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize
+        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize
     {
         return std::ptr::null_mut();
     }
@@ -4494,9 +4394,8 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     if channelCount > (*host).channelLimit {
         channelCount = (*host).channelLimit;
     }
-    (*peer).channels =
-        enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>() as size_t))
-            as *mut ENetChannel;
+    (*peer).channels = enet_malloc(channelCount.wrapping_mul(::core::mem::size_of::<ENetChannel>()))
+        as *mut ENetChannel;
     if ((*peer).channels).is_null() {
         return std::ptr::null_mut();
     }
@@ -4523,53 +4422,51 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         (*peer).outgoingSessionID as c_int
     } else {
         (*command).connect.incomingSessionID as c_int
-    }) as enet_uint8;
+    }) as u8;
     incomingSessionID = ((incomingSessionID as c_int + 1 as c_int)
         & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
-        as enet_uint8;
+        as u8;
     if incomingSessionID as c_int == (*peer).outgoingSessionID as c_int {
         incomingSessionID = ((incomingSessionID as c_int + 1 as c_int)
             & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int
-                >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
-            as enet_uint8;
+                >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int) as u8;
     }
     (*peer).outgoingSessionID = incomingSessionID;
     outgoingSessionID = (if (*command).connect.outgoingSessionID as c_int == 0xff as c_int {
         (*peer).incomingSessionID as c_int
     } else {
         (*command).connect.outgoingSessionID as c_int
-    }) as enet_uint8;
+    }) as u8;
     outgoingSessionID = ((outgoingSessionID as c_int + 1 as c_int)
         & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
-        as enet_uint8;
+        as u8;
     if outgoingSessionID as c_int == (*peer).incomingSessionID as c_int {
         outgoingSessionID = ((outgoingSessionID as c_int + 1 as c_int)
             & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int
-                >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
-            as enet_uint8;
+                >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int) as u8;
     }
     (*peer).incomingSessionID = outgoingSessionID;
     channel = (*peer).channels;
     while channel < &mut *((*peer).channels).add(channelCount) as *mut ENetChannel {
-        (*channel).outgoingReliableSequenceNumber = 0 as c_int as enet_uint16;
-        (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
-        (*channel).incomingReliableSequenceNumber = 0 as c_int as enet_uint16;
-        (*channel).incomingUnreliableSequenceNumber = 0 as c_int as enet_uint16;
+        (*channel).outgoingReliableSequenceNumber = 0 as c_int as u16;
+        (*channel).outgoingUnreliableSequenceNumber = 0 as c_int as u16;
+        (*channel).incomingReliableSequenceNumber = 0 as c_int as u16;
+        (*channel).incomingUnreliableSequenceNumber = 0 as c_int as u16;
         enet_list_clear(&mut (*channel).incomingReliableCommands);
         enet_list_clear(&mut (*channel).incomingUnreliableCommands);
-        (*channel).usedReliableWindows = 0 as c_int as enet_uint16;
+        (*channel).usedReliableWindows = 0 as c_int as u16;
         _enet_memset(
             ((*channel).reliableWindows).as_mut_ptr() as *mut c_void,
             0 as c_int,
-            ::core::mem::size_of::<[enet_uint16; 16]>() as size_t,
+            ::core::mem::size_of::<[u16; 16]>(),
         );
         channel = channel.offset(1);
     }
     mtu = ntohl((*command).connect.mtu);
     if mtu < ENET_PROTOCOL_MINIMUM_MTU as c_int as c_uint {
-        mtu = ENET_PROTOCOL_MINIMUM_MTU as c_int as enet_uint32;
+        mtu = ENET_PROTOCOL_MINIMUM_MTU as c_int as u32;
     } else if mtu > ENET_PROTOCOL_MAXIMUM_MTU as c_int as c_uint {
-        mtu = ENET_PROTOCOL_MAXIMUM_MTU as c_int as enet_uint32;
+        mtu = ENET_PROTOCOL_MAXIMUM_MTU as c_int as u32;
     }
     if mtu < (*peer).mtu {
         (*peer).mtu = mtu;
@@ -4577,7 +4474,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     if (*host).outgoingBandwidth == 0 as c_int as c_uint
         && (*peer).incomingBandwidth == 0 as c_int as c_uint
     {
-        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     } else if (*host).outgoingBandwidth == 0 as c_int as c_uint
         || (*peer).incomingBandwidth == 0 as c_int as c_uint
     {
@@ -4598,12 +4495,12 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint);
     }
     if (*peer).windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint {
-        (*peer).windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*peer).windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as u32;
     } else if (*peer).windowSize > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as c_uint {
-        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     }
     if (*host).incomingBandwidth == 0 as c_int as c_uint {
-        windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     } else {
         windowSize = ((*host).incomingBandwidth)
             .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as c_int as c_uint)
@@ -4613,20 +4510,19 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         windowSize = ntohl((*command).connect.windowSize);
     }
     if windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint {
-        windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as u32;
     } else if windowSize > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as c_uint {
-        windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     }
     verifyCommand.header.command = (ENET_PROTOCOL_COMMAND_VERIFY_CONNECT as c_int
-        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int)
-        as enet_uint8;
-    verifyCommand.header.channelID = 0xff as c_int as enet_uint8;
+        | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int) as u8;
+    verifyCommand.header.channelID = 0xff as c_int as u8;
     verifyCommand.verifyConnect.outgoingPeerID = htons((*peer).incomingPeerID);
     verifyCommand.verifyConnect.incomingSessionID = incomingSessionID;
     verifyCommand.verifyConnect.outgoingSessionID = outgoingSessionID;
     verifyCommand.verifyConnect.mtu = htonl((*peer).mtu);
     verifyCommand.verifyConnect.windowSize = htonl(windowSize);
-    verifyCommand.verifyConnect.channelCount = htonl(channelCount as uint32_t);
+    verifyCommand.verifyConnect.channelCount = htonl(channelCount as u32);
     verifyCommand.verifyConnect.incomingBandwidth = htonl((*host).incomingBandwidth);
     verifyCommand.verifyConnect.outgoingBandwidth = htonl((*host).outgoingBandwidth);
     verifyCommand.verifyConnect.packetThrottleInterval = htonl((*peer).packetThrottleInterval);
@@ -4639,8 +4535,8 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         peer,
         &verifyCommand,
         std::ptr::null_mut(),
-        0 as c_int as enet_uint32,
-        0 as c_int as enet_uint16,
+        0 as c_int as u32,
+        0 as c_int as u16,
     );
     peer
 }
@@ -4648,32 +4544,31 @@ unsafe fn enet_protocol_handle_send_reliable<S: Socket>(
     host: *mut ENetHost<S>,
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
-    currentData: *mut *mut enet_uint8,
+    currentData: *mut *mut u8,
 ) -> c_int {
-    if (*command).header.channelID as size_t >= (*peer).channelCount
+    if (*command).header.channelID as usize >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    let dataLength = ntohs((*command).sendReliable.dataLength) as size_t;
+    let dataLength = ntohs((*command).sendReliable.dataLength) as usize;
     *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
-        || *currentData
-            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
+        || *currentData > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8
     {
         return -(1 as c_int);
     }
     if (enet_peer_queue_incoming_command(
         peer,
         command,
-        (command as *const enet_uint8)
+        (command as *const u8)
             .offset(::core::mem::size_of::<ENetProtocolSendReliable>() as c_ulong as isize)
             as *const c_void,
         dataLength,
-        ENET_PACKET_FLAG_RELIABLE as c_int as enet_uint32,
-        0 as c_int as enet_uint32,
+        ENET_PACKET_FLAG_RELIABLE as c_int as u32,
+        0 as c_int as u32,
     ))
     .is_null()
     {
@@ -4685,32 +4580,30 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     host: *mut ENetHost<S>,
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
-    currentData: *mut *mut enet_uint8,
+    currentData: *mut *mut u8,
 ) -> c_int {
-    let mut unsequencedGroup: enet_uint32;
-    if (*command).header.channelID as size_t >= (*peer).channelCount
+    let mut unsequencedGroup: u32;
+    if (*command).header.channelID as usize >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    let dataLength = ntohs((*command).sendUnsequenced.dataLength) as size_t;
+    let dataLength = ntohs((*command).sendUnsequenced.dataLength) as usize;
     *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
-        || *currentData
-            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
+        || *currentData > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8
     {
         return -(1 as c_int);
     }
-    unsequencedGroup = ntohs((*command).sendUnsequenced.unsequencedGroup) as enet_uint32;
+    unsequencedGroup = ntohs((*command).sendUnsequenced.unsequencedGroup) as u32;
     let index = unsequencedGroup.wrapping_rem(ENET_PEER_UNSEQUENCED_WINDOW_SIZE as c_int as c_uint);
     if unsequencedGroup < (*peer).incomingUnsequencedGroup as c_uint {
-        unsequencedGroup = (unsequencedGroup as c_uint).wrapping_add(0x10000 as c_int as c_uint)
-            as enet_uint32 as enet_uint32;
+        unsequencedGroup = (unsequencedGroup as c_uint).wrapping_add(0x10000 as c_int as c_uint);
     }
     if unsequencedGroup
-        >= ((*peer).incomingUnsequencedGroup as enet_uint32).wrapping_add(
+        >= ((*peer).incomingUnsequencedGroup as u32).wrapping_add(
             (ENET_PEER_FREE_UNSEQUENCED_WINDOWS as c_int
                 * ENET_PEER_UNSEQUENCED_WINDOW_SIZE as c_int) as c_uint,
         )
@@ -4719,11 +4612,11 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     }
     unsequencedGroup &= 0xffff as c_int as c_uint;
     if unsequencedGroup.wrapping_sub(index) != (*peer).incomingUnsequencedGroup as c_uint {
-        (*peer).incomingUnsequencedGroup = unsequencedGroup.wrapping_sub(index) as enet_uint16;
+        (*peer).incomingUnsequencedGroup = unsequencedGroup.wrapping_sub(index) as u16;
         _enet_memset(
             ((*peer).unsequencedWindow).as_mut_ptr() as *mut c_void,
             0 as c_int,
-            ::core::mem::size_of::<[enet_uint32; 32]>() as size_t,
+            ::core::mem::size_of::<[u32; 32]>(),
         );
     } else if (*peer).unsequencedWindow[index.wrapping_div(32 as c_int as c_uint) as usize]
         & ((1 as c_int) << index.wrapping_rem(32 as c_int as c_uint)) as c_uint
@@ -4734,12 +4627,12 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     if (enet_peer_queue_incoming_command(
         peer,
         command,
-        (command as *const enet_uint8)
+        (command as *const u8)
             .offset(::core::mem::size_of::<ENetProtocolSendUnsequenced>() as c_ulong as isize)
             as *const c_void,
         dataLength,
-        ENET_PACKET_FLAG_UNSEQUENCED as c_int as enet_uint32,
-        0 as c_int as enet_uint32,
+        ENET_PACKET_FLAG_UNSEQUENCED as c_int as u32,
+        0 as c_int as u32,
     ))
     .is_null()
     {
@@ -4753,32 +4646,31 @@ unsafe fn enet_protocol_handle_send_unreliable<S: Socket>(
     host: *mut ENetHost<S>,
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
-    currentData: *mut *mut enet_uint8,
+    currentData: *mut *mut u8,
 ) -> c_int {
-    if (*command).header.channelID as size_t >= (*peer).channelCount
+    if (*command).header.channelID as usize >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    let dataLength = ntohs((*command).sendUnreliable.dataLength) as size_t;
+    let dataLength = ntohs((*command).sendUnreliable.dataLength) as usize;
     *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
-        || *currentData
-            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
+        || *currentData > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8
     {
         return -(1 as c_int);
     }
     if (enet_peer_queue_incoming_command(
         peer,
         command,
-        (command as *const enet_uint8)
+        (command as *const u8)
             .offset(::core::mem::size_of::<ENetProtocolSendUnreliable>() as c_ulong as isize)
             as *const c_void,
         dataLength,
-        0 as c_int as enet_uint32,
-        0 as c_int as enet_uint32,
+        0 as c_int as u32,
+        0 as c_int as u32,
     ))
     .is_null()
     {
@@ -4790,38 +4682,36 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     host: *mut ENetHost<S>,
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
-    currentData: *mut *mut enet_uint8,
+    currentData: *mut *mut u8,
 ) -> c_int {
-    let mut fragmentLength: enet_uint32;
-    let mut startWindow: enet_uint16;
+    let mut fragmentLength: u32;
+    let mut startWindow: u16;
     let mut currentCommand: ENetListIterator;
     let mut startCommand: *mut ENetIncomingCommand = std::ptr::null_mut();
-    if (*command).header.channelID as size_t >= (*peer).channelCount
+    if (*command).header.channelID as usize >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    fragmentLength = ntohs((*command).sendFragment.dataLength) as enet_uint32;
+    fragmentLength = ntohs((*command).sendFragment.dataLength) as u32;
     *currentData = (*currentData).offset(fragmentLength as isize);
     if fragmentLength <= 0 as c_int as c_uint
-        || fragmentLength as size_t > (*host).maximumPacketSize
+        || fragmentLength as usize > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
-        || *currentData
-            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
+        || *currentData > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8
     {
         return -(1 as c_int);
     }
     let channel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
-    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as enet_uint32;
-    startWindow = startSequenceNumber
-        .wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as c_int as c_uint)
-        as enet_uint16;
+    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as u32;
+    startWindow =
+        startSequenceNumber.wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as c_int as c_uint) as u16;
     let currentWindow = ((*channel).incomingReliableSequenceNumber as c_int
-        / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as enet_uint16;
+        / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as u16;
     if startSequenceNumber < (*channel).incomingReliableSequenceNumber as c_uint {
-        startWindow = (startWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as enet_uint16;
+        startWindow = (startWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as u16;
     }
     if (startWindow as c_int) < currentWindow as c_int
         || startWindow as c_int
@@ -4835,7 +4725,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     let totalLength = ntohl((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int as c_uint
         || fragmentNumber >= fragmentCount
-        || totalLength as size_t > (*host).maximumPacketSize
+        || totalLength as usize > (*host).maximumPacketSize
         || totalLength < fragmentCount
         || fragmentOffset >= totalLength
         || fragmentLength > totalLength.wrapping_sub(fragmentOffset)
@@ -4870,7 +4760,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
                 if (*incomingCommand).command.header.command as c_int
                     & ENET_PROTOCOL_COMMAND_MASK as c_int
                     != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT as c_int
-                    || totalLength as size_t != (*(*incomingCommand).packet).dataLength
+                    || totalLength as usize != (*(*incomingCommand).packet).dataLength
                     || fragmentCount != (*incomingCommand).fragmentCount
                 {
                     return -(1 as c_int);
@@ -4883,13 +4773,13 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     }
     if startCommand.is_null() {
         let mut hostCommand: ENetProtocol = *command;
-        hostCommand.header.reliableSequenceNumber = startSequenceNumber as enet_uint16;
+        hostCommand.header.reliableSequenceNumber = startSequenceNumber as u16;
         startCommand = enet_peer_queue_incoming_command(
             peer,
             &hostCommand,
             std::ptr::null(),
-            totalLength as size_t,
-            ENET_PACKET_FLAG_RELIABLE as c_int as enet_uint32,
+            totalLength as usize,
+            ENET_PACKET_FLAG_RELIABLE as c_int as u32,
             fragmentCount,
         );
         if startCommand.is_null() {
@@ -4905,18 +4795,18 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
         let fresh32 = &mut *((*startCommand).fragments)
             .offset(fragmentNumber.wrapping_div(32 as c_int as c_uint) as isize);
         *fresh32 |= ((1 as c_int) << fragmentNumber.wrapping_rem(32 as c_int as c_uint)) as c_uint;
-        if fragmentOffset.wrapping_add(fragmentLength) as size_t
+        if fragmentOffset.wrapping_add(fragmentLength) as usize
             > (*(*startCommand).packet).dataLength
         {
-            fragmentLength = ((*(*startCommand).packet).dataLength)
-                .wrapping_sub(fragmentOffset as size_t) as enet_uint32;
+            fragmentLength =
+                ((*(*startCommand).packet).dataLength).wrapping_sub(fragmentOffset as usize) as u32;
         }
         _enet_memcpy(
             ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
-            (command as *mut enet_uint8)
+            (command as *mut u8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong as isize)
                 as *const c_void,
-            fragmentLength as size_t,
+            fragmentLength as usize,
         );
         if (*startCommand).fragmentsRemaining <= 0 as c_int as c_uint {
             enet_peer_dispatch_incoming_reliable_commands(peer, channel, std::ptr::null_mut());
@@ -4928,39 +4818,37 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     host: *mut ENetHost<S>,
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
-    currentData: *mut *mut enet_uint8,
+    currentData: *mut *mut u8,
 ) -> c_int {
-    let mut fragmentLength: enet_uint32;
-    let mut reliableWindow: enet_uint16;
+    let mut fragmentLength: u32;
+    let mut reliableWindow: u16;
     let mut currentCommand: ENetListIterator;
     let mut startCommand: *mut ENetIncomingCommand = std::ptr::null_mut();
-    if (*command).header.channelID as size_t >= (*peer).channelCount
+    if (*command).header.channelID as usize >= (*peer).channelCount
         || (*peer).state as c_uint != ENET_PEER_STATE_CONNECTED as c_int as c_uint
             && (*peer).state as c_uint != ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
     {
         return -(1 as c_int);
     }
-    fragmentLength = ntohs((*command).sendFragment.dataLength) as enet_uint32;
+    fragmentLength = ntohs((*command).sendFragment.dataLength) as u32;
     *currentData = (*currentData).offset(fragmentLength as isize);
-    if fragmentLength as size_t > (*host).maximumPacketSize
+    if fragmentLength as usize > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
-        || *currentData
-            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
+        || *currentData > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8
     {
         return -(1 as c_int);
     }
     let channel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
-    let reliableSequenceNumber = (*command).header.reliableSequenceNumber as enet_uint32;
-    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as enet_uint32;
+    let reliableSequenceNumber = (*command).header.reliableSequenceNumber as u32;
+    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as u32;
     reliableWindow = reliableSequenceNumber
         .wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as c_int as c_uint)
-        as enet_uint16;
+        as u16;
     let currentWindow = ((*channel).incomingReliableSequenceNumber as c_int
-        / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as enet_uint16;
+        / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as u16;
     if reliableSequenceNumber < (*channel).incomingReliableSequenceNumber as c_uint {
-        reliableWindow =
-            (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as enet_uint16;
+        reliableWindow = (reliableWindow as c_int + ENET_PEER_RELIABLE_WINDOWS as c_int) as u16;
     }
     if (reliableWindow as c_int) < currentWindow as c_int
         || reliableWindow as c_int
@@ -4979,7 +4867,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     let totalLength = ntohl((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as c_int as c_uint
         || fragmentNumber >= fragmentCount
-        || totalLength as size_t > (*host).maximumPacketSize
+        || totalLength as usize > (*host).maximumPacketSize
         || fragmentOffset >= totalLength
         || fragmentLength > totalLength.wrapping_sub(fragmentOffset)
     {
@@ -5019,7 +4907,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
                 if (*incomingCommand).command.header.command as c_int
                     & ENET_PROTOCOL_COMMAND_MASK as c_int
                     != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT as c_int
-                    || totalLength as size_t != (*(*incomingCommand).packet).dataLength
+                    || totalLength as usize != (*(*incomingCommand).packet).dataLength
                     || fragmentCount != (*incomingCommand).fragmentCount
                 {
                     return -(1 as c_int);
@@ -5035,8 +4923,8 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
             peer,
             command,
             std::ptr::null(),
-            totalLength as size_t,
-            ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT as c_int as enet_uint32,
+            totalLength as usize,
+            ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT as c_int as u32,
             fragmentCount,
         );
         if startCommand.is_null() {
@@ -5052,18 +4940,18 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
         let fresh33 = &mut *((*startCommand).fragments)
             .offset(fragmentNumber.wrapping_div(32 as c_int as c_uint) as isize);
         *fresh33 |= ((1 as c_int) << fragmentNumber.wrapping_rem(32 as c_int as c_uint)) as c_uint;
-        if fragmentOffset.wrapping_add(fragmentLength) as size_t
+        if fragmentOffset.wrapping_add(fragmentLength) as usize
             > (*(*startCommand).packet).dataLength
         {
-            fragmentLength = ((*(*startCommand).packet).dataLength)
-                .wrapping_sub(fragmentOffset as size_t) as enet_uint32;
+            fragmentLength =
+                ((*(*startCommand).packet).dataLength).wrapping_sub(fragmentOffset as usize) as u32;
         }
         _enet_memcpy(
             ((*(*startCommand).packet).data).offset(fragmentOffset as isize) as *mut c_void,
-            (command as *mut enet_uint8)
+            (command as *mut u8)
                 .offset(::core::mem::size_of::<ENetProtocolSendFragment>() as c_ulong as isize)
                 as *const c_void,
-            fragmentLength as size_t,
+            fragmentLength as usize,
         );
         if (*startCommand).fragmentsRemaining <= 0 as c_int as c_uint {
             enet_peer_dispatch_incoming_unreliable_commands(peer, channel, std::ptr::null_mut());
@@ -5104,7 +4992,7 @@ unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
     if (*peer).incomingBandwidth == 0 as c_int as c_uint
         && (*host).outgoingBandwidth == 0 as c_int as c_uint
     {
-        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     } else if (*peer).incomingBandwidth == 0 as c_int as c_uint
         || (*host).outgoingBandwidth == 0 as c_int as c_uint
     {
@@ -5125,9 +5013,9 @@ unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
         .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint);
     }
     if (*peer).windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint {
-        (*peer).windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*peer).windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as u32;
     } else if (*peer).windowSize > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as c_uint {
-        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        (*peer).windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     }
     0 as c_int
 }
@@ -5190,20 +5078,19 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
 ) -> c_int {
-    let mut roundTripTime: enet_uint32;
-    let mut receivedSentTime: enet_uint32;
+    let mut roundTripTime: u32;
+    let mut receivedSentTime: u32;
     if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECTED as c_int as c_uint
         || (*peer).state as c_uint == ENET_PEER_STATE_ZOMBIE as c_int as c_uint
     {
         return 0 as c_int;
     }
-    receivedSentTime = ntohs((*command).acknowledge.receivedSentTime) as enet_uint32;
+    receivedSentTime = ntohs((*command).acknowledge.receivedSentTime) as u32;
     receivedSentTime |= (*host).serviceTime & 0xffff0000 as c_uint;
     if receivedSentTime & 0x8000 as c_int as c_uint
         > (*host).serviceTime & 0x8000 as c_int as c_uint
     {
-        receivedSentTime = (receivedSentTime as c_uint).wrapping_sub(0x10000 as c_int as c_uint)
-            as enet_uint32 as enet_uint32;
+        receivedSentTime = (receivedSentTime as c_uint).wrapping_sub(0x10000 as c_int as c_uint);
     }
     if ((*host).serviceTime).wrapping_sub(receivedSentTime) >= 86400000 as c_int as c_uint {
         return 0 as c_int;
@@ -5222,24 +5109,19 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
     if (*peer).lastReceiveTime > 0 as c_int as c_uint {
         enet_peer_throttle(peer, roundTripTime);
         (*peer).roundTripTimeVariance = ((*peer).roundTripTimeVariance as c_uint)
-            .wrapping_sub(((*peer).roundTripTimeVariance).wrapping_div(4 as c_int as c_uint))
-            as enet_uint32 as enet_uint32;
+            .wrapping_sub(((*peer).roundTripTimeVariance).wrapping_div(4 as c_int as c_uint));
         if roundTripTime >= (*peer).roundTripTime {
-            let diff: enet_uint32 = roundTripTime.wrapping_sub((*peer).roundTripTime);
+            let diff: u32 = roundTripTime.wrapping_sub((*peer).roundTripTime);
             (*peer).roundTripTimeVariance = ((*peer).roundTripTimeVariance as c_uint)
-                .wrapping_add(diff.wrapping_div(4 as c_int as c_uint))
-                as enet_uint32 as enet_uint32;
+                .wrapping_add(diff.wrapping_div(4 as c_int as c_uint));
             (*peer).roundTripTime = ((*peer).roundTripTime as c_uint)
-                .wrapping_add(diff.wrapping_div(8 as c_int as c_uint))
-                as enet_uint32 as enet_uint32;
+                .wrapping_add(diff.wrapping_div(8 as c_int as c_uint));
         } else {
-            let diff_0: enet_uint32 = ((*peer).roundTripTime).wrapping_sub(roundTripTime);
+            let diff_0: u32 = ((*peer).roundTripTime).wrapping_sub(roundTripTime);
             (*peer).roundTripTimeVariance = ((*peer).roundTripTimeVariance as c_uint)
-                .wrapping_add(diff_0.wrapping_div(4 as c_int as c_uint))
-                as enet_uint32 as enet_uint32;
+                .wrapping_add(diff_0.wrapping_div(4 as c_int as c_uint));
             (*peer).roundTripTime = ((*peer).roundTripTime as c_uint)
-                .wrapping_sub(diff_0.wrapping_div(8 as c_int as c_uint))
-                as enet_uint32 as enet_uint32;
+                .wrapping_sub(diff_0.wrapping_div(8 as c_int as c_uint));
         }
     } else {
         (*peer).roundTripTime = roundTripTime;
@@ -5278,12 +5160,12 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
     } else {
         1 as c_int as c_uint
     };
-    (*peer).earliestTimeout = 0 as c_int as enet_uint32;
+    (*peer).earliestTimeout = 0 as c_int as u32;
     let receivedReliableSequenceNumber =
-        ntohs((*command).acknowledge.receivedReliableSequenceNumber) as enet_uint32;
+        ntohs((*command).acknowledge.receivedReliableSequenceNumber) as u32;
     let commandNumber = enet_protocol_remove_sent_reliable_command(
         peer,
-        receivedReliableSequenceNumber as enet_uint16,
+        receivedReliableSequenceNumber as u16,
         (*command).header.channelID,
     );
     match (*peer).state as c_uint {
@@ -5314,14 +5196,14 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     peer: *mut ENetPeer<S>,
     command: *const ENetProtocol,
 ) -> c_int {
-    let mut mtu: enet_uint32;
-    let mut windowSize: enet_uint32;
+    let mut mtu: u32;
+    let mut windowSize: u32;
     if (*peer).state as c_uint != ENET_PEER_STATE_CONNECTING as c_int as c_uint {
         return 0 as c_int;
     }
-    let channelCount = ntohl((*command).verifyConnect.channelCount) as size_t;
-    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as size_t
-        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as size_t
+    let channelCount = ntohl((*command).verifyConnect.channelCount) as usize;
+    if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as c_int as usize
+        || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as c_int as usize
         || ntohl((*command).verifyConnect.packetThrottleInterval) != (*peer).packetThrottleInterval
         || ntohl((*command).verifyConnect.packetThrottleAcceleration)
             != (*peer).packetThrottleAcceleration
@@ -5329,15 +5211,11 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
             != (*peer).packetThrottleDeceleration
         || (*command).verifyConnect.connectID != (*peer).connectID
     {
-        (*peer).eventData = 0 as c_int as enet_uint32;
+        (*peer).eventData = 0 as c_int as u32;
         enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
         return -(1 as c_int);
     }
-    enet_protocol_remove_sent_reliable_command(
-        peer,
-        1 as c_int as enet_uint16,
-        0xff as c_int as enet_uint8,
-    );
+    enet_protocol_remove_sent_reliable_command(peer, 1 as c_int as u16, 0xff as c_int as u8);
     if channelCount < (*peer).channelCount {
         (*peer).channelCount = channelCount;
     }
@@ -5346,19 +5224,19 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     (*peer).outgoingSessionID = (*command).verifyConnect.outgoingSessionID;
     mtu = ntohl((*command).verifyConnect.mtu);
     if mtu < ENET_PROTOCOL_MINIMUM_MTU as c_int as c_uint {
-        mtu = ENET_PROTOCOL_MINIMUM_MTU as c_int as enet_uint32;
+        mtu = ENET_PROTOCOL_MINIMUM_MTU as c_int as u32;
     } else if mtu > ENET_PROTOCOL_MAXIMUM_MTU as c_int as c_uint {
-        mtu = ENET_PROTOCOL_MAXIMUM_MTU as c_int as enet_uint32;
+        mtu = ENET_PROTOCOL_MAXIMUM_MTU as c_int as u32;
     }
     if mtu < (*peer).mtu {
         (*peer).mtu = mtu;
     }
     windowSize = ntohl((*command).verifyConnect.windowSize);
     if windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as c_uint {
-        windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as c_int as u32;
     }
     if windowSize > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as c_uint {
-        windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as enet_uint32;
+        windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as c_int as u32;
     }
     if windowSize < (*peer).windowSize {
         (*peer).windowSize = windowSize;
@@ -5374,33 +5252,32 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
 ) -> c_int {
     let mut command: *mut ENetProtocol;
     let mut peer: *mut ENetPeer<S>;
-    let mut currentData: *mut enet_uint8;
-    let mut headerSize: size_t;
-    let mut peerID: enet_uint16;
-    if (*host).receivedDataLength < 2 as size_t {
+    let mut currentData: *mut u8;
+    let mut headerSize: usize;
+    let mut peerID: u16;
+    if (*host).receivedDataLength < 2_usize {
         return 0 as c_int;
     }
     let header = (*host).receivedData as *mut ENetProtocolHeader;
     peerID = ntohs((*header).peerID);
     let sessionID = ((peerID as c_int & ENET_PROTOCOL_HEADER_SESSION_MASK as c_int)
-        >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int) as enet_uint8;
-    let flags = (peerID as c_int & ENET_PROTOCOL_HEADER_FLAG_MASK as c_int) as enet_uint16;
+        >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int) as u8;
+    let flags = (peerID as c_int & ENET_PROTOCOL_HEADER_FLAG_MASK as c_int) as u16;
     peerID = (peerID as c_int
         & !(ENET_PROTOCOL_HEADER_FLAG_MASK as c_int | ENET_PROTOCOL_HEADER_SESSION_MASK as c_int))
-        as enet_uint16;
+        as u16;
     headerSize = if flags as c_int & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as c_int != 0 {
-        ::core::mem::size_of::<ENetProtocolHeader>() as size_t
+        ::core::mem::size_of::<ENetProtocolHeader>()
     } else {
-        2 as size_t
+        2_usize
     };
     if ((*host).checksum.assume_init_ref()).is_some() {
-        headerSize = (headerSize as c_ulong)
-            .wrapping_add(::core::mem::size_of::<enet_uint32>() as c_ulong)
-            as size_t as size_t;
+        headerSize =
+            (headerSize as c_ulong).wrapping_add(::core::mem::size_of::<u32>() as c_ulong) as usize;
     }
     if peerID as c_int == ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int {
         peer = std::ptr::null_mut();
-    } else if peerID as size_t >= (*host).peerCount {
+    } else if peerID as usize >= (*host).peerCount {
         return 0 as c_int;
     } else {
         peer = &mut *((*host).peers).offset(peerID as isize) as *mut ENetPeer<S>;
@@ -5436,12 +5313,11 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             ((*host).packetData[1 as c_int as usize])
                 .as_mut_ptr()
                 .add(headerSize),
-            (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize),
+            ::core::mem::size_of::<[u8; 4096]>().wrapping_sub(headerSize),
         );
         let originalSize = compressor.decompress(in_data, out);
-        if originalSize <= 0 as c_int as size_t
-            || originalSize
-                > (::core::mem::size_of::<[enet_uint8; 4096]>() as size_t).wrapping_sub(headerSize)
+        if originalSize <= 0 as c_int as usize
+            || originalSize > ::core::mem::size_of::<[u8; 4096]>().wrapping_sub(headerSize)
         {
             return 0 as c_int;
         }
@@ -5454,14 +5330,14 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         (*host).receivedDataLength = headerSize.wrapping_add(originalSize);
     }
     if let Some(checksum_fn) = (*host).checksum.assume_init_ref() {
-        let checksum_addr: *mut enet_uint8 = &mut *((*host).receivedData)
-            .add(headerSize.wrapping_sub(::core::mem::size_of::<enet_uint32>() as size_t))
-            as *mut enet_uint8;
-        let mut desiredChecksum: enet_uint32 = 0;
+        let checksum_addr: *mut u8 = &mut *((*host).receivedData)
+            .add(headerSize.wrapping_sub(::core::mem::size_of::<u32>()))
+            as *mut u8;
+        let mut desiredChecksum: u32 = 0;
         _enet_memcpy(
-            &mut desiredChecksum as *mut enet_uint32 as *mut c_void,
+            &mut desiredChecksum as *mut u32 as *mut c_void,
             checksum_addr as *const c_void,
-            ::core::mem::size_of::<enet_uint32>(),
+            ::core::mem::size_of::<u32>(),
         );
         let mut buffer: ENetBuffer = ENetBuffer {
             data: std::ptr::null_mut(),
@@ -5474,8 +5350,8 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         };
         _enet_memcpy(
             checksum_addr as *mut c_void,
-            &checksum as *const enet_uint32 as *const c_void,
-            ::core::mem::size_of::<enet_uint32>(),
+            &checksum as *const u32 as *const c_void,
+            ::core::mem::size_of::<u32>(),
         );
         buffer.data = (*host).receivedData as *mut c_void;
         buffer.dataLength = (*host).receivedDataLength;
@@ -5496,30 +5372,27 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
                 .cloned()
                 .unwrap(),
         );
-        (*peer).incomingDataTotal = ((*peer).incomingDataTotal as size_t)
-            .wrapping_add((*host).receivedDataLength)
-            as enet_uint32 as enet_uint32;
+        (*peer).incomingDataTotal =
+            ((*peer).incomingDataTotal as usize).wrapping_add((*host).receivedDataLength) as u32;
     }
     currentData = ((*host).receivedData).add(headerSize);
-    while currentData
-        < &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
-    {
+    while currentData < &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8 {
         command = currentData as *mut ENetProtocol;
         if currentData
             .offset(::core::mem::size_of::<ENetProtocolCommandHeader>() as c_ulong as isize)
-            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
+            > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8
         {
             break;
         }
-        let commandNumber = ((*command).header.command as c_int
-            & ENET_PROTOCOL_COMMAND_MASK as c_int) as enet_uint8;
+        let commandNumber =
+            ((*command).header.command as c_int & ENET_PROTOCOL_COMMAND_MASK as c_int) as u8;
         if commandNumber as c_int >= ENET_PROTOCOL_COMMAND_COUNT as c_int {
             break;
         }
         let commandSize = COMMAND_SIZES[commandNumber as usize];
-        if commandSize == 0 as c_int as size_t
+        if commandSize == 0 as c_int as usize
             || currentData.add(commandSize)
-                > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut enet_uint8
+                > &mut *((*host).receivedData).add((*host).receivedDataLength) as *mut u8
         {
             break;
         }
@@ -5648,7 +5521,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
         };
         buffer.data = ((*host).packetData[0 as c_int as usize]).as_mut_ptr() as *mut c_void;
         const MTU: usize = 4096;
-        buffer.dataLength = ::core::mem::size_of::<[enet_uint8; MTU]>() as size_t;
+        buffer.dataLength = ::core::mem::size_of::<[u8; MTU]>();
         let receivedLength = match (*host)
             .socket
             .assume_init_mut()
@@ -5660,7 +5533,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
                     _enet_memcpy(
                         buffer.data,
                         received_data.as_ptr() as *const c_void,
-                        received_data.len() as size_t,
+                        received_data.len(),
                     );
                     received_data.len() as c_int
                 } else {
@@ -5681,10 +5554,10 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             return 0 as c_int;
         }
         (*host).receivedData = ((*host).packetData[0 as c_int as usize]).as_mut_ptr();
-        (*host).receivedDataLength = receivedLength as size_t;
+        (*host).receivedDataLength = receivedLength as usize;
         (*host).totalReceivedData = ((*host).totalReceivedData as c_uint)
-            .wrapping_add(receivedLength as c_uint)
-            as enet_uint32 as enet_uint32;
+            .wrapping_add(receivedLength as c_uint) as u32
+            as u32;
         (*host).totalReceivedPackets = ((*host).totalReceivedPackets).wrapping_add(1);
         if ((*host).intercept).is_some() {
             match ((*host).intercept).expect("non-null function pointer")(host, event) {
@@ -5747,7 +5620,7 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
         &mut *((*host).buffers).as_mut_ptr().add((*host).bufferCount) as *mut ENetBuffer;
     let mut acknowledgement: *mut ENetAcknowledgement;
     let mut currentAcknowledgement: ENetListIterator;
-    let mut reliableSequenceNumber: enet_uint16;
+    let mut reliableSequenceNumber: u16;
     currentAcknowledgement = (*peer).acknowledgements.sentinel.next;
     while currentAcknowledgement != &mut (*peer).acknowledgements.sentinel as *mut ENetListNode {
         if command
@@ -5762,27 +5635,25 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
                         .wrapping_div(::core::mem::size_of::<ENetBuffer>() as c_ulong)
                         as isize,
                 ) as *mut ENetBuffer
-            || ((*peer).mtu as size_t).wrapping_sub((*host).packetSize)
-                < ::core::mem::size_of::<ENetProtocolAcknowledge>() as size_t
+            || ((*peer).mtu as usize).wrapping_sub((*host).packetSize)
+                < ::core::mem::size_of::<ENetProtocolAcknowledge>()
         {
             (*peer).flags =
-                ((*peer).flags as c_int | ENET_PEER_FLAG_CONTINUE_SENDING as c_int) as enet_uint16;
+                ((*peer).flags as c_int | ENET_PEER_FLAG_CONTINUE_SENDING as c_int) as u16;
             break;
         } else {
             acknowledgement = currentAcknowledgement as *mut ENetAcknowledgement;
             currentAcknowledgement = (*currentAcknowledgement).next;
             (*buffer).data = command as *mut c_void;
-            (*buffer).dataLength = ::core::mem::size_of::<ENetProtocolAcknowledge>() as size_t;
-            (*host).packetSize = ((*host).packetSize as size_t).wrapping_add((*buffer).dataLength)
-                as size_t as size_t;
+            (*buffer).dataLength = ::core::mem::size_of::<ENetProtocolAcknowledge>();
+            (*host).packetSize = (*host).packetSize.wrapping_add((*buffer).dataLength);
             reliableSequenceNumber =
                 htons((*acknowledgement).command.header.reliableSequenceNumber);
-            (*command).header.command = ENET_PROTOCOL_COMMAND_ACKNOWLEDGE as c_int as enet_uint8;
+            (*command).header.command = ENET_PROTOCOL_COMMAND_ACKNOWLEDGE as c_int as u8;
             (*command).header.channelID = (*acknowledgement).command.header.channelID;
             (*command).header.reliableSequenceNumber = reliableSequenceNumber;
             (*command).acknowledge.receivedReliableSequenceNumber = reliableSequenceNumber;
-            (*command).acknowledge.receivedSentTime =
-                htons((*acknowledgement).sentTime as uint16_t);
+            (*command).acknowledge.receivedSentTime = htons((*acknowledgement).sentTime as u16);
             if (*acknowledgement).command.header.command as c_int
                 & ENET_PROTOCOL_COMMAND_MASK as c_int
                 == ENET_PROTOCOL_COMMAND_DISCONNECT as c_int
@@ -5795,8 +5666,8 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
             buffer = buffer.offset(1);
         }
     }
-    (*host).commandCount = command.offset_from(((*host).commands).as_mut_ptr()) as c_long as size_t;
-    (*host).bufferCount = buffer.offset_from(((*host).buffers).as_mut_ptr()) as c_long as size_t;
+    (*host).commandCount = command.offset_from(((*host).commands).as_mut_ptr()) as c_long as usize;
+    (*host).bufferCount = buffer.offset_from(((*host).buffers).as_mut_ptr()) as c_long as usize;
 }
 unsafe fn enet_protocol_check_timeouts<S: Socket>(
     host: *mut ENetHost<S>,
@@ -5850,13 +5721,11 @@ unsafe fn enet_protocol_check_timeouts<S: Socket>(
             return 1 as c_int;
         }
         (*peer).packetsLost = ((*peer).packetsLost).wrapping_add(1);
-        (*outgoingCommand).roundTripTimeout = ((*outgoingCommand).roundTripTimeout as c_uint)
-            .wrapping_mul(2 as c_int as c_uint)
-            as enet_uint32 as enet_uint32;
+        (*outgoingCommand).roundTripTimeout =
+            ((*outgoingCommand).roundTripTimeout as c_uint).wrapping_mul(2 as c_int as c_uint);
         if !((*outgoingCommand).packet).is_null() {
             (*peer).reliableDataInTransit = ((*peer).reliableDataInTransit as c_uint)
-                .wrapping_sub((*outgoingCommand).fragmentLength as c_uint)
-                as enet_uint32 as enet_uint32;
+                .wrapping_sub((*outgoingCommand).fragmentLength as c_uint);
             enet_list_insert(
                 insertSendReliablePosition,
                 enet_list_remove(&mut (*outgoingCommand).outgoingCommandList),
@@ -5891,8 +5760,8 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
     let mut currentCommand: ENetListIterator;
     let mut currentSendReliableCommand: ENetListIterator;
     let mut channel: *mut ENetChannel = std::ptr::null_mut();
-    let mut reliableWindow: enet_uint16 = 0 as c_int as enet_uint16;
-    let mut commandSize: size_t;
+    let mut reliableWindow: u16 = 0 as c_int as u16;
+    let mut commandSize: usize;
     let mut windowWrap: c_int = 0 as c_int;
     let mut canPing: c_int = 1 as c_int;
     currentCommand = (*peer).outgoingCommands.sentinel.next;
@@ -5929,7 +5798,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             != 0
         {
             channel =
-                if ((*outgoingCommand).command.header.channelID as size_t) < (*peer).channelCount {
+                if ((*outgoingCommand).command.header.channelID as usize) < (*peer).channelCount {
                     &mut *((*peer).channels)
                         .offset((*outgoingCommand).command.header.channelID as isize)
                         as *mut ENetChannel
@@ -5937,8 +5806,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                     std::ptr::null_mut()
                 };
             reliableWindow = ((*outgoingCommand).reliableSequenceNumber as c_int
-                / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int)
-                as enet_uint16;
+                / ENET_PEER_RELIABLE_WINDOW_SIZE as c_int) as u16;
             if !channel.is_null() {
                 if windowWrap != 0 {
                     continue;
@@ -5971,7 +5839,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 }
             }
             if !((*outgoingCommand).packet).is_null() {
-                let windowSize: enet_uint32 = ((*peer).packetThrottle)
+                let windowSize: u32 = ((*peer).packetThrottle)
                     .wrapping_mul((*peer).windowSize)
                     .wrapping_div(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint);
                 if ((*peer).reliableDataInTransit)
@@ -6002,15 +5870,14 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                         .wrapping_div(::core::mem::size_of::<ENetBuffer>() as c_ulong)
                         as isize,
                 ) as *mut ENetBuffer
-            || ((*peer).mtu as size_t).wrapping_sub((*host).packetSize) < commandSize
+            || ((*peer).mtu as usize).wrapping_sub((*host).packetSize) < commandSize
             || !((*outgoingCommand).packet).is_null()
-                && (((*peer).mtu as size_t).wrapping_sub((*host).packetSize) as enet_uint16
-                    as c_int)
-                    < commandSize.wrapping_add((*outgoingCommand).fragmentLength as size_t)
-                        as enet_uint16 as c_int
+                && (((*peer).mtu as usize).wrapping_sub((*host).packetSize) as u16 as c_int)
+                    < commandSize.wrapping_add((*outgoingCommand).fragmentLength as usize) as u16
+                        as c_int
         {
             (*peer).flags =
-                ((*peer).flags as c_int | ENET_PEER_FLAG_CONTINUE_SENDING as c_int) as enet_uint16;
+                ((*peer).flags as c_int | ENET_PEER_FLAG_CONTINUE_SENDING as c_int) as u16;
             break;
         } else {
             if (*outgoingCommand).command.header.command as c_int
@@ -6020,7 +5887,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 if !channel.is_null() && ((*outgoingCommand).sendAttempts as c_int) < 1 as c_int {
                     (*channel).usedReliableWindows = ((*channel).usedReliableWindows as c_int
                         | (1 as c_int) << reliableWindow as c_int)
-                        as enet_uint16;
+                        as u16;
                     (*channel).reliableWindows[reliableWindow as usize] =
                         ((*channel).reliableWindows[reliableWindow as usize]).wrapping_add(1);
                 }
@@ -6043,31 +5910,26 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 (*outgoingCommand).sentTime = (*host).serviceTime;
                 (*host).headerFlags = ((*host).headerFlags as c_int
                     | ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as c_int)
-                    as enet_uint16;
+                    as u16;
                 (*peer).reliableDataInTransit = ((*peer).reliableDataInTransit as c_uint)
                     .wrapping_add((*outgoingCommand).fragmentLength as c_uint)
-                    as enet_uint32 as enet_uint32;
+                    as u32 as u32;
             } else {
                 if !((*outgoingCommand).packet).is_null()
                     && (*outgoingCommand).fragmentOffset == 0 as c_int as c_uint
                 {
                     (*peer).packetThrottleCounter = ((*peer).packetThrottleCounter as c_uint)
-                        .wrapping_add(ENET_PEER_PACKET_THROTTLE_COUNTER as c_int as c_uint)
-                        as enet_uint32
-                        as enet_uint32;
+                        .wrapping_add(ENET_PEER_PACKET_THROTTLE_COUNTER as c_int as c_uint);
                     (*peer).packetThrottleCounter = ((*peer).packetThrottleCounter as c_uint)
-                        .wrapping_rem(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint)
-                        as enet_uint32
-                        as enet_uint32;
+                        .wrapping_rem(ENET_PEER_PACKET_THROTTLE_SCALE as c_int as c_uint);
                     if (*peer).packetThrottleCounter > (*peer).packetThrottle {
-                        let reliableSequenceNumber: enet_uint16 =
-                            (*outgoingCommand).reliableSequenceNumber;
-                        let unreliableSequenceNumber: enet_uint16 =
+                        let reliableSequenceNumber: u16 = (*outgoingCommand).reliableSequenceNumber;
+                        let unreliableSequenceNumber: u16 =
                             (*outgoingCommand).unreliableSequenceNumber;
                         loop {
                             (*(*outgoingCommand).packet).referenceCount =
                                 ((*(*outgoingCommand).packet).referenceCount).wrapping_sub(1);
-                            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as size_t {
+                            if (*(*outgoingCommand).packet).referenceCount == 0 as c_int as usize {
                                 enet_packet_destroy((*outgoingCommand).packet);
                             }
                             enet_list_remove(&mut (*outgoingCommand).outgoingCommandList);
@@ -6100,18 +5962,17 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             }
             (*buffer).data = command as *mut c_void;
             (*buffer).dataLength = commandSize;
-            (*host).packetSize = ((*host).packetSize as size_t).wrapping_add((*buffer).dataLength)
-                as size_t as size_t;
+            (*host).packetSize = ((*host).packetSize).wrapping_add((*buffer).dataLength);
             *command = (*outgoingCommand).command;
             if !((*outgoingCommand).packet).is_null() {
                 buffer = buffer.offset(1);
                 (*buffer).data = ((*(*outgoingCommand).packet).data)
                     .offset((*outgoingCommand).fragmentOffset as isize)
                     as *mut c_void;
-                (*buffer).dataLength = (*outgoingCommand).fragmentLength as size_t;
+                (*buffer).dataLength = (*outgoingCommand).fragmentLength as usize;
                 (*host).packetSize = ((*host).packetSize as c_ulong)
                     .wrapping_add((*outgoingCommand).fragmentLength as c_ulong)
-                    as size_t as size_t;
+                    as usize as usize;
             } else if (*outgoingCommand).command.header.command as c_int
                 & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as c_int
                 == 0
@@ -6123,8 +5984,8 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             buffer = buffer.offset(1);
         }
     }
-    (*host).commandCount = command.offset_from(((*host).commands).as_mut_ptr()) as c_long as size_t;
-    (*host).bufferCount = buffer.offset_from(((*host).buffers).as_mut_ptr()) as c_long as size_t;
+    (*host).commandCount = command.offset_from(((*host).commands).as_mut_ptr()) as c_long as usize;
+    (*host).bufferCount = buffer.offset_from(((*host).buffers).as_mut_ptr()) as c_long as usize;
     if (*peer).state as c_uint == ENET_PEER_STATE_DISCONNECT_LATER as c_int as c_uint
         && enet_peer_has_outgoing_commands(peer) == 0
         && (*sentUnreliableCommands).sentinel.next
@@ -6139,10 +6000,10 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
     event: *mut ENetEvent<S>,
     checkForTimeouts: c_int,
 ) -> c_int {
-    let mut headerData: [enet_uint8; 8] = [0; 8];
+    let mut headerData: [u8; 8] = [0; 8];
     let header: *mut ENetProtocolHeader = headerData.as_mut_ptr() as *mut ENetProtocolHeader;
     let mut sentLength: c_int;
-    let mut shouldCompress: size_t;
+    let mut shouldCompress: usize;
     let mut sentUnreliableCommands: ENetList = ENetList {
         sentinel: ENetListNode {
             next: std::ptr::null_mut(),
@@ -6163,11 +6024,11 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
             {
                 (*currentPeer).flags = ((*currentPeer).flags as c_int
                     & !(ENET_PEER_FLAG_CONTINUE_SENDING as c_int))
-                    as enet_uint16;
-                (*host).headerFlags = 0 as c_int as enet_uint16;
-                (*host).commandCount = 0 as c_int as size_t;
-                (*host).bufferCount = 1 as c_int as size_t;
-                (*host).packetSize = ::core::mem::size_of::<ENetProtocolHeader>() as size_t;
+                    as u16;
+                (*host).headerFlags = 0 as c_int as u16;
+                (*host).commandCount = 0 as c_int as usize;
+                (*host).bufferCount = 1 as c_int as usize;
+                (*host).packetSize = ::core::mem::size_of::<ENetProtocolHeader>();
                 if (*currentPeer).acknowledgements.sentinel.next
                     != &mut (*currentPeer).acknowledgements.sentinel as *mut ENetListNode
                 {
@@ -6206,8 +6067,8 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         } else {
                             ((*host).serviceTime).wrapping_sub((*currentPeer).lastReceiveTime)
                         }) >= (*currentPeer).pingInterval
-                        && ((*currentPeer).mtu as size_t).wrapping_sub((*host).packetSize)
-                            >= ::core::mem::size_of::<ENetProtocolPing>() as size_t
+                        && ((*currentPeer).mtu as usize).wrapping_sub((*host).packetSize)
+                            >= ::core::mem::size_of::<ENetProtocolPing>()
                     {
                         enet_peer_ping(currentPeer);
                         enet_protocol_check_outgoing_commands(
@@ -6216,7 +6077,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             &mut sentUnreliableCommands,
                         );
                     }
-                    if (*host).commandCount != 0 as c_int as size_t {
+                    if (*host).commandCount != 0 as c_int as usize {
                         if (*currentPeer).packetLossEpoch == 0 as c_int as c_uint {
                             (*currentPeer).packetLossEpoch = (*host).serviceTime;
                         } else if (if ((*host).serviceTime)
@@ -6229,7 +6090,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         }) >= ENET_PEER_PACKET_LOSS_INTERVAL as c_int as c_uint
                             && (*currentPeer).packetsSent > 0 as c_int as c_uint
                         {
-                            let packetLoss: enet_uint32 = ((*currentPeer).packetsLost)
+                            let packetLoss: u32 = ((*currentPeer).packetsLost)
                                 .wrapping_mul(ENET_PEER_PACKET_LOSS_SCALE as c_int as c_uint)
                                 .wrapping_div((*currentPeer).packetsSent);
                             (*currentPeer).packetLossVariance = ((*currentPeer).packetLossVariance)
@@ -6245,8 +6106,8 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                 .wrapping_add(packetLoss)
                                 .wrapping_div(8 as c_int as c_uint);
                             (*currentPeer).packetLossEpoch = (*host).serviceTime;
-                            (*currentPeer).packetsSent = 0 as c_int as enet_uint32;
-                            (*currentPeer).packetsLost = 0 as c_int as enet_uint32;
+                            (*currentPeer).packetsSent = 0 as c_int as u32;
+                            (*currentPeer).packetsLost = 0 as c_int as u32;
                         }
                         let fresh34 = &mut (*((*host).buffers).as_mut_ptr()).data;
                         *fresh34 = headerData.as_mut_ptr() as *mut c_void;
@@ -6254,22 +6115,17 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as c_int
                             != 0
                         {
-                            (*header).sentTime = htons(
-                                ((*host).serviceTime & 0xffff as c_int as c_uint) as uint16_t,
-                            );
+                            (*header).sentTime =
+                                htons(((*host).serviceTime & 0xffff as c_int as c_uint) as u16);
                             (*((*host).buffers).as_mut_ptr()).dataLength =
-                                ::core::mem::size_of::<ENetProtocolHeader>() as size_t;
+                                ::core::mem::size_of::<ENetProtocolHeader>();
                         } else {
-                            (*((*host).buffers).as_mut_ptr()).dataLength = 2 as size_t;
+                            (*((*host).buffers).as_mut_ptr()).dataLength = 2;
                         }
-                        shouldCompress = 0 as c_int as size_t;
+                        shouldCompress = 0 as c_int as usize;
                         if let Some(compressor) = (*host).compressor.assume_init_mut() {
-                            let originalSize: size_t =
-                                ((*host).packetSize).wrapping_sub(::core::mem::size_of::<
-                                    ENetProtocolHeader,
-                                >(
-                                )
-                                    as size_t);
+                            let originalSize: usize = ((*host).packetSize)
+                                .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>());
                             let mut inBuffers = vec![];
                             for i in 0..((*host).bufferCount).wrapping_sub(1) {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(1 + i);
@@ -6278,7 +6134,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                     (*buffer).dataLength,
                                 ));
                             }
-                            let compressedSize: size_t = compressor.compress(
+                            let compressedSize: usize = compressor.compress(
                                 inBuffers,
                                 originalSize,
                                 std::slice::from_raw_parts_mut(
@@ -6286,12 +6142,11 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                     originalSize,
                                 ),
                             );
-                            if compressedSize > 0 as c_int as size_t
-                                && compressedSize < originalSize
+                            if compressedSize > 0 as c_int as usize && compressedSize < originalSize
                             {
                                 (*host).headerFlags = ((*host).headerFlags as c_int
                                     | ENET_PROTOCOL_HEADER_FLAG_COMPRESSED as c_int)
-                                    as enet_uint16;
+                                    as u16;
                                 shouldCompress = compressedSize;
                             }
                         }
@@ -6301,17 +6156,17 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             (*host).headerFlags = ((*host).headerFlags as c_int
                                 | ((*currentPeer).outgoingSessionID as c_int)
                                     << ENET_PROTOCOL_HEADER_SESSION_SHIFT as c_int)
-                                as enet_uint16;
+                                as u16;
                         }
                         (*header).peerID = htons(
                             ((*currentPeer).outgoingPeerID as c_int | (*host).headerFlags as c_int)
-                                as uint16_t,
+                                as u16,
                         );
                         if let Some(checksum_fn) = (*host).checksum.assume_init_ref() {
-                            let checksum_addr: *mut enet_uint8 = &mut *headerData
+                            let checksum_addr: *mut u8 = &mut *headerData
                                 .as_mut_ptr()
                                 .add((*((*host).buffers).as_mut_ptr()).dataLength)
-                                as *mut enet_uint8;
+                                as *mut u8;
                             let mut checksum = if ((*currentPeer).outgoingPeerID as c_int)
                                 < ENET_PROTOCOL_MAXIMUM_PEER_ID as c_int
                             {
@@ -6321,14 +6176,13 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             };
                             _enet_memcpy(
                                 checksum_addr as *mut c_void,
-                                &checksum as *const enet_uint32 as *const c_void,
-                                ::core::mem::size_of::<enet_uint32>(),
+                                &checksum as *const u32 as *const c_void,
+                                ::core::mem::size_of::<u32>(),
                             );
                             let fresh35 = &mut (*((*host).buffers).as_mut_ptr()).dataLength;
-                            *fresh35 =
-                                (*fresh35 as c_ulong)
-                                    .wrapping_add(::core::mem::size_of::<enet_uint32>() as c_ulong)
-                                    as size_t as size_t;
+                            *fresh35 = (*fresh35 as c_ulong)
+                                .wrapping_add(::core::mem::size_of::<u32>() as c_ulong)
+                                as usize;
                             let mut inBuffers = vec![];
                             for i in 0..(*host).bufferCount {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(i);
@@ -6340,16 +6194,16 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             checksum = checksum_fn(inBuffers);
                             _enet_memcpy(
                                 checksum_addr as *mut c_void,
-                                &checksum as *const enet_uint32 as *const c_void,
-                                ::core::mem::size_of::<enet_uint32>(),
+                                &checksum as *const u32 as *const c_void,
+                                ::core::mem::size_of::<u32>(),
                             );
                         }
-                        if shouldCompress > 0 as c_int as size_t {
+                        if shouldCompress > 0 as c_int as usize {
                             (*host).buffers[1 as c_int as usize].data =
                                 ((*host).packetData[1 as c_int as usize]).as_mut_ptr()
                                     as *mut c_void;
                             (*host).buffers[1 as c_int as usize].dataLength = shouldCompress;
-                            (*host).bufferCount = 2 as c_int as size_t;
+                            (*host).bufferCount = 2 as c_int as usize;
                         }
                         (*currentPeer).lastSendTime = (*host).serviceTime;
                         let mut conglomerate_buffer = vec![];
@@ -6379,9 +6233,9 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         if sentLength < 0 as c_int {
                             return -(1 as c_int);
                         }
-                        (*host).totalSentData =
-                            ((*host).totalSentData as c_uint).wrapping_add(sentLength as c_uint)
-                                as enet_uint32 as enet_uint32;
+                        (*host).totalSentData = ((*host).totalSentData as c_uint)
+                            .wrapping_add(sentLength as c_uint)
+                            as u32 as u32;
                         (*host).totalSentPackets = ((*host).totalSentPackets).wrapping_add(1);
                     }
                 }
@@ -6460,6 +6314,6 @@ pub(crate) unsafe fn enet_host_service<S: Socket>(
     }
     0 as c_int
 }
-pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> enet_uint32 {
-    ((*host).time.assume_init_ref()().as_millis() % u32::MAX as u128) as enet_uint32
+pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> u32 {
+    ((*host).time.assume_init_ref()().as_millis() % u32::MAX as u128) as u32
 }
