@@ -11,19 +11,6 @@ pub(crate) enum c_void {
     __variant2,
 }
 
-pub(crate) fn ntohl(__netlong: u32) -> u32 {
-    u32::from_be(__netlong)
-}
-pub(crate) fn ntohs(__netshort: u16) -> u16 {
-    u16::from_be(__netshort)
-}
-pub(crate) fn htonl(__hostlong: u32) -> u32 {
-    __hostlong.to_be()
-}
-pub(crate) fn htons(__hostshort: u16) -> u16 {
-    __hostshort.to_be()
-}
-
 #[derive(Default)]
 struct Allocator {
     allocations: HashMap<*const c_void, Layout>,

@@ -1747,19 +1747,19 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
     command.header.command = (ENET_PROTOCOL_COMMAND_CONNECT as i32
         | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32) as u8;
     command.header.channelID = 0xff_i32 as u8;
-    command.connect.outgoingPeerID = htons((*currentPeer).incomingPeerID);
+    command.connect.outgoingPeerID = (*currentPeer).incomingPeerID.to_be();
     command.connect.incomingSessionID = (*currentPeer).incomingSessionID;
     command.connect.outgoingSessionID = (*currentPeer).outgoingSessionID;
-    command.connect.mtu = htonl((*currentPeer).mtu);
-    command.connect.windowSize = htonl((*currentPeer).windowSize);
-    command.connect.channelCount = htonl(channelCount as u32);
-    command.connect.incomingBandwidth = htonl((*host).incomingBandwidth);
-    command.connect.outgoingBandwidth = htonl((*host).outgoingBandwidth);
-    command.connect.packetThrottleInterval = htonl((*currentPeer).packetThrottleInterval);
-    command.connect.packetThrottleAcceleration = htonl((*currentPeer).packetThrottleAcceleration);
-    command.connect.packetThrottleDeceleration = htonl((*currentPeer).packetThrottleDeceleration);
+    command.connect.mtu = (*currentPeer).mtu.to_be();
+    command.connect.windowSize = (*currentPeer).windowSize.to_be();
+    command.connect.channelCount = (channelCount as u32).to_be();
+    command.connect.incomingBandwidth = (*host).incomingBandwidth.to_be();
+    command.connect.outgoingBandwidth = (*host).outgoingBandwidth.to_be();
+    command.connect.packetThrottleInterval = (*currentPeer).packetThrottleInterval.to_be();
+    command.connect.packetThrottleAcceleration = (*currentPeer).packetThrottleAcceleration.to_be();
+    command.connect.packetThrottleDeceleration = (*currentPeer).packetThrottleDeceleration.to_be();
     command.connect.connectID = (*currentPeer).connectID;
-    command.connect.data = htonl(data);
+    command.connect.data = data.to_be();
     enet_peer_queue_outgoing_command(
         currentPeer,
         &command,
@@ -1962,11 +1962,11 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                     | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32)
                     as u8;
                 command.header.channelID = 0xff_i32 as u8;
-                command.bandwidthLimit.outgoingBandwidth = htonl((*host).outgoingBandwidth);
+                command.bandwidthLimit.outgoingBandwidth = (*host).outgoingBandwidth.to_be();
                 if (*peer).incomingBandwidthThrottleEpoch == timeCurrent {
-                    command.bandwidthLimit.incomingBandwidth = htonl((*peer).outgoingBandwidth);
+                    command.bandwidthLimit.incomingBandwidth = (*peer).outgoingBandwidth.to_be();
                 } else {
-                    command.bandwidthLimit.incomingBandwidth = htonl(bandwidthLimit);
+                    command.bandwidthLimit.incomingBandwidth = bandwidthLimit.to_be();
                 }
                 enet_peer_queue_outgoing_command(
                     peer,
@@ -2339,7 +2339,7 @@ pub(crate) unsafe extern "C" fn enet_crc32(
         }
         buffers = buffers.offset(1);
     }
-    htonl(!crc)
+    (!crc).to_be()
 }
 pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     peer: *mut ENetPeer<S>,
@@ -2360,9 +2360,9 @@ pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     command.header.command = (ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE as i32
         | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32) as u8;
     command.header.channelID = 0xff_i32 as u8;
-    command.throttleConfigure.packetThrottleInterval = htonl(interval);
-    command.throttleConfigure.packetThrottleAcceleration = htonl(acceleration);
-    command.throttleConfigure.packetThrottleDeceleration = htonl(deceleration);
+    command.throttleConfigure.packetThrottleInterval = interval.to_be();
+    command.throttleConfigure.packetThrottleAcceleration = acceleration.to_be();
+    command.throttleConfigure.packetThrottleDeceleration = deceleration.to_be();
     enet_peer_queue_outgoing_command(
         peer,
         &command,
@@ -2451,12 +2451,12 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
         {
             commandNumber = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT as i32 as u8;
             startSequenceNumber =
-                htons(((*channel).outgoingUnreliableSequenceNumber as i32 + 1_i32) as u16);
+                (((*channel).outgoingUnreliableSequenceNumber as i32 + 1_i32) as u16).to_be();
         } else {
             commandNumber = (ENET_PROTOCOL_COMMAND_SEND_FRAGMENT as i32
                 | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32) as u8;
             startSequenceNumber =
-                htons(((*channel).outgoingReliableSequenceNumber as i32 + 1_i32) as u16);
+                (((*channel).outgoingReliableSequenceNumber as i32 + 1_i32) as u16).to_be();
         }
         enet_list_clear(&mut fragments);
         fragmentNumber = 0_i32 as u32;
@@ -2481,11 +2481,11 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             (*fragment).command.header.command = commandNumber;
             (*fragment).command.header.channelID = channelID;
             (*fragment).command.sendFragment.startSequenceNumber = startSequenceNumber;
-            (*fragment).command.sendFragment.dataLength = htons(fragmentLength as u16);
-            (*fragment).command.sendFragment.fragmentCount = htonl(fragmentCount);
-            (*fragment).command.sendFragment.fragmentNumber = htonl(fragmentNumber);
-            (*fragment).command.sendFragment.totalLength = htonl((*packet).dataLength as u32);
-            (*fragment).command.sendFragment.fragmentOffset = ntohl(fragmentOffset);
+            (*fragment).command.sendFragment.dataLength = (fragmentLength as u16).to_be();
+            (*fragment).command.sendFragment.fragmentCount = fragmentCount.to_be();
+            (*fragment).command.sendFragment.fragmentNumber = fragmentNumber.to_be();
+            (*fragment).command.sendFragment.totalLength = ((*packet).dataLength as u32).to_be();
+            (*fragment).command.sendFragment.fragmentOffset = u32::from_be(fragmentOffset);
             enet_list_insert(&mut fragments.sentinel, fragment as *mut c_void);
             fragmentNumber = fragmentNumber.wrapping_add(1);
             fragmentOffset = (fragmentOffset as usize).wrapping_add(fragmentLength) as u32;
@@ -2505,16 +2505,16 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     {
         command.header.command = (ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as i32
             | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED as i32) as u8;
-        command.sendUnsequenced.dataLength = htons((*packet).dataLength as u16);
+        command.sendUnsequenced.dataLength = ((*packet).dataLength as u16).to_be();
     } else if (*packet).flags & ENET_PACKET_FLAG_RELIABLE as i32 as u32 != 0
         || (*channel).outgoingUnreliableSequenceNumber as i32 >= 0xffff_i32
     {
         command.header.command = (ENET_PROTOCOL_COMMAND_SEND_RELIABLE as i32
             | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32) as u8;
-        command.sendReliable.dataLength = htons((*packet).dataLength as u16);
+        command.sendReliable.dataLength = ((*packet).dataLength as u16).to_be();
     } else {
         command.header.command = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE as i32 as u8;
-        command.sendUnreliable.dataLength = htons((*packet).dataLength as u16);
+        command.sendUnreliable.dataLength = ((*packet).dataLength as u16).to_be();
     }
     if (enet_peer_queue_outgoing_command(
         peer,
@@ -2774,7 +2774,7 @@ pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(peer: *mut ENetPeer<S>,
         command.header.command = (ENET_PROTOCOL_COMMAND_DISCONNECT as i32
             | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED as i32) as u8;
         command.header.channelID = 0xff_i32 as u8;
-        command.disconnect.data = htonl(data);
+        command.disconnect.data = data.to_be();
         enet_peer_queue_outgoing_command(
             peer,
             &command,
@@ -2804,7 +2804,7 @@ pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, dat
     enet_peer_reset_queues(peer);
     command.header.command = ENET_PROTOCOL_COMMAND_DISCONNECT as i32 as u8;
     command.header.channelID = 0xff_i32 as u8;
-    command.disconnect.data = htonl(data);
+    command.disconnect.data = data.to_be();
     if (*peer).state == ENET_PEER_STATE_CONNECTED as i32 as u32
         || (*peer).state == ENET_PEER_STATE_DISCONNECT_LATER as i32 as u32
     {
@@ -2943,7 +2943,7 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
     (*outgoingCommand).sentTime = 0_i32 as u32;
     (*outgoingCommand).roundTripTimeout = 0_i32 as u32;
     (*outgoingCommand).command.header.reliableSequenceNumber =
-        htons((*outgoingCommand).reliableSequenceNumber);
+        (*outgoingCommand).reliableSequenceNumber.to_be();
     (*(*peer).host).totalQueued = ((*(*peer).host).totalQueued).wrapping_add(1);
     (*outgoingCommand).queueTime = (*(*peer).host).totalQueued;
     match (*outgoingCommand).command.header.command as i32 & ENET_PROTOCOL_COMMAND_MASK as i32 {
@@ -2951,11 +2951,11 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
             (*outgoingCommand)
                 .command
                 .sendUnreliable
-                .unreliableSequenceNumber = htons((*outgoingCommand).unreliableSequenceNumber);
+                .unreliableSequenceNumber = (*outgoingCommand).unreliableSequenceNumber.to_be();
         }
         9 => {
             (*outgoingCommand).command.sendUnsequenced.unsequencedGroup =
-                htons((*peer).outgoingUnsequencedGroup);
+                (*peer).outgoingUnsequencedGroup.to_be();
         }
         _ => {}
     }
@@ -3288,7 +3288,8 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                         }
                         _ => {
                             unreliableSequenceNumber =
-                                ntohs((*command).sendUnreliable.unreliableSequenceNumber) as u32;
+                                u16::from_be((*command).sendUnreliable.unreliableSequenceNumber)
+                                    as u32;
                             if reliableSequenceNumber
                                 == (*channel).incomingReliableSequenceNumber as u32
                                 && unreliableSequenceNumber
@@ -3535,7 +3536,8 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                         }
                         _ => {
                             unreliableSequenceNumber =
-                                ntohs((*command).sendUnreliable.unreliableSequenceNumber) as u32;
+                                u16::from_be((*command).sendUnreliable.unreliableSequenceNumber)
+                                    as u32;
                             if reliableSequenceNumber
                                 == (*channel).incomingReliableSequenceNumber as u32
                                 && unreliableSequenceNumber
@@ -3782,7 +3784,8 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                         }
                         _ => {
                             unreliableSequenceNumber =
-                                ntohs((*command).sendUnreliable.unreliableSequenceNumber) as u32;
+                                u16::from_be((*command).sendUnreliable.unreliableSequenceNumber)
+                                    as u32;
                             if reliableSequenceNumber
                                 == (*channel).incomingReliableSequenceNumber as u32
                                 && unreliableSequenceNumber
@@ -4292,7 +4295,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
             reliableSequenceNumber: 0,
         },
     };
-    channelCount = ntohl((*command).connect.channelCount) as usize;
+    channelCount = u32::from_be((*command).connect.channelCount) as usize;
     if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize
         || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize
     {
@@ -4349,13 +4352,15 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
             .unwrap(),
     );
     (*peer).mtu = (*host).mtu;
-    (*peer).outgoingPeerID = ntohs((*command).connect.outgoingPeerID);
-    (*peer).incomingBandwidth = ntohl((*command).connect.incomingBandwidth);
-    (*peer).outgoingBandwidth = ntohl((*command).connect.outgoingBandwidth);
-    (*peer).packetThrottleInterval = ntohl((*command).connect.packetThrottleInterval);
-    (*peer).packetThrottleAcceleration = ntohl((*command).connect.packetThrottleAcceleration);
-    (*peer).packetThrottleDeceleration = ntohl((*command).connect.packetThrottleDeceleration);
-    (*peer).eventData = ntohl((*command).connect.data);
+    (*peer).outgoingPeerID = u16::from_be((*command).connect.outgoingPeerID);
+    (*peer).incomingBandwidth = u32::from_be((*command).connect.incomingBandwidth);
+    (*peer).outgoingBandwidth = u32::from_be((*command).connect.outgoingBandwidth);
+    (*peer).packetThrottleInterval = u32::from_be((*command).connect.packetThrottleInterval);
+    (*peer).packetThrottleAcceleration =
+        u32::from_be((*command).connect.packetThrottleAcceleration);
+    (*peer).packetThrottleDeceleration =
+        u32::from_be((*command).connect.packetThrottleDeceleration);
+    (*peer).eventData = u32::from_be((*command).connect.data);
     incomingSessionID = (if (*command).connect.incomingSessionID as i32 == 0xff_i32 {
         (*peer).outgoingSessionID as i32
     } else {
@@ -4400,7 +4405,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         );
         channel = channel.offset(1);
     }
-    mtu = ntohl((*command).connect.mtu);
+    mtu = u32::from_be((*command).connect.mtu);
     if mtu < ENET_PROTOCOL_MINIMUM_MTU as i32 as u32 {
         mtu = ENET_PROTOCOL_MINIMUM_MTU as i32 as u32;
     } else if mtu > ENET_PROTOCOL_MAXIMUM_MTU as i32 as u32 {
@@ -4441,8 +4446,8 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
             .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as i32 as u32)
             .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
     }
-    if windowSize > ntohl((*command).connect.windowSize) {
-        windowSize = ntohl((*command).connect.windowSize);
+    if windowSize > u32::from_be((*command).connect.windowSize) {
+        windowSize = u32::from_be((*command).connect.windowSize);
     }
     if windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
         windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
@@ -4452,19 +4457,19 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     verifyCommand.header.command = (ENET_PROTOCOL_COMMAND_VERIFY_CONNECT as i32
         | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32) as u8;
     verifyCommand.header.channelID = 0xff_i32 as u8;
-    verifyCommand.verifyConnect.outgoingPeerID = htons((*peer).incomingPeerID);
+    verifyCommand.verifyConnect.outgoingPeerID = (*peer).incomingPeerID.to_be();
     verifyCommand.verifyConnect.incomingSessionID = incomingSessionID;
     verifyCommand.verifyConnect.outgoingSessionID = outgoingSessionID;
-    verifyCommand.verifyConnect.mtu = htonl((*peer).mtu);
-    verifyCommand.verifyConnect.windowSize = htonl(windowSize);
-    verifyCommand.verifyConnect.channelCount = htonl(channelCount as u32);
-    verifyCommand.verifyConnect.incomingBandwidth = htonl((*host).incomingBandwidth);
-    verifyCommand.verifyConnect.outgoingBandwidth = htonl((*host).outgoingBandwidth);
-    verifyCommand.verifyConnect.packetThrottleInterval = htonl((*peer).packetThrottleInterval);
+    verifyCommand.verifyConnect.mtu = (*peer).mtu.to_be();
+    verifyCommand.verifyConnect.windowSize = windowSize.to_be();
+    verifyCommand.verifyConnect.channelCount = (channelCount as u32).to_be();
+    verifyCommand.verifyConnect.incomingBandwidth = (*host).incomingBandwidth.to_be();
+    verifyCommand.verifyConnect.outgoingBandwidth = (*host).outgoingBandwidth.to_be();
+    verifyCommand.verifyConnect.packetThrottleInterval = (*peer).packetThrottleInterval.to_be();
     verifyCommand.verifyConnect.packetThrottleAcceleration =
-        htonl((*peer).packetThrottleAcceleration);
+        (*peer).packetThrottleAcceleration.to_be();
     verifyCommand.verifyConnect.packetThrottleDeceleration =
-        htonl((*peer).packetThrottleDeceleration);
+        (*peer).packetThrottleDeceleration.to_be();
     verifyCommand.verifyConnect.connectID = (*peer).connectID;
     enet_peer_queue_outgoing_command(
         peer,
@@ -4487,7 +4492,7 @@ unsafe fn enet_protocol_handle_send_reliable<S: Socket>(
     {
         return -1_i32;
     }
-    let dataLength = ntohs((*command).sendReliable.dataLength) as usize;
+    let dataLength = u16::from_be((*command).sendReliable.dataLength) as usize;
     *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
@@ -4524,7 +4529,7 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     {
         return -1_i32;
     }
-    let dataLength = ntohs((*command).sendUnsequenced.dataLength) as usize;
+    let dataLength = u16::from_be((*command).sendUnsequenced.dataLength) as usize;
     *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
@@ -4532,7 +4537,7 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     {
         return -1_i32;
     }
-    unsequencedGroup = ntohs((*command).sendUnsequenced.unsequencedGroup) as u32;
+    unsequencedGroup = u16::from_be((*command).sendUnsequenced.unsequencedGroup) as u32;
     let index = unsequencedGroup.wrapping_rem(ENET_PEER_UNSEQUENCED_WINDOW_SIZE as i32 as u32);
     if unsequencedGroup < (*peer).incomingUnsequencedGroup as u32 {
         unsequencedGroup = unsequencedGroup.wrapping_add(0x10000_i32 as u32);
@@ -4589,7 +4594,7 @@ unsafe fn enet_protocol_handle_send_unreliable<S: Socket>(
     {
         return -1_i32;
     }
-    let dataLength = ntohs((*command).sendUnreliable.dataLength) as usize;
+    let dataLength = u16::from_be((*command).sendUnreliable.dataLength) as usize;
     *currentData = (*currentData).add(dataLength);
     if dataLength > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
@@ -4629,7 +4634,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     {
         return -1_i32;
     }
-    fragmentLength = ntohs((*command).sendFragment.dataLength) as u32;
+    fragmentLength = u16::from_be((*command).sendFragment.dataLength) as u32;
     *currentData = (*currentData).offset(fragmentLength as isize);
     if fragmentLength <= 0_i32 as u32
         || fragmentLength as usize > (*host).maximumPacketSize
@@ -4640,7 +4645,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     }
     let channel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
-    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as u32;
+    let startSequenceNumber = u16::from_be((*command).sendFragment.startSequenceNumber) as u32;
     startWindow =
         startSequenceNumber.wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as i32 as u32) as u16;
     let currentWindow = ((*channel).incomingReliableSequenceNumber as i32
@@ -4654,10 +4659,10 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     {
         return 0_i32;
     }
-    let fragmentNumber = ntohl((*command).sendFragment.fragmentNumber);
-    let fragmentCount = ntohl((*command).sendFragment.fragmentCount);
-    let fragmentOffset = ntohl((*command).sendFragment.fragmentOffset);
-    let totalLength = ntohl((*command).sendFragment.totalLength);
+    let fragmentNumber = u32::from_be((*command).sendFragment.fragmentNumber);
+    let fragmentCount = u32::from_be((*command).sendFragment.fragmentCount);
+    let fragmentOffset = u32::from_be((*command).sendFragment.fragmentOffset);
+    let totalLength = u32::from_be((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
         || fragmentNumber >= fragmentCount
         || totalLength as usize > (*host).maximumPacketSize
@@ -4764,7 +4769,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     {
         return -1_i32;
     }
-    fragmentLength = ntohs((*command).sendFragment.dataLength) as u32;
+    fragmentLength = u16::from_be((*command).sendFragment.dataLength) as u32;
     *currentData = (*currentData).offset(fragmentLength as isize);
     if fragmentLength as usize > (*host).maximumPacketSize
         || *currentData < (*host).receivedData
@@ -4775,7 +4780,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     let channel =
         &mut *((*peer).channels).offset((*command).header.channelID as isize) as *mut ENetChannel;
     let reliableSequenceNumber = (*command).header.reliableSequenceNumber as u32;
-    let startSequenceNumber = ntohs((*command).sendFragment.startSequenceNumber) as u32;
+    let startSequenceNumber = u16::from_be((*command).sendFragment.startSequenceNumber) as u32;
     reliableWindow =
         reliableSequenceNumber.wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as i32 as u32) as u16;
     let currentWindow = ((*channel).incomingReliableSequenceNumber as i32
@@ -4794,10 +4799,10 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     {
         return 0_i32;
     }
-    let fragmentNumber = ntohl((*command).sendFragment.fragmentNumber);
-    let fragmentCount = ntohl((*command).sendFragment.fragmentCount);
-    let fragmentOffset = ntohl((*command).sendFragment.fragmentOffset);
-    let totalLength = ntohl((*command).sendFragment.totalLength);
+    let fragmentNumber = u32::from_be((*command).sendFragment.fragmentNumber);
+    let fragmentCount = u32::from_be((*command).sendFragment.fragmentCount);
+    let fragmentOffset = u32::from_be((*command).sendFragment.fragmentOffset);
+    let totalLength = u32::from_be((*command).sendFragment.totalLength);
     if fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
         || fragmentNumber >= fragmentCount
         || totalLength as usize > (*host).maximumPacketSize
@@ -4916,8 +4921,8 @@ unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
     if (*peer).incomingBandwidth != 0_i32 as u32 {
         (*host).bandwidthLimitedPeers = ((*host).bandwidthLimitedPeers).wrapping_sub(1);
     }
-    (*peer).incomingBandwidth = ntohl((*command).bandwidthLimit.incomingBandwidth);
-    (*peer).outgoingBandwidth = ntohl((*command).bandwidthLimit.outgoingBandwidth);
+    (*peer).incomingBandwidth = u32::from_be((*command).bandwidthLimit.incomingBandwidth);
+    (*peer).outgoingBandwidth = u32::from_be((*command).bandwidthLimit.outgoingBandwidth);
     if (*peer).incomingBandwidth != 0_i32 as u32 {
         (*host).bandwidthLimitedPeers = ((*host).bandwidthLimitedPeers).wrapping_add(1);
     }
@@ -4958,11 +4963,12 @@ unsafe fn enet_protocol_handle_throttle_configure<S: Socket>(
     {
         return -1_i32;
     }
-    (*peer).packetThrottleInterval = ntohl((*command).throttleConfigure.packetThrottleInterval);
+    (*peer).packetThrottleInterval =
+        u32::from_be((*command).throttleConfigure.packetThrottleInterval);
     (*peer).packetThrottleAcceleration =
-        ntohl((*command).throttleConfigure.packetThrottleAcceleration);
+        u32::from_be((*command).throttleConfigure.packetThrottleAcceleration);
     (*peer).packetThrottleDeceleration =
-        ntohl((*command).throttleConfigure.packetThrottleDeceleration);
+        u32::from_be((*command).throttleConfigure.packetThrottleDeceleration);
     0_i32
 }
 unsafe fn enet_protocol_handle_disconnect<S: Socket>(
@@ -4996,7 +5002,7 @@ unsafe fn enet_protocol_handle_disconnect<S: Socket>(
         enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
     }
     if (*peer).state != ENET_PEER_STATE_DISCONNECTED as i32 as u32 {
-        (*peer).eventData = ntohl((*command).disconnect.data);
+        (*peer).eventData = u32::from_be((*command).disconnect.data);
     }
     0_i32
 }
@@ -5013,7 +5019,7 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
     {
         return 0_i32;
     }
-    receivedSentTime = ntohs((*command).acknowledge.receivedSentTime) as u32;
+    receivedSentTime = u16::from_be((*command).acknowledge.receivedSentTime) as u32;
     receivedSentTime |= (*host).serviceTime & 0xffff0000_u32;
     if receivedSentTime & 0x8000_i32 as u32 > (*host).serviceTime & 0x8000_i32 as u32 {
         receivedSentTime = receivedSentTime.wrapping_sub(0x10000_i32 as u32);
@@ -5091,7 +5097,7 @@ unsafe fn enet_protocol_handle_acknowledge<S: Socket>(
     };
     (*peer).earliestTimeout = 0_i32 as u32;
     let receivedReliableSequenceNumber =
-        ntohs((*command).acknowledge.receivedReliableSequenceNumber) as u32;
+        u16::from_be((*command).acknowledge.receivedReliableSequenceNumber) as u32;
     let commandNumber = enet_protocol_remove_sent_reliable_command(
         peer,
         receivedReliableSequenceNumber as u16,
@@ -5130,13 +5136,14 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     if (*peer).state != ENET_PEER_STATE_CONNECTING as i32 as u32 {
         return 0_i32;
     }
-    let channelCount = ntohl((*command).verifyConnect.channelCount) as usize;
+    let channelCount = u32::from_be((*command).verifyConnect.channelCount) as usize;
     if channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize
         || channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize
-        || ntohl((*command).verifyConnect.packetThrottleInterval) != (*peer).packetThrottleInterval
-        || ntohl((*command).verifyConnect.packetThrottleAcceleration)
+        || u32::from_be((*command).verifyConnect.packetThrottleInterval)
+            != (*peer).packetThrottleInterval
+        || u32::from_be((*command).verifyConnect.packetThrottleAcceleration)
             != (*peer).packetThrottleAcceleration
-        || ntohl((*command).verifyConnect.packetThrottleDeceleration)
+        || u32::from_be((*command).verifyConnect.packetThrottleDeceleration)
             != (*peer).packetThrottleDeceleration
         || (*command).verifyConnect.connectID != (*peer).connectID
     {
@@ -5148,10 +5155,10 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     if channelCount < (*peer).channelCount {
         (*peer).channelCount = channelCount;
     }
-    (*peer).outgoingPeerID = ntohs((*command).verifyConnect.outgoingPeerID);
+    (*peer).outgoingPeerID = u16::from_be((*command).verifyConnect.outgoingPeerID);
     (*peer).incomingSessionID = (*command).verifyConnect.incomingSessionID;
     (*peer).outgoingSessionID = (*command).verifyConnect.outgoingSessionID;
-    mtu = ntohl((*command).verifyConnect.mtu);
+    mtu = u32::from_be((*command).verifyConnect.mtu);
     if mtu < ENET_PROTOCOL_MINIMUM_MTU as i32 as u32 {
         mtu = ENET_PROTOCOL_MINIMUM_MTU as i32 as u32;
     } else if mtu > ENET_PROTOCOL_MAXIMUM_MTU as i32 as u32 {
@@ -5160,7 +5167,7 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     if mtu < (*peer).mtu {
         (*peer).mtu = mtu;
     }
-    windowSize = ntohl((*command).verifyConnect.windowSize);
+    windowSize = u32::from_be((*command).verifyConnect.windowSize);
     if windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
         windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
     }
@@ -5170,8 +5177,8 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     if windowSize < (*peer).windowSize {
         (*peer).windowSize = windowSize;
     }
-    (*peer).incomingBandwidth = ntohl((*command).verifyConnect.incomingBandwidth);
-    (*peer).outgoingBandwidth = ntohl((*command).verifyConnect.outgoingBandwidth);
+    (*peer).incomingBandwidth = u32::from_be((*command).verifyConnect.incomingBandwidth);
+    (*peer).outgoingBandwidth = u32::from_be((*command).verifyConnect.outgoingBandwidth);
     enet_protocol_notify_connect(host, peer, event);
     0_i32
 }
@@ -5188,7 +5195,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         return 0_i32;
     }
     let header = (*host).receivedData as *mut ENetProtocolHeader;
-    peerID = ntohs((*header).peerID);
+    peerID = u16::from_be((*header).peerID);
     let sessionID = ((peerID as i32 & ENET_PROTOCOL_HEADER_SESSION_MASK as i32)
         >> ENET_PROTOCOL_HEADER_SESSION_SHIFT as i32) as u8;
     let flags = (peerID as i32 & ENET_PROTOCOL_HEADER_FLAG_MASK as i32) as u16;
@@ -5328,7 +5335,8 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         if peer.is_null() && commandNumber as i32 != ENET_PROTOCOL_COMMAND_CONNECT as i32 {
             break;
         }
-        (*command).header.reliableSequenceNumber = ntohs((*command).header.reliableSequenceNumber);
+        (*command).header.reliableSequenceNumber =
+            u16::from_be((*command).header.reliableSequenceNumber);
         match commandNumber as i32 {
             1 => {
                 if enet_protocol_handle_acknowledge(host, event, peer, command) != 0 {
@@ -5415,7 +5423,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         if flags as i32 & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME as i32 == 0 {
             break;
         }
-        let sentTime = ntohs((*header).sentTime);
+        let sentTime = u16::from_be((*header).sentTime);
         match (*peer).state {
             7 | 2 | 0 | 9 => {}
             8 => {
@@ -5572,13 +5580,16 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
             (*buffer).data = command as *mut c_void;
             (*buffer).dataLength = ::core::mem::size_of::<ENetProtocolAcknowledge>();
             (*host).packetSize = (*host).packetSize.wrapping_add((*buffer).dataLength);
-            reliableSequenceNumber =
-                htons((*acknowledgement).command.header.reliableSequenceNumber);
+            reliableSequenceNumber = (*acknowledgement)
+                .command
+                .header
+                .reliableSequenceNumber
+                .to_be();
             (*command).header.command = ENET_PROTOCOL_COMMAND_ACKNOWLEDGE as i32 as u8;
             (*command).header.channelID = (*acknowledgement).command.header.channelID;
             (*command).header.reliableSequenceNumber = reliableSequenceNumber;
             (*command).acknowledge.receivedReliableSequenceNumber = reliableSequenceNumber;
-            (*command).acknowledge.receivedSentTime = htons((*acknowledgement).sentTime as u16);
+            (*command).acknowledge.receivedSentTime = ((*acknowledgement).sentTime as u16).to_be();
             if (*acknowledgement).command.header.command as i32 & ENET_PROTOCOL_COMMAND_MASK as i32
                 == ENET_PROTOCOL_COMMAND_DISCONNECT as i32
             {
@@ -6035,7 +6046,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             != 0
                         {
                             (*header).sentTime =
-                                htons(((*host).serviceTime & 0xffff_i32 as u32) as u16);
+                                (((*host).serviceTime & 0xffff_i32 as u32) as u16).to_be();
                             (*((*host).buffers).as_mut_ptr()).dataLength =
                                 ::core::mem::size_of::<ENetProtocolHeader>();
                         } else {
@@ -6076,10 +6087,10 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                     << ENET_PROTOCOL_HEADER_SESSION_SHIFT as i32)
                                 as u16;
                         }
-                        (*header).peerID = htons(
-                            ((*currentPeer).outgoingPeerID as i32 | (*host).headerFlags as i32)
-                                as u16,
-                        );
+                        (*header).peerID = (((*currentPeer).outgoingPeerID as i32
+                            | (*host).headerFlags as i32)
+                            as u16)
+                            .to_be();
                         if let Some(checksum_fn) = (*host).checksum.assume_init_ref() {
                             let checksum_addr: *mut u8 = &mut *headerData
                                 .as_mut_ptr()
