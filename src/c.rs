@@ -1,7 +1,6 @@
 use crate::{os::c_void, Socket};
 
 mod compress;
-mod crc32;
 mod event;
 mod host;
 mod list;
@@ -10,7 +9,6 @@ mod peer;
 mod protocol;
 
 pub(crate) use compress::*;
-pub(crate) use crc32::*;
 pub(crate) use event::*;
 pub(crate) use host::*;
 pub(crate) use list::*;

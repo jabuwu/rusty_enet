@@ -33,7 +33,7 @@ pub(crate) struct ENetHost<S: Socket> {
     pub(crate) commandCount: usize,
     pub(crate) buffers: [ENetBuffer; 65],
     pub(crate) bufferCount: usize,
-    pub(crate) checksum: MaybeUninit<Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>>,
+    pub(crate) checksum: MaybeUninit<Option<Box<dyn Fn(&[&[u8]]) -> u32>>>,
     pub(crate) time: MaybeUninit<Box<dyn Fn() -> Duration>>,
     pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
     pub(crate) packetData: [[u8; 4096]; 2],

@@ -1484,11 +1484,11 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         );
         buffer.data = (*host).receivedData as *mut c_void;
         buffer.dataLength = (*host).receivedDataLength;
-        let inBuffers = vec![std::slice::from_raw_parts(
+        let inBuffers = [std::slice::from_raw_parts(
             buffer.data as *mut u8,
             buffer.dataLength,
         )];
-        if checksum_fn(inBuffers) != desiredChecksum {
+        if checksum_fn(&inBuffers) != desiredChecksum {
             return 0_i32;
         }
     }
@@ -2264,7 +2264,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                     (*buffer).dataLength,
                                 ));
                             }
-                            checksum = checksum_fn(inBuffers);
+                            checksum = checksum_fn(&inBuffers);
                             _enet_memcpy(
                                 checksum_addr as *mut c_void,
                                 &checksum as *const u32 as *const c_void,

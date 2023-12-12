@@ -30,7 +30,7 @@ pub struct HostSettings {
     pub compressor: Option<Box<dyn Compressor>>,
     /// The checksum function to use when sending and receiving packets, or [`None`] for no
     /// checksum.
-    pub checksum: Option<Box<dyn Fn(Vec<&[u8]>) -> u32>>,
+    pub checksum: Option<Box<dyn Fn(&[&[u8]]) -> u32>>,
     /// A custom time function to use, or [`None`] to use the default one. Should return an
     /// an accurate, incrementally increasing [`Duration`].
     pub time: Option<Box<dyn Fn() -> Duration>>,
