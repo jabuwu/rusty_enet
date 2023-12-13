@@ -1655,11 +1655,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
         };
         buffer.data = ((*host).packet_data[0_i32 as usize]).as_mut_ptr();
         buffer.data_length = ::core::mem::size_of::<[u8; ENET_PROTOCOL_MAXIMUM_MTU as usize]>();
-        let received_length = match (*host)
-            .socket
-            .assume_init_mut()
-            .receive(buffer.data_length as usize)
-        {
+        let received_length = match (*host).socket.assume_init_mut().receive(buffer.data_length) {
             Ok(Some((received_address, PacketReceived::Complete(received_data)))) => {
                 if received_data.len() <= ENET_PROTOCOL_MAXIMUM_MTU as usize {
                     *(*host).received_address.assume_init_mut() = Some(received_address);
