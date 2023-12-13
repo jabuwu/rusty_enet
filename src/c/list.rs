@@ -28,7 +28,7 @@ pub(crate) unsafe fn enet_list_insert(
 pub(crate) unsafe fn enet_list_remove(position: ENetListIterator) -> *mut u8 {
     (*(*position).previous).next = (*position).next;
     (*(*position).next).previous = (*position).previous;
-    position as *mut u8
+    position.cast()
 }
 pub(crate) unsafe fn enet_list_move(
     position: ENetListIterator,

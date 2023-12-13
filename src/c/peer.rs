@@ -219,13 +219,11 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             if ((*packet).data_length).wrapping_sub(fragment_offset as usize) < fragment_length {
                 fragment_length = ((*packet).data_length).wrapping_sub(fragment_offset as usize);
             }
-            fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>())
-                as *mut ENetOutgoingCommand;
+            fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>()).cast();
             if fragment.is_null() {
-                while fragments.sentinel.next != &mut fragments.sentinel as *mut ENetListNode {
-                    fragment =
-                        enet_list_remove(fragments.sentinel.next) as *mut ENetOutgoingCommand;
-                    enet_free(fragment as *mut u8);
+                while fragments.sentinel.next != std::ptr::addr_of_mut!(fragments.sentinel) {
+                    fragment = enet_list_remove(fragments.sentinel.next).cast();
+                    enet_free(fragment.cast());
                 }
                 return -1_i32;
             }
@@ -240,14 +238,14 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             (*fragment).command.send_fragment.fragment_number = fragment_number.to_be();
             (*fragment).command.send_fragment.total_length = ((*packet).data_length as u32).to_be();
             (*fragment).command.send_fragment.fragment_offset = u32::from_be(fragment_offset);
-            enet_list_insert(&mut fragments.sentinel, fragment as *mut u8);
+            enet_list_insert(&mut fragments.sentinel, fragment.cast());
             fragment_number = fragment_number.wrapping_add(1);
             fragment_offset = (fragment_offset as usize).wrapping_add(fragment_length) as u32;
         }
         (*packet).reference_count =
             ((*packet).reference_count as u64).wrapping_add(fragment_number as u64) as usize;
-        while fragments.sentinel.next != &mut fragments.sentinel as *mut ENetListNode {
-            fragment = enet_list_remove(fragments.sentinel.next) as *mut ENetOutgoingCommand;
+        while fragments.sentinel.next != std::ptr::addr_of_mut!(fragments.sentinel) {
+            fragment = enet_list_remove(fragments.sentinel.next).cast();
             enet_peer_setup_outgoing_command(peer, fragment);
         }
         return 0_i32;
@@ -288,21 +286,21 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     channel_id: *mut u8,
 ) -> *mut ENetPacket {
     if (*peer).dispatched_commands.sentinel.next
-        == &mut (*peer).dispatched_commands.sentinel as *mut ENetListNode
+        == std::ptr::addr_of_mut!((*peer).dispatched_commands.sentinel)
     {
         return std::ptr::null_mut();
     }
-    let incoming_command =
-        enet_list_remove((*peer).dispatched_commands.sentinel.next) as *mut ENetIncomingCommand;
+    let incoming_command: *mut ENetIncomingCommand =
+        enet_list_remove((*peer).dispatched_commands.sentinel.next).cast();
     if !channel_id.is_null() {
         *channel_id = (*incoming_command).command.header.channel_id;
     }
     let packet = (*incoming_command).packet;
     (*packet).reference_count = ((*packet).reference_count).wrapping_sub(1);
     if !((*incoming_command).fragments).is_null() {
-        enet_free((*incoming_command).fragments as *mut u8);
+        enet_free((*incoming_command).fragments.cast());
     }
-    enet_free(incoming_command as *mut u8);
+    enet_free(incoming_command.cast());
     (*peer).total_waiting_data = (*peer)
         .total_waiting_data
         .wrapping_sub((*packet).data_length) as usize as usize;
@@ -310,8 +308,8 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
 }
 unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
     let mut outgoing_command: *mut ENetOutgoingCommand;
-    while (*queue).sentinel.next != &mut (*queue).sentinel as *mut ENetListNode {
-        outgoing_command = enet_list_remove((*queue).sentinel.next) as *mut ENetOutgoingCommand;
+    while (*queue).sentinel.next != std::ptr::addr_of_mut!((*queue).sentinel) {
+        outgoing_command = enet_list_remove((*queue).sentinel.next).cast();
         if !((*outgoing_command).packet).is_null() {
             (*(*outgoing_command).packet).reference_count =
                 ((*(*outgoing_command).packet).reference_count).wrapping_sub(1);
@@ -319,7 +317,7 @@ unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
                 enet_packet_destroy((*outgoing_command).packet);
             }
         }
-        enet_free(outgoing_command as *mut u8);
+        enet_free(outgoing_command.cast());
     }
 }
 unsafe fn enet_peer_remove_incoming_commands(
@@ -331,8 +329,7 @@ unsafe fn enet_peer_remove_incoming_commands(
     let mut current_command: ENetListIterator;
     current_command = start_command;
     while current_command != end_command {
-        let incoming_command: *mut ENetIncomingCommand =
-            current_command as *mut ENetIncomingCommand;
+        let incoming_command: *mut ENetIncomingCommand = current_command.cast();
         current_command = (*current_command).next;
         if incoming_command == exclude_command {
             continue;
@@ -346,9 +343,9 @@ unsafe fn enet_peer_remove_incoming_commands(
             }
         }
         if !((*incoming_command).fragments).is_null() {
-            enet_free((*incoming_command).fragments as *mut u8);
+            enet_free((*incoming_command).fragments.cast());
         }
-        enet_free(incoming_command as *mut u8);
+        enet_free(incoming_command.cast());
     }
 }
 unsafe fn enet_peer_reset_incoming_commands(queue: *mut ENetList) {
@@ -366,7 +363,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
         (*peer).flags = ((*peer).flags as i32 & !(ENET_PEER_FLAG_NEEDS_DISPATCH as i32)) as u16;
     }
     while (*peer).acknowledgements.sentinel.next
-        != &mut (*peer).acknowledgements.sentinel as *mut ENetListNode
+        != std::ptr::addr_of_mut!((*peer).acknowledgements.sentinel)
     {
         enet_free(enet_list_remove((*peer).acknowledgements.sentinel.next));
     }
@@ -381,7 +378,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
             enet_peer_reset_incoming_commands(&mut (*channel).incoming_unreliable_commands);
             channel = channel.offset(1);
         }
-        enet_free((*peer).channels as *mut u8);
+        enet_free((*peer).channels.cast());
     }
     (*peer).channels = std::ptr::null_mut();
     (*peer).channel_count = 0_i32 as usize;
@@ -588,11 +585,11 @@ pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, dat
 }
 pub(crate) unsafe fn enet_peer_has_outgoing_commands<S: Socket>(peer: *mut ENetPeer<S>) -> i32 {
     if (*peer).outgoing_commands.sentinel.next
-        == &mut (*peer).outgoing_commands.sentinel as *mut ENetListNode
+        == std::ptr::addr_of_mut!((*peer).outgoing_commands.sentinel)
         && (*peer).outgoing_send_reliable_commands.sentinel.next
-            == &mut (*peer).outgoing_send_reliable_commands.sentinel as *mut ENetListNode
+            == std::ptr::addr_of_mut!((*peer).outgoing_send_reliable_commands.sentinel)
         && (*peer).sent_reliable_commands.sentinel.next
-            == &mut (*peer).sent_reliable_commands.sentinel as *mut ENetListNode
+            == std::ptr::addr_of_mut!((*peer).sent_reliable_commands.sentinel)
     {
         return 0_i32;
     }
@@ -634,19 +631,19 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
             return std::ptr::null_mut();
         }
     }
-    let acknowledgement =
-        enet_malloc(::core::mem::size_of::<ENetAcknowledgement>()) as *mut ENetAcknowledgement;
+    let acknowledgement: *mut ENetAcknowledgement =
+        enet_malloc(::core::mem::size_of::<ENetAcknowledgement>()).cast();
     if acknowledgement.is_null() {
         return std::ptr::null_mut();
     }
     (*peer).outgoing_data_total = ((*peer).outgoing_data_total as u64)
         .wrapping_add(::core::mem::size_of::<ENetProtocolAcknowledge>() as u64)
-        as u32 as u32;
+        as u32;
     (*acknowledgement).sent_time = sent_time as u32;
     (*acknowledgement).command = *command;
     enet_list_insert(
         &mut (*peer).acknowledgements.sentinel,
-        acknowledgement as *mut u8,
+        acknowledgement.cast(),
     );
     acknowledgement
 }
@@ -725,12 +722,12 @@ pub(crate) unsafe fn enet_peer_setup_outgoing_command<S: Socket>(
     {
         enet_list_insert(
             &mut (*peer).outgoing_send_reliable_commands.sentinel,
-            outgoing_command as *mut u8,
+            outgoing_command.cast(),
         );
     } else {
         enet_list_insert(
             &mut (*peer).outgoing_commands.sentinel,
-            outgoing_command as *mut u8,
+            outgoing_command.cast(),
         );
     };
 }
@@ -742,7 +739,7 @@ pub(crate) unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
     length: u16,
 ) -> *mut ENetOutgoingCommand {
     let outgoing_command: *mut ENetOutgoingCommand =
-        enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>()) as *mut ENetOutgoingCommand;
+        enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>()).cast();
     if outgoing_command.is_null() {
         return std::ptr::null_mut();
     }
@@ -769,10 +766,9 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
     start_command = current_command;
     dropped_command = start_command;
     while current_command
-        != &mut (*channel).incoming_unreliable_commands.sentinel as *mut ENetListNode
+        != std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
     {
-        let incoming_command: *mut ENetIncomingCommand =
-            current_command as *mut ENetIncomingCommand;
+        let incoming_command: *mut ENetIncomingCommand = current_command.cast();
         if (*incoming_command).command.header.command as i32 & ENET_PROTOCOL_COMMAND_MASK as i32
             != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as i32
         {
@@ -787,13 +783,13 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                     if start_command != current_command {
                         enet_list_move(
                             &mut (*peer).dispatched_commands.sentinel,
-                            start_command as *mut u8,
-                            (*current_command).previous as *mut u8,
+                            start_command.cast(),
+                            (*current_command).previous.cast(),
                         );
                         if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
                             enet_list_insert(
                                 &mut (*(*peer).host).dispatch_queue.sentinel,
-                                &mut (*peer).dispatch_list as *mut ENetListNode as *mut u8,
+                                std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
                             );
                             (*peer).flags = ((*peer).flags as i32
                                 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32)
@@ -828,13 +824,13 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                 if start_command != current_command {
                     enet_list_move(
                         &mut (*peer).dispatched_commands.sentinel,
-                        start_command as *mut u8,
-                        (*current_command).previous as *mut u8,
+                        start_command.cast(),
+                        (*current_command).previous.cast(),
                     );
                     if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
                         enet_list_insert(
                             &mut (*(*peer).host).dispatch_queue.sentinel,
-                            &mut (*peer).dispatch_list as *mut ENetListNode as *mut u8,
+                            std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
                         );
                         (*peer).flags =
                             ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
@@ -854,13 +850,13 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
     if start_command != current_command {
         enet_list_move(
             &mut (*peer).dispatched_commands.sentinel,
-            start_command as *mut u8,
-            (*current_command).previous as *mut u8,
+            start_command.cast(),
+            (*current_command).previous.cast(),
         );
         if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
             enet_list_insert(
                 &mut (*(*peer).host).dispatch_queue.sentinel,
-                &mut (*peer).dispatch_list as *mut ENetListNode as *mut u8,
+                std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
             );
             (*peer).flags = ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
         }
@@ -881,10 +877,9 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
     let mut current_command: ENetListIterator;
     current_command = (*channel).incoming_reliable_commands.sentinel.next;
     while current_command
-        != &mut (*channel).incoming_reliable_commands.sentinel as *mut ENetListNode
+        != std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
     {
-        let incoming_command: *mut ENetIncomingCommand =
-            current_command as *mut ENetIncomingCommand;
+        let incoming_command: *mut ENetIncomingCommand = current_command.cast();
         if (*incoming_command).fragments_remaining > 0_i32 as u32
             || (*incoming_command).reliable_sequence_number as i32
                 != ((*channel).incoming_reliable_sequence_number as i32 + 1_i32) as u16 as i32
@@ -906,18 +901,18 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
     (*channel).incoming_unreliable_sequence_number = 0_i32 as u16;
     enet_list_move(
         &mut (*peer).dispatched_commands.sentinel,
-        (*channel).incoming_reliable_commands.sentinel.next as *mut u8,
-        (*current_command).previous as *mut u8,
+        ((*channel).incoming_reliable_commands.sentinel.next).cast(),
+        ((*current_command).previous).cast(),
     );
     if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
         enet_list_insert(
             &mut (*(*peer).host).dispatch_queue.sentinel,
-            &mut (*peer).dispatch_list as *mut ENetListNode as *mut u8,
+            std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
         );
         (*peer).flags = ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
     }
     if (*channel).incoming_unreliable_commands.sentinel.next
-        != &mut (*channel).incoming_unreliable_commands.sentinel as *mut ENetListNode
+        != std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
     {
         enet_peer_dispatch_incoming_unreliable_commands(peer, channel, queued_command);
     }
@@ -930,7 +925,6 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     flags: u32,
     fragment_count: u32,
 ) -> *mut ENetIncomingCommand {
-    let mut current_block: u64;
     static mut DUMMY_COMMAND: ENetIncomingCommand = ENetIncomingCommand {
         incoming_command_list: ENetListNode {
             next: 0 as *mut ENetListNode,
@@ -947,9 +941,10 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         },
         fragment_count: 0,
         fragments_remaining: 0,
-        fragments: 0 as *const u32 as *mut u32,
-        packet: 0 as *const ENetPacket as *mut ENetPacket,
+        fragments: std::ptr::null_mut(),
+        packet: std::ptr::null_mut(),
     };
+    let mut current_block: u64;
     let channel: *mut ENetChannel =
         ((*peer).channels).offset((*command).header.channel_id as isize);
     let mut unreliable_sequence_number: u32 = 0_i32 as u32;
@@ -1006,13 +1001,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == &mut (*channel).incoming_reliable_commands.sentinel
-                                            as *mut ENetListNode
+                                        == std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
-                                    incoming_command = current_command as *mut ENetIncomingCommand;
+                                    incoming_command = current_command.cast();
                                     if reliable_sequence_number
                                         >= (*channel).incoming_reliable_sequence_number as u32
                                     {
@@ -1066,13 +1060,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == &mut (*channel).incoming_unreliable_commands.sentinel
-                                            as *mut ENetListNode
+                                        == std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
-                                    incoming_command = current_command as *mut ENetIncomingCommand;
+                                    incoming_command = current_command.cast();
                                     if (*command).header.command as i32
                                         & ENET_PROTOCOL_COMMAND_MASK as i32
                                         != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as i32
@@ -1098,35 +1091,28 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                             }
                                             current_block = 11459959175219260272;
                                         }
-                                        match current_block {
-                                            17478428563724192186 => {}
-                                            _ => {
-                                                if ((*incoming_command).reliable_sequence_number
+                                        if current_block != 17478428563724192186 {
+                                            if ((*incoming_command).reliable_sequence_number as u32)
+                                                < reliable_sequence_number
+                                            {
+                                                current_block = 7746103178988627676;
+                                                break;
+                                            }
+                                            if (*incoming_command).reliable_sequence_number as u32
+                                                <= reliable_sequence_number
+                                                && (*incoming_command).unreliable_sequence_number
+                                                    as u32
+                                                    <= unreliable_sequence_number
+                                            {
+                                                if ((*incoming_command).unreliable_sequence_number
                                                     as u32)
-                                                    < reliable_sequence_number
+                                                    < unreliable_sequence_number
                                                 {
                                                     current_block = 7746103178988627676;
                                                     break;
-                                                }
-                                                if (*incoming_command).reliable_sequence_number
-                                                    as u32
-                                                    <= reliable_sequence_number
-                                                    && (*incoming_command)
-                                                        .unreliable_sequence_number
-                                                        as u32
-                                                        <= unreliable_sequence_number
-                                                {
-                                                    if ((*incoming_command)
-                                                        .unreliable_sequence_number
-                                                        as u32)
-                                                        < unreliable_sequence_number
-                                                    {
-                                                        current_block = 7746103178988627676;
-                                                        break;
-                                                    } else {
-                                                        current_block = 9207730764507465628;
-                                                        break;
-                                                    }
+                                                } else {
+                                                    current_block = 9207730764507465628;
+                                                    break;
                                                 }
                                             }
                                         }
@@ -1148,7 +1134,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 } else {
                                     incoming_command =
                                         enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
-                                            as *mut ENetIncomingCommand;
+                                            .cast();
                                     if incoming_command.is_null() {
                                         current_block = 15492018734234176694;
                                     } else {
@@ -1177,14 +1163,14 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                             >(
                                                             )),
                                                     )
-                                                        as *mut u32;
+                                                    .cast();
                                             }
                                             if ((*incoming_command).fragments).is_null() {
-                                                enet_free(incoming_command as *mut u8);
+                                                enet_free(incoming_command.cast());
                                                 current_block = 15492018734234176694;
                                             } else {
                                                 write_bytes(
-                                                    (*incoming_command).fragments as *mut u8,
+                                                    (*incoming_command).fragments.cast::<u8>(),
                                                     0,
                                                     (fragment_count
                                                         .wrapping_add(31_i32 as u32)
@@ -1199,42 +1185,39 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         } else {
                                             current_block = 13321564401369230990;
                                         }
-                                        match current_block {
-                                            15492018734234176694 => {}
-                                            _ => {
-                                                if !packet.is_null() {
-                                                    (*packet).reference_count =
-                                                        ((*packet).reference_count).wrapping_add(1);
-                                                    (*peer).total_waiting_data = (*peer)
-                                                        .total_waiting_data
-                                                        .wrapping_add((*packet).data_length)
-                                                        as usize
-                                                        as usize;
-                                                }
-                                                enet_list_insert(
-                                                    (*current_command).next,
-                                                    incoming_command as *mut u8,
-                                                );
-                                                match (*command).header.command as i32
-                                                    & ENET_PROTOCOL_COMMAND_MASK as i32
-                                                {
-                                                    8 | 6 => {
-                                                        enet_peer_dispatch_incoming_reliable_commands(
-                                                                peer,
-                                                                channel,
-                                                                incoming_command,
-                                                            );
-                                                    }
-                                                    _ => {
-                                                        enet_peer_dispatch_incoming_unreliable_commands(
-                                                                peer,
-                                                                channel,
-                                                                incoming_command,
-                                                            );
-                                                    }
-                                                }
-                                                return incoming_command;
+                                        if current_block != 15492018734234176694 {
+                                            if !packet.is_null() {
+                                                (*packet).reference_count =
+                                                    ((*packet).reference_count).wrapping_add(1);
+                                                (*peer).total_waiting_data = (*peer)
+                                                    .total_waiting_data
+                                                    .wrapping_add((*packet).data_length)
+                                                    as usize
+                                                    as usize;
                                             }
+                                            enet_list_insert(
+                                                (*current_command).next,
+                                                incoming_command.cast(),
+                                            );
+                                            match (*command).header.command as i32
+                                                & ENET_PROTOCOL_COMMAND_MASK as i32
+                                            {
+                                                8 | 6 => {
+                                                    enet_peer_dispatch_incoming_reliable_commands(
+                                                        peer,
+                                                        channel,
+                                                        incoming_command,
+                                                    );
+                                                }
+                                                _ => {
+                                                    enet_peer_dispatch_incoming_unreliable_commands(
+                                                        peer,
+                                                        channel,
+                                                        incoming_command,
+                                                    );
+                                                }
+                                            }
+                                            return incoming_command;
                                         }
                                     }
                                 }
@@ -1259,13 +1242,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == &mut (*channel).incoming_reliable_commands.sentinel
-                                            as *mut ENetListNode
+                                        == std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
-                                    incoming_command = current_command as *mut ENetIncomingCommand;
+                                    incoming_command = current_command.cast();
                                     if reliable_sequence_number
                                         >= (*channel).incoming_reliable_sequence_number as u32
                                     {
@@ -1319,13 +1301,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == &mut (*channel).incoming_unreliable_commands.sentinel
-                                            as *mut ENetListNode
+                                        == std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
-                                    incoming_command = current_command as *mut ENetIncomingCommand;
+                                    incoming_command = current_command.cast();
                                     if (*command).header.command as i32
                                         & ENET_PROTOCOL_COMMAND_MASK as i32
                                         != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as i32
@@ -1351,35 +1332,28 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                             }
                                             current_block = 11459959175219260272;
                                         }
-                                        match current_block {
-                                            17478428563724192186 => {}
-                                            _ => {
-                                                if ((*incoming_command).reliable_sequence_number
+                                        if current_block != 17478428563724192186 {
+                                            if ((*incoming_command).reliable_sequence_number as u32)
+                                                < reliable_sequence_number
+                                            {
+                                                current_block = 7746103178988627676;
+                                                break;
+                                            }
+                                            if (*incoming_command).reliable_sequence_number as u32
+                                                <= reliable_sequence_number
+                                                && (*incoming_command).unreliable_sequence_number
+                                                    as u32
+                                                    <= unreliable_sequence_number
+                                            {
+                                                if ((*incoming_command).unreliable_sequence_number
                                                     as u32)
-                                                    < reliable_sequence_number
+                                                    < unreliable_sequence_number
                                                 {
                                                     current_block = 7746103178988627676;
                                                     break;
-                                                }
-                                                if (*incoming_command).reliable_sequence_number
-                                                    as u32
-                                                    <= reliable_sequence_number
-                                                    && (*incoming_command)
-                                                        .unreliable_sequence_number
-                                                        as u32
-                                                        <= unreliable_sequence_number
-                                                {
-                                                    if ((*incoming_command)
-                                                        .unreliable_sequence_number
-                                                        as u32)
-                                                        < unreliable_sequence_number
-                                                    {
-                                                        current_block = 7746103178988627676;
-                                                        break;
-                                                    } else {
-                                                        current_block = 9207730764507465628;
-                                                        break;
-                                                    }
+                                                } else {
+                                                    current_block = 9207730764507465628;
+                                                    break;
                                                 }
                                             }
                                         }
@@ -1401,7 +1375,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 } else {
                                     incoming_command =
                                         enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
-                                            as *mut ENetIncomingCommand;
+                                            .cast();
                                     if incoming_command.is_null() {
                                         current_block = 15492018734234176694;
                                     } else {
@@ -1430,14 +1404,14 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                             >(
                                                             )),
                                                     )
-                                                        as *mut u32;
+                                                    .cast();
                                             }
                                             if ((*incoming_command).fragments).is_null() {
-                                                enet_free(incoming_command as *mut u8);
+                                                enet_free(incoming_command.cast());
                                                 current_block = 15492018734234176694;
                                             } else {
                                                 write_bytes(
-                                                    (*incoming_command).fragments as *mut u8,
+                                                    (*incoming_command).fragments.cast::<u8>(),
                                                     0,
                                                     (fragment_count
                                                         .wrapping_add(31_i32 as u32)
@@ -1452,42 +1426,39 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         } else {
                                             current_block = 13321564401369230990;
                                         }
-                                        match current_block {
-                                            15492018734234176694 => {}
-                                            _ => {
-                                                if !packet.is_null() {
-                                                    (*packet).reference_count =
-                                                        ((*packet).reference_count).wrapping_add(1);
-                                                    (*peer).total_waiting_data = (*peer)
-                                                        .total_waiting_data
-                                                        .wrapping_add((*packet).data_length)
-                                                        as usize
-                                                        as usize;
-                                                }
-                                                enet_list_insert(
-                                                    (*current_command).next,
-                                                    incoming_command as *mut u8,
-                                                );
-                                                match (*command).header.command as i32
-                                                    & ENET_PROTOCOL_COMMAND_MASK as i32
-                                                {
-                                                    8 | 6 => {
-                                                        enet_peer_dispatch_incoming_reliable_commands(
-                                                                peer,
-                                                                channel,
-                                                                incoming_command,
-                                                            );
-                                                    }
-                                                    _ => {
-                                                        enet_peer_dispatch_incoming_unreliable_commands(
-                                                                peer,
-                                                                channel,
-                                                                incoming_command,
-                                                            );
-                                                    }
-                                                }
-                                                return incoming_command;
+                                        if current_block != 15492018734234176694 {
+                                            if !packet.is_null() {
+                                                (*packet).reference_count =
+                                                    ((*packet).reference_count).wrapping_add(1);
+                                                (*peer).total_waiting_data = (*peer)
+                                                    .total_waiting_data
+                                                    .wrapping_add((*packet).data_length)
+                                                    as usize
+                                                    as usize;
                                             }
+                                            enet_list_insert(
+                                                (*current_command).next,
+                                                incoming_command.cast(),
+                                            );
+                                            match (*command).header.command as i32
+                                                & ENET_PROTOCOL_COMMAND_MASK as i32
+                                            {
+                                                8 | 6 => {
+                                                    enet_peer_dispatch_incoming_reliable_commands(
+                                                        peer,
+                                                        channel,
+                                                        incoming_command,
+                                                    );
+                                                }
+                                                _ => {
+                                                    enet_peer_dispatch_incoming_unreliable_commands(
+                                                        peer,
+                                                        channel,
+                                                        incoming_command,
+                                                    );
+                                                }
+                                            }
+                                            return incoming_command;
                                         }
                                     }
                                 }
@@ -1512,13 +1483,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == &mut (*channel).incoming_reliable_commands.sentinel
-                                            as *mut ENetListNode
+                                        == std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
-                                    incoming_command = current_command as *mut ENetIncomingCommand;
+                                    incoming_command = current_command.cast();
                                     if reliable_sequence_number
                                         >= (*channel).incoming_reliable_sequence_number as u32
                                     {
@@ -1572,13 +1542,12 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == &mut (*channel).incoming_unreliable_commands.sentinel
-                                            as *mut ENetListNode
+                                        == std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
                                     {
                                         current_block = 7746103178988627676;
                                         break;
                                     }
-                                    incoming_command = current_command as *mut ENetIncomingCommand;
+                                    incoming_command = current_command.cast();
                                     if (*command).header.command as i32
                                         & ENET_PROTOCOL_COMMAND_MASK as i32
                                         != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED as i32
@@ -1604,35 +1573,28 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                             }
                                             current_block = 11459959175219260272;
                                         }
-                                        match current_block {
-                                            17478428563724192186 => {}
-                                            _ => {
-                                                if ((*incoming_command).reliable_sequence_number
+                                        if current_block != 17478428563724192186 {
+                                            if ((*incoming_command).reliable_sequence_number as u32)
+                                                < reliable_sequence_number
+                                            {
+                                                current_block = 7746103178988627676;
+                                                break;
+                                            }
+                                            if (*incoming_command).reliable_sequence_number as u32
+                                                <= reliable_sequence_number
+                                                && (*incoming_command).unreliable_sequence_number
+                                                    as u32
+                                                    <= unreliable_sequence_number
+                                            {
+                                                if ((*incoming_command).unreliable_sequence_number
                                                     as u32)
-                                                    < reliable_sequence_number
+                                                    < unreliable_sequence_number
                                                 {
                                                     current_block = 7746103178988627676;
                                                     break;
-                                                }
-                                                if (*incoming_command).reliable_sequence_number
-                                                    as u32
-                                                    <= reliable_sequence_number
-                                                    && (*incoming_command)
-                                                        .unreliable_sequence_number
-                                                        as u32
-                                                        <= unreliable_sequence_number
-                                                {
-                                                    if ((*incoming_command)
-                                                        .unreliable_sequence_number
-                                                        as u32)
-                                                        < unreliable_sequence_number
-                                                    {
-                                                        current_block = 7746103178988627676;
-                                                        break;
-                                                    } else {
-                                                        current_block = 9207730764507465628;
-                                                        break;
-                                                    }
+                                                } else {
+                                                    current_block = 9207730764507465628;
+                                                    break;
                                                 }
                                             }
                                         }
@@ -1654,7 +1616,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                 } else {
                                     incoming_command =
                                         enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
-                                            as *mut ENetIncomingCommand;
+                                            .cast();
                                     if incoming_command.is_null() {
                                         current_block = 15492018734234176694;
                                     } else {
@@ -1683,14 +1645,14 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                             >(
                                                             )),
                                                     )
-                                                        as *mut u32;
+                                                    .cast();
                                             }
                                             if ((*incoming_command).fragments).is_null() {
-                                                enet_free(incoming_command as *mut u8);
+                                                enet_free(incoming_command.cast());
                                                 current_block = 15492018734234176694;
                                             } else {
                                                 write_bytes(
-                                                    (*incoming_command).fragments as *mut u8,
+                                                    (*incoming_command).fragments.cast::<u8>(),
                                                     0,
                                                     (fragment_count
                                                         .wrapping_add(31_i32 as u32)
@@ -1705,42 +1667,39 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         } else {
                                             current_block = 13321564401369230990;
                                         }
-                                        match current_block {
-                                            15492018734234176694 => {}
-                                            _ => {
-                                                if !packet.is_null() {
-                                                    (*packet).reference_count =
-                                                        ((*packet).reference_count).wrapping_add(1);
-                                                    (*peer).total_waiting_data = (*peer)
-                                                        .total_waiting_data
-                                                        .wrapping_add((*packet).data_length)
-                                                        as usize
-                                                        as usize;
-                                                }
-                                                enet_list_insert(
-                                                    (*current_command).next,
-                                                    incoming_command as *mut u8,
-                                                );
-                                                match (*command).header.command as i32
-                                                    & ENET_PROTOCOL_COMMAND_MASK as i32
-                                                {
-                                                    8 | 6 => {
-                                                        enet_peer_dispatch_incoming_reliable_commands(
-                                                                peer,
-                                                                channel,
-                                                                incoming_command,
-                                                            );
-                                                    }
-                                                    _ => {
-                                                        enet_peer_dispatch_incoming_unreliable_commands(
-                                                                peer,
-                                                                channel,
-                                                                incoming_command,
-                                                            );
-                                                    }
-                                                }
-                                                return incoming_command;
+                                        if current_block != 15492018734234176694 {
+                                            if !packet.is_null() {
+                                                (*packet).reference_count =
+                                                    ((*packet).reference_count).wrapping_add(1);
+                                                (*peer).total_waiting_data = (*peer)
+                                                    .total_waiting_data
+                                                    .wrapping_add((*packet).data_length)
+                                                    as usize
+                                                    as usize;
                                             }
+                                            enet_list_insert(
+                                                (*current_command).next,
+                                                incoming_command.cast(),
+                                            );
+                                            match (*command).header.command as i32
+                                                & ENET_PROTOCOL_COMMAND_MASK as i32
+                                            {
+                                                8 | 6 => {
+                                                    enet_peer_dispatch_incoming_reliable_commands(
+                                                        peer,
+                                                        channel,
+                                                        incoming_command,
+                                                    );
+                                                }
+                                                _ => {
+                                                    enet_peer_dispatch_incoming_unreliable_commands(
+                                                        peer,
+                                                        channel,
+                                                        incoming_command,
+                                                    );
+                                                }
+                                            }
+                                            return incoming_command;
                                         }
                                     }
                                 }

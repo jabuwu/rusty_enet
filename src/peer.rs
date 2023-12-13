@@ -1,14 +1,14 @@
 use std::{fmt::Debug, time::Duration};
 
 use crate::{
-    enet_peer_disconnect, enet_peer_disconnect_later, enet_peer_disconnect_now, enet_peer_ping,
-    enet_peer_ping_interval, enet_peer_reset, enet_peer_send, enet_peer_throttle_configure,
-    enet_peer_timeout, ENetList, ENetListNode, ENetPeer, Error, Packet, Socket,
-    ENET_PEER_STATE_ACKNOWLEDGING_CONNECT, ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT,
-    ENET_PEER_STATE_CONNECTED, ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
+    consts::ENET_PROTOCOL_MAXIMUM_PEER_ID, enet_peer_disconnect, enet_peer_disconnect_later,
+    enet_peer_disconnect_now, enet_peer_ping, enet_peer_ping_interval, enet_peer_reset,
+    enet_peer_send, enet_peer_throttle_configure, enet_peer_timeout,
+    ENetPeer, Error, Packet, Socket, ENET_PEER_STATE_ACKNOWLEDGING_CONNECT,
+    ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT, ENET_PEER_STATE_CONNECTED,
+    ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
     ENET_PEER_STATE_CONNECTION_SUCCEEDED, ENET_PEER_STATE_DISCONNECTED,
     ENET_PEER_STATE_DISCONNECTING, ENET_PEER_STATE_DISCONNECT_LATER, ENET_PEER_STATE_ZOMBIE,
-    ENET_PROTOCOL_MAXIMUM_PEER_ID,
 };
 
 /// A newtype around a `usize`, representing a unique identifier for a peer.
@@ -43,6 +43,7 @@ pub struct Peer<S: Socket>(pub(crate) *mut ENetPeer<S>);
 
 impl<S: Socket> Peer<S> {
     /// Get the [`PeerID`] of this peer.
+    #[must_use]
     pub fn id(&self) -> PeerID {
         PeerID(unsafe { self.0.offset_from((*(*self.0).host).peers) as usize })
     }
@@ -63,7 +64,7 @@ impl<S: Socket> Peer<S> {
     /// # Errors
     ///
     /// Returns [`Error::FailedToSend`] if the underlying ENet call failed.
-    pub fn send(&mut self, channel_id: u8, packet: Packet) -> Result<(), Error> {
+    pub fn send(&mut self, channel_id: u8, packet: &Packet) -> Result<(), Error> {
         unsafe {
             if enet_peer_send(self.0, channel_id, packet.packet) == 0 {
                 Ok(())
@@ -175,6 +176,7 @@ impl<S: Socket> Peer<S> {
     }
 
     /// Get the current state of the peer.
+    #[must_use]
     pub fn state(&self) -> PeerState {
         unsafe {
             match (*self.0).state {
@@ -194,75 +196,89 @@ impl<S: Socket> Peer<S> {
     }
 
     /// Check if this peer's state is [`PeerState::Connected`].
+    #[must_use]
     pub fn connected(&self) -> bool {
         self.state() == PeerState::Connected
     }
 
     /// Number of channels allocated for communication with peer.
+    #[must_use]
     pub fn channel_count(&self) -> usize {
         unsafe { (*self.0).channel_count }
     }
 
     /// Downstream bandwidth of the client in bytes/second.
+    #[must_use]
     pub fn incoming_bandwidth(&self) -> u32 {
         unsafe { (*self.0).incoming_bandwidth }
     }
 
     /// Upstream bandwidth of the client in bytes/second.
+    #[must_use]
     pub fn outgoing_bandwidth(&self) -> u32 {
         unsafe { (*self.0).outgoing_bandwidth }
     }
 
     /// Total amount of downstream data received.
+    #[must_use]
     pub fn incoming_data_total(&self) -> u32 {
         unsafe { (*self.0).incoming_data_total }
     }
 
     /// Total amount of upstream data sent.
+    #[must_use]
     pub fn outgoing_data_total(&self) -> u32 {
         unsafe { (*self.0).outgoing_data_total }
     }
 
     /// Total number of packets sent.
+    #[must_use]
     pub fn packets_sent(&self) -> u32 {
         unsafe { (*self.0).packets_sent }
     }
 
     /// Total number of packets lost.
+    #[must_use]
     pub fn packets_lost(&self) -> u32 {
         unsafe { (*self.0).packets_lost }
     }
 
     /// Mean packet loss of reliable packets as a ratio with respect to the constant
     /// [`ENET_PEER_PACKET_LOSS_SCALE`](crate::consts::ENET_PEER_PACKET_LOSS_SCALE).
+    #[must_use]
     pub fn packet_loss(&self) -> u32 {
         unsafe { (*self.0).packet_loss }
     }
 
     /// Variance of the mean packet loss.
+    #[must_use]
     pub fn packet_loss_variance(&self) -> u32 {
         unsafe { (*self.0).packet_loss_variance }
     }
 
     /// Ping interval. See [`Peer::set_ping_interval`].
+    #[must_use]
     pub fn ping_interval(&self) -> Duration {
-        Duration::from_millis(unsafe { (*self.0).ping_interval } as u64)
+        Duration::from_millis(u64::from(unsafe { (*self.0).ping_interval }))
     }
 
     /// Mean round trip time (RTT), between sending a reliable packet and receiving its
     /// acknowledgement.
+    #[must_use]
     pub fn round_trip_time(&self) -> Duration {
-        Duration::from_millis(unsafe { (*self.0).round_trip_time } as u64)
+        Duration::from_millis(u64::from(unsafe { (*self.0).round_trip_time }))
     }
 
     /// Round trip time (RTT) variance. See [`Peer::round_trip_time`].
+    #[must_use]
     pub fn round_trip_time_variance(&self) -> Duration {
-        Duration::from_millis(unsafe { (*self.0).round_trip_time_variance } as u64)
+        Duration::from_millis(u64::from(unsafe { (*self.0).round_trip_time_variance }))
     }
 
     /// Address of the remote peer, or [`None`] if this peer has never been connected.
     ///
     /// If the peer has disconnected, the previously connected peer's address will be returned.
+    #[must_use]
     pub fn address(&self) -> Option<S::PeerAddress> {
         unsafe { (*self.0).address.assume_init_ref().clone() }
     }
@@ -274,7 +290,7 @@ impl<S: Socket> Debug for Peer<S> {
         f.debug_struct("Peer")
             .field(
                 "dispatchList",
-                &(&peer.dispatch_list as *const ENetListNode),
+                &std::ptr::addr_of!(peer.dispatch_list),
             )
             .field("host", &peer.host)
             .field("outgoingPeerID", &peer.outgoing_peer_id)
@@ -346,23 +362,23 @@ impl<S: Socket> Debug for Peer<S> {
             )
             .field(
                 "acknowledgements",
-                &(&peer.acknowledgements as *const ENetList),
+                &std::ptr::addr_of!(peer.acknowledgements),
             )
             .field(
                 "sentReliableCommands",
-                &(&peer.sent_reliable_commands as *const ENetList),
+                &std::ptr::addr_of!(peer.sent_reliable_commands),
             )
             .field(
                 "outgoingSendReliableCommands",
-                &(&peer.outgoing_send_reliable_commands as *const ENetList),
+                &std::ptr::addr_of!(peer.outgoing_send_reliable_commands),
             )
             .field(
                 "outgoingCommands",
-                &(&peer.outgoing_commands as *const ENetList),
+                &std::ptr::addr_of!(peer.outgoing_commands),
             )
             .field(
                 "dispatchedCommands",
-                &(&peer.dispatched_commands as *const ENetList),
+                &std::ptr::addr_of!(peer.dispatched_commands),
             )
             .field("flags", &peer.flags)
             .field("reserved", &peer.reserved)

@@ -29,7 +29,7 @@ impl Allocator {
                 .align_to(8)
                 .unwrap();
             let ptr = unsafe { std::alloc::alloc(layout) };
-            self.allocations.insert(ptr as *const u8, layout);
+            self.allocations.insert(ptr.cast_const(), layout);
             ptr.cast::<u8>()
         } else {
             std::ptr::null_mut()
@@ -39,7 +39,7 @@ impl Allocator {
     unsafe fn free(&mut self, ptr: *const u8) {
         if !ptr.is_null() {
             let layout = self.allocations.remove(&ptr).unwrap();
-            unsafe { std::alloc::dealloc(ptr as *mut u8, layout) };
+            unsafe { std::alloc::dealloc(ptr.cast_mut(), layout) };
         }
     }
 }

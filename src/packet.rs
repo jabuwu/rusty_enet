@@ -53,6 +53,7 @@ impl Packet {
     /// - [`Packet::always_unreliable`]
     /// - [`Packet::always_unreliable_unsequenced`]
     /// - [`Packet::reliable`]
+    #[must_use]
     pub fn new(data: &[u8], flags: PacketKind) -> Self {
         let packet = unsafe {
             enet_packet_create(
@@ -79,34 +80,40 @@ impl Packet {
 
     /// Create a new unreliable packet with
     /// [`PacketKind::Unreliable { sequenced: true }`](`PacketKind::Unreliable`)
+    #[must_use]
     pub fn unreliable(data: &[u8]) -> Self {
         Self::new(data, PacketKind::Unreliable { sequenced: true })
     }
 
     /// Create a new unreliable packet with
     /// [`PacketKind::Unreliable { sequenced: false }`](`PacketKind::Unreliable`)
+    #[must_use]
     pub fn unreliable_unsequenced(data: &[u8]) -> Self {
         Self::new(data, PacketKind::Unreliable { sequenced: false })
     }
 
     /// Create a new always unreliable packet with
     /// [`PacketKind::AlwaysUnreliable { sequenced: true }`](`PacketKind::AlwaysUnreliable`)
+    #[must_use]
     pub fn always_unreliable(data: &[u8]) -> Self {
         Self::new(data, PacketKind::AlwaysUnreliable { sequenced: true })
     }
 
     /// Create a new always unreliable packet with
     /// [`PacketKind::AlwaysUnreliable { sequenced: false }`](`PacketKind::AlwaysUnreliable`)
+    #[must_use]
     pub fn always_unreliable_unsequenced(data: &[u8]) -> Self {
         Self::new(data, PacketKind::AlwaysUnreliable { sequenced: false })
     }
 
     /// Create a new unreliable packet with [`PacketKind::Reliable`]
+    #[must_use]
     pub fn reliable(data: &[u8]) -> Self {
         Self::new(data, PacketKind::Reliable)
     }
 
     /// Get this packet's [`PacketKind`].
+    #[must_use]
     pub fn kind(&self) -> PacketKind {
         let flags = unsafe { (*self.packet).flags | !ENET_PACKET_FLAG_SENT };
         let sequenced = flags & ENET_PACKET_FLAG_UNSEQUENCED == 0;
@@ -120,6 +127,7 @@ impl Packet {
     }
 
     /// Get the byte array contained in this packet.
+    #[must_use]
     pub fn data(&self) -> &[u8] {
         unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).data_length) }
     }

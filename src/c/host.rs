@@ -61,15 +61,15 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     if peer_count > ENET_PROTOCOL_MAXIMUM_PEER_ID as i32 as usize {
         return std::ptr::null_mut();
     }
-    let host = enet_malloc(::core::mem::size_of::<ENetHost<S>>()) as *mut ENetHost<S>;
+    let host: *mut ENetHost<S> = enet_malloc(::core::mem::size_of::<ENetHost<S>>()).cast();
     if host.is_null() {
         return std::ptr::null_mut();
     }
     write_bytes(host, 0, 1);
-    (*host).peers = enet_malloc(peer_count.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>()))
-        as *mut ENetPeer<S>;
+    (*host).peers =
+        enet_malloc(peer_count.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>())).cast();
     if ((*host).peers).is_null() {
-        enet_free(host as *mut u8);
+        enet_free(host.cast());
         return std::ptr::null_mut();
     }
     write_bytes((*host).peers, 0, peer_count);
@@ -151,8 +151,8 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(host: *mut ENetHost<S>) {
     (*host).time.assume_init_drop();
     (*host).compressor.assume_init_drop();
     (*host).received_address.assume_init_drop();
-    enet_free((*host).peers as *mut u8);
-    enet_free(host as *mut u8);
+    enet_free((*host).peers.cast());
+    enet_free(host.cast());
 }
 pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> u32 {
     (*host).random_seed = (*host).random_seed.wrapping_add(0x6d2b79f5_u32);
@@ -192,8 +192,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         return std::ptr::null_mut();
     }
     (*current_peer).channels =
-        enet_malloc(channel_count.wrapping_mul(::core::mem::size_of::<ENetChannel>()))
-            as *mut ENetChannel;
+        enet_malloc(channel_count.wrapping_mul(::core::mem::size_of::<ENetChannel>())).cast();
     if ((*current_peer).channels).is_null() {
         return std::ptr::null_mut();
     }
@@ -223,7 +222,11 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         enet_list_clear(&mut (*channel).incoming_reliable_commands);
         enet_list_clear(&mut (*channel).incoming_unreliable_commands);
         (*channel).used_reliable_windows = 0_i32 as u16;
-        write_bytes(((*channel).reliable_windows).as_mut_ptr() as *mut u8, 0, 1);
+        write_bytes(
+            ((*channel).reliable_windows).as_mut_ptr().cast::<u8>(),
+            0,
+            1,
+        );
         channel = channel.offset(1);
     }
     command.header.command = (ENET_PROTOCOL_COMMAND_CONNECT as i32
@@ -304,11 +307,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
     let mut bandwidth: u32 = !0_i32 as u32;
     let mut throttle: u32;
     let mut bandwidth_limit: u32 = 0_i32 as u32;
-    let mut needs_adjustment: i32 = if (*host).bandwidth_limited_peers > 0_i32 as usize {
-        1_i32
-    } else {
-        0_i32
-    };
+    let mut needs_adjustment = (*host).bandwidth_limited_peers > 0_usize;
     let mut peer: *mut ENetPeer<S>;
     let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
@@ -339,8 +338,8 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
             peer = peer.offset(1);
         }
     }
-    while peers_remaining > 0_i32 as u32 && needs_adjustment != 0_i32 {
-        needs_adjustment = 0_i32;
+    while peers_remaining > 0_i32 as u32 && needs_adjustment {
+        needs_adjustment = false;
         if data_total <= bandwidth {
             throttle = ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32;
         } else {
@@ -376,7 +375,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                     (*peer).outgoing_bandwidth_throttle_epoch = time_current;
                     (*peer).incoming_data_total = 0_i32 as u32;
                     (*peer).outgoing_data_total = 0_i32 as u32;
-                    needs_adjustment = 1_i32;
+                    needs_adjustment = true;
                     peers_remaining = peers_remaining.wrapping_sub(1);
                     bandwidth = bandwidth.wrapping_sub(peer_bandwidth);
                     data_total = data_total.wrapping_sub(peer_bandwidth);
@@ -413,12 +412,12 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
         (*host).recalculate_bandwidth_limits = 0_i32;
         peers_remaining = (*host).connected_peers as u32;
         bandwidth = (*host).incoming_bandwidth;
-        needs_adjustment = 1_i32;
+        needs_adjustment = true;
         if bandwidth == 0_i32 as u32 {
             bandwidth_limit = 0_i32 as u32;
         } else {
-            while peers_remaining > 0_i32 as u32 && needs_adjustment != 0_i32 {
-                needs_adjustment = 0_i32;
+            while peers_remaining > 0_i32 as u32 && needs_adjustment {
+                needs_adjustment = false;
                 bandwidth_limit = bandwidth.wrapping_div(peers_remaining);
                 peer = (*host).peers;
                 while peer < ((*host).peers).add((*host).peer_count) {
@@ -429,7 +428,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                             && (*peer).outgoing_bandwidth >= bandwidth_limit)
                     {
                         (*peer).incoming_bandwidth_throttle_epoch = time_current;
-                        needs_adjustment = 1_i32;
+                        needs_adjustment = true;
                         peers_remaining = peers_remaining.wrapping_sub(1);
                         bandwidth = bandwidth.wrapping_sub((*peer).outgoing_bandwidth);
                     }

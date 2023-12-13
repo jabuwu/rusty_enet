@@ -37,7 +37,7 @@ fn main() {
                     if let Ok(message) = str::from_utf8(packet.data()) {
                         println!("Received packet: {:?}", message);
                     }
-                    _ = peer.send(channel_id, packet);
+                    _ = peer.send(channel_id, &packet);
                 }
             }
         }

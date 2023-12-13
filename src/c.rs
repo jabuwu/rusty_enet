@@ -70,6 +70,7 @@ pub(crate) struct ENetIncomingCommand {
     pub(crate) fragments: *mut u32,
     pub(crate) packet: *mut ENetPacket,
 }
+#[allow(clippy::cast_possible_truncation)]
 pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> u32 {
-    ((*host).time.assume_init_ref()().as_millis() % u32::MAX as u128) as u32
+    ((*host).time.assume_init_ref()().as_millis() % u128::from(u32::MAX)) as u32
 }

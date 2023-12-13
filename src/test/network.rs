@@ -91,7 +91,7 @@ pub struct NetworkConditions {
 }
 
 impl NetworkConditions {
-    pub fn perfect() -> Self {
+    pub const fn perfect() -> Self {
         Self {
             round_trip_time: 0,
             round_trip_time_variance: 0,
@@ -99,7 +99,7 @@ impl NetworkConditions {
         }
     }
 
-    pub fn good() -> Self {
+    pub const fn good() -> Self {
         Self {
             round_trip_time: 50,
             round_trip_time_variance: 30,
@@ -107,7 +107,7 @@ impl NetworkConditions {
         }
     }
 
-    pub fn bad() -> Self {
+    pub const fn bad() -> Self {
         Self {
             round_trip_time: 300,
             round_trip_time_variance: 100,
@@ -115,7 +115,7 @@ impl NetworkConditions {
         }
     }
 
-    pub fn disconnected() -> Self {
+    pub const fn disconnected() -> Self {
         Self {
             round_trip_time: 0,
             round_trip_time_variance: 0,
@@ -177,7 +177,7 @@ impl Network {
                 }
             }
         }
-        for event in self.events.iter_mut() {
+        for event in &mut self.events {
             if time >= event.send_time {
                 self.sockets[event.to].send(event.from, &event.data);
                 event.sent = true;
@@ -257,12 +257,12 @@ impl Network {
 
     pub fn disconnect(&mut self, from: usize, to: usize, data: u32) {
         let peer = self.resolve_peer(from, to);
-        self.hosts[from].peer_mut(peer).disconnect(data)
+        self.hosts[from].peer_mut(peer).disconnect(data);
     }
 
     pub fn disconnect_later(&mut self, from: usize, to: usize, data: u32) {
         let peer = self.resolve_peer(from, to);
-        self.hosts[from].peer_mut(peer).disconnect_later(data)
+        self.hosts[from].peer_mut(peer).disconnect_later(data);
     }
 
     pub fn disconnect_now(&mut self, from: usize, to: usize, data: u32) {
@@ -271,7 +271,7 @@ impl Network {
         self.conditions.remove(&(from, to));
     }
 
-    pub fn send(&mut self, from: usize, to: usize, channel_id: u8, packet: enet::Packet) {
+    pub fn send(&mut self, from: usize, to: usize, channel_id: u8, packet: &enet::Packet) {
         let peer = self.resolve_peer(from, to);
         self.hosts[from]
             .peer_mut(peer)
@@ -291,7 +291,7 @@ pub struct Host {
 }
 
 impl Host {
-    pub fn address(&self) -> usize {
+    pub const fn address(&self) -> usize {
         self.address
     }
 }
@@ -343,15 +343,15 @@ pub struct EventReceive {
 }
 
 impl Event {
-    pub fn from(&self) -> usize {
+    pub const fn from(&self) -> usize {
         self.from
     }
 
-    pub fn to(&self) -> usize {
+    pub const fn to(&self) -> usize {
         self.to
     }
 
-    pub fn is_connect(&self) -> bool {
+    pub const fn is_connect(&self) -> bool {
         matches!(&self.event, enet::EventNoRef::Connect { .. })
     }
 
@@ -368,7 +368,7 @@ impl Event {
         }
     }
 
-    pub fn is_disconnect(&self) -> bool {
+    pub const fn is_disconnect(&self) -> bool {
         matches!(&self.event, enet::EventNoRef::Disconnect { .. })
     }
 
@@ -385,7 +385,7 @@ impl Event {
         }
     }
 
-    pub fn is_receive(&self) -> bool {
+    pub const fn is_receive(&self) -> bool {
         matches!(&self.event, enet::EventNoRef::Receive { .. })
     }
 

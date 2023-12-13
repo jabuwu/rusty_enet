@@ -1,12 +1,11 @@
 use std::{cmp::Ordering, fmt::Debug, mem::zeroed, time::Duration};
 
 use crate::{
-    enet_host_bandwidth_limit, enet_host_broadcast, enet_host_channel_limit,
-    enet_host_check_events, enet_host_compress, enet_host_connect, enet_host_create,
-    enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetBuffer, ENetEvent,
-    ENetHost, ENetList, ENetPeer, ENetProtocol, Error, Event, Packet, Peer, PeerID, PeerState,
-    Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
-    ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT,
+    consts::ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, enet_host_bandwidth_limit, enet_host_broadcast,
+    enet_host_channel_limit, enet_host_check_events, enet_host_compress, enet_host_connect,
+    enet_host_create, enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetEvent, ENetHost, ENetPeer, Error, Event, Packet, Peer,
+    PeerID, PeerState, Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT,
+    ENET_EVENT_TYPE_RECEIVE,
 };
 
 /// Settings for a newly created host, passed into [`Host::create`].
@@ -72,6 +71,7 @@ impl<S: Socket> Host<S> {
     ///
     /// Returns [`Error::BadParameter`] if one of the host settings was invalid, or
     /// [`Error::FailedToCreateHost`] if the underlying ENet call failed.
+    #[allow(clippy::missing_panics_doc)]
     pub fn create(socket: S, settings: HostSettings) -> Result<Host<S>, Error> {
         if settings.channel_limit == 0 {
             return Err(Error::BadParameter);
@@ -191,6 +191,7 @@ impl<S: Socket> Host<S> {
     /// # Panics
     ///
     /// Panics if the peer ID is outside the bounds of peers allocated for this host.
+    #[must_use]
     pub fn peer(&self, peer: PeerID) -> &Peer<S> {
         self.peers
             .get(peer.0)
@@ -275,14 +276,14 @@ impl<S: Socket> Host<S> {
     }
 
     /// Queues a packet to be sent to all peers.
-    pub fn broadcast(&mut self, channel_id: u8, packet: Packet) -> Result<(), Error> {
+    pub fn broadcast(&mut self, channel_id: u8, packet: &Packet) {
         unsafe {
             enet_host_broadcast(self.host, channel_id, packet.packet);
-            Ok(())
         }
     }
 
     /// Get the maximum allowed channels for future incoming connections.
+    #[must_use]
     pub fn channel_limit(&self) -> usize {
         unsafe { (*self.host).channel_limit }
     }
@@ -304,6 +305,7 @@ impl<S: Socket> Host<S> {
 
     /// Get the host's current bandwidth limit as (`incoming bandwidth`, `outgoing bandwidth`) in
     /// bytes/second. Returns [`None`] if there is no limit.
+    #[must_use]
     pub fn bandwidth_limit(&self) -> (Option<u32>, Option<u32>) {
         unsafe {
             (
@@ -402,13 +404,13 @@ impl<S: Socket> Debug for Host<S> {
             .field("peerCount", &host.peer_count)
             .field("channelLimit", &host.channel_limit)
             .field("serviceTime", &host.service_time)
-            .field("dispatchQueue", &(&host.dispatch_queue as *const ENetList))
+            .field("dispatchQueue", &std::ptr::addr_of!(host.dispatch_queue))
             .field("totalQueued", &host.total_queued)
             .field("packetSize", &host.packet_size)
             .field("headerFlags", &host.header_flags)
-            .field("commands", &(&host.commands as *const [ENetProtocol; 32]))
+            .field("commands", &std::ptr::addr_of!(host.commands))
             .field("commandCount", &host.command_count)
-            .field("buffers", &(&host.buffers as *const [ENetBuffer; 65]))
+            .field("buffers", &std::ptr::addr_of!(host.buffers))
             .field("bufferCount", &host.buffer_count)
             .field("checksum", &host.checksum)
             .field("time", &host.time)

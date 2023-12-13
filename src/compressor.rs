@@ -16,8 +16,9 @@ pub struct RangeCoder(*mut ENetRangeCoder);
 
 impl RangeCoder {
     /// Create a new range coder compressor.
+    #[must_use]
     pub fn new() -> Self {
-        Self(unsafe { enet_range_coder_create() as *mut ENetRangeCoder })
+        Self(unsafe { enet_range_coder_create().cast() })
     }
 }
 
@@ -33,12 +34,12 @@ impl Compressor for RangeCoder {
             let mut buffers = vec![];
             for in_buffer in in_buffers {
                 buffers.push(ENetBuffer {
-                    data: in_buffer.as_ptr() as *mut u8,
+                    data: in_buffer.as_ptr().cast_mut(),
                     data_length: in_buffer.len(),
                 });
             }
             enet_range_coder_compress(
-                self.0 as *mut u8,
+                self.0.cast(),
                 buffers.as_ptr(),
                 buffers.len(),
                 in_limit,
@@ -51,7 +52,7 @@ impl Compressor for RangeCoder {
     fn decompress(&mut self, in_data: &[u8], out: &mut [u8]) -> usize {
         unsafe {
             enet_range_coder_decompress(
-                self.0 as *mut u8,
+                self.0.cast(),
                 in_data.as_ptr(),
                 in_data.len(),
                 out.as_mut_ptr(),
@@ -63,6 +64,6 @@ impl Compressor for RangeCoder {
 
 impl Drop for RangeCoder {
     fn drop(&mut self) {
-        unsafe { enet_range_coder_destroy(self.0 as *mut u8) };
+        unsafe { enet_range_coder_destroy(self.0.cast::<u8>()) };
     }
 }

@@ -30,18 +30,18 @@ pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: u32 = 3;
 pub(crate) const ENET_RANGE_CODER_TOP: u32 = 16777216;
 pub(crate) unsafe fn enet_range_coder_create() -> *mut u8 {
     let range_coder: *mut ENetRangeCoder =
-        enet_malloc(::core::mem::size_of::<ENetRangeCoder>()) as *mut ENetRangeCoder;
+        enet_malloc(::core::mem::size_of::<ENetRangeCoder>()).cast();
     if range_coder.is_null() {
         return std::ptr::null_mut();
     }
-    range_coder as *mut u8
+    range_coder.cast()
 }
 pub(crate) unsafe fn enet_range_coder_destroy(context: *mut u8) {
-    let range_coder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    let range_coder: *mut ENetRangeCoder = context.cast();
     if range_coder.is_null() {
         return;
     }
-    enet_free(range_coder as *mut u8);
+    enet_free(range_coder.cast());
 }
 unsafe fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
     let mut total: u16 = 0_i32 as u16;
@@ -69,7 +69,7 @@ pub(crate) unsafe fn enet_range_coder_compress(
     mut out_data: *mut u8,
     out_limit: usize,
 ) -> usize {
-    let range_coder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    let range_coder: *mut ENetRangeCoder = context.cast();
     let out_start: *mut u8 = out_data;
     let out_end: *mut u8 = out_data.add(out_limit);
     let mut in_data: *const u8;
@@ -83,7 +83,7 @@ pub(crate) unsafe fn enet_range_coder_compress(
     if range_coder.is_null() || in_buffer_count <= 0_i32 as usize || in_limit <= 0_i32 as usize {
         return 0_i32 as usize;
     }
-    in_data = (*in_buffers).data as *const u8;
+    in_data = (*in_buffers).data.cast_const();
     in_end = in_data.add((*in_buffers).data_length);
     in_buffers = in_buffers.offset(1);
     in_buffer_count = in_buffer_count.wrapping_sub(1);
@@ -115,7 +115,7 @@ pub(crate) unsafe fn enet_range_coder_compress(
             if in_buffer_count <= 0_i32 as usize {
                 break;
             }
-            in_data = (*in_buffers).data as *const u8;
+            in_data = (*in_buffers).data.cast_const();
             in_end = in_data.add((*in_buffers).data_length);
             in_buffers = in_buffers.offset(1);
             in_buffer_count = in_buffer_count.wrapping_sub(1);
@@ -466,7 +466,7 @@ pub(crate) unsafe fn enet_range_coder_decompress(
     mut out_data: *mut u8,
     out_limit: usize,
 ) -> usize {
-    let range_coder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    let range_coder: *mut ENetRangeCoder = context.cast();
     let out_start: *mut u8 = out_data;
     let out_end: *mut u8 = out_data.add(out_limit);
     let in_end: *const u8 = in_data.add(in_limit);

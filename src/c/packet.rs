@@ -15,19 +15,18 @@ pub(crate) unsafe fn enet_packet_create(
     data_length: usize,
     flags: u32,
 ) -> *mut ENetPacket {
-    let packet: *mut ENetPacket =
-        enet_malloc(::core::mem::size_of::<ENetPacket>()) as *mut ENetPacket;
+    let packet: *mut ENetPacket = enet_malloc(::core::mem::size_of::<ENetPacket>()).cast();
     if packet.is_null() {
         return std::ptr::null_mut();
     }
     if flags & ENET_PACKET_FLAG_NO_ALLOCATE as i32 as u32 != 0 {
-        (*packet).data = data as *mut u8;
+        (*packet).data = data.cast_mut();
     } else if data_length <= 0_i32 as usize {
         (*packet).data = std::ptr::null_mut();
     } else {
         (*packet).data = enet_malloc(data_length);
         if ((*packet).data).is_null() {
-            enet_free(packet as *mut u8);
+            enet_free(packet.cast());
             return std::ptr::null_mut();
         }
         if !data.is_null() {
@@ -48,5 +47,5 @@ pub(crate) unsafe fn enet_packet_destroy(packet: *mut ENetPacket) {
     {
         enet_free((*packet).data);
     }
-    enet_free(packet as *mut u8);
+    enet_free(packet.cast());
 }

@@ -17,7 +17,7 @@ pub struct SocketOptions {
 /// A trait for implementing the underlying data transport layer ENet uses.
 ///
 /// An implementation for [`std::net::UdpSocket`] is provided out of the box.
-#[allow(clippy::type_complexity)]
+#[allow(clippy::type_complexity, clippy::missing_errors_doc)]
 pub trait Socket: Sized {
     /// The address type to use, which must implement [`Address`].
     ///

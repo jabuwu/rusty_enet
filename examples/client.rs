@@ -29,7 +29,7 @@ fn main() {
                 enet::Event::Connect { peer, .. } => {
                     println!("Connected");
                     let packet = enet::Packet::reliable("hello world".as_bytes());
-                    _ = peer.send(0, packet);
+                    _ = peer.send(0, &packet);
                 }
                 enet::Event::Disconnect { .. } => {
                     println!("Disconnected");

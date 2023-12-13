@@ -33,7 +33,7 @@ fn events() {
         host1,
         host2,
         0,
-        enet::Packet::reliable("hello world".as_bytes()),
+        &enet::Packet::reliable("hello world".as_bytes()),
     );
     let events = network.update(1);
     assert_eq!(events.len(), 1);
@@ -73,13 +73,13 @@ fn resend_reliable_packet() {
         host1,
         host2,
         0,
-        enet::Packet::reliable("reliable".as_bytes()),
+        &enet::Packet::reliable("reliable".as_bytes()),
     );
     network.send(
         host1,
         host2,
         0,
-        enet::Packet::unreliable("unreliable".as_bytes()),
+        &enet::Packet::unreliable("unreliable".as_bytes()),
     );
     let events = network.update(1);
     assert_eq!(events.len(), 2);
@@ -97,19 +97,19 @@ fn resend_reliable_packet() {
         host1,
         host2,
         0,
-        enet::Packet::reliable("reliable1".as_bytes()),
+        &enet::Packet::reliable("reliable1".as_bytes()),
     );
     network.send(
         host1,
         host2,
         0,
-        enet::Packet::reliable("reliable2".as_bytes()),
+        &enet::Packet::reliable("reliable2".as_bytes()),
     );
     network.send(
         host1,
         host2,
         0,
-        enet::Packet::unreliable("unreliable".as_bytes()),
+        &enet::Packet::unreliable("unreliable".as_bytes()),
     );
     let events = network.update(1);
     assert_eq!(events.len(), 0);

@@ -30,6 +30,7 @@ pub enum Event<'a, S: Socket> {
 
 impl<'a, S: Socket> Event<'a, S> {
     /// Remove the peer reference from this event, converting into an [`EventNoRef`].
+    #[must_use]
     pub fn no_ref(self) -> EventNoRef {
         match self {
             Self::Connect { peer, data } => EventNoRef::Connect {

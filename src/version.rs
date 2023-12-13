@@ -11,7 +11,8 @@ pub struct Version {
 
 impl Version {
     /// Get the version of the ENet library.
-    pub fn current() -> Version {
+    #[must_use]
+    pub const fn current() -> Version {
         Version {
             major: 1,
             minor: 3,
