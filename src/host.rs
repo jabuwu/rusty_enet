@@ -98,7 +98,7 @@ impl<S: Socket> Host<S> {
                 settings.seed,
             );
             let mut peers = vec![];
-            for peer_index in 0..(*host).peerCount {
+            for peer_index in 0..(*host).peer_count {
                 peers.push(Peer((*host).peers.add(peer_index)));
             }
             if let Some(compressor) = settings.compressor {
@@ -288,7 +288,7 @@ impl<S: Socket> Host<S> {
 
     /// Get the maximum allowed channels for future incoming connections.
     pub fn channel_limit(&self) -> usize {
-        unsafe { (*self.host).channelLimit }
+        unsafe { (*self.host).channel_limit }
     }
 
     /// Limits the maximum allowed channels of future incoming connections. Cannot be 0.
@@ -311,11 +311,11 @@ impl<S: Socket> Host<S> {
     pub fn bandwidth_limit(&self) -> (Option<u32>, Option<u32>) {
         unsafe {
             (
-                match (*self.host).incomingBandwidth {
+                match (*self.host).incoming_bandwidth {
                     0 => None,
                     limit => Some(limit),
                 },
-                match (*self.host).outgoingBandwidth {
+                match (*self.host).outgoing_bandwidth {
                     0 => None,
                     limit => Some(limit),
                 },
@@ -369,7 +369,7 @@ impl<S: Socket> Host<S> {
             },
             ENET_EVENT_TYPE_RECEIVE => Event::Receive {
                 peer: self.peer_mut(self.peer_index(event.peer)),
-                channel_id: event.channelID,
+                channel_id: event.channel_id,
                 packet: Packet::new_from_ptr(event.packet),
             },
             _ => unreachable!(),
@@ -392,44 +392,44 @@ impl<S: Socket> Debug for Host<S> {
         let host = unsafe { &(*self.host) };
         f.debug_struct("Host")
             .field("socket", &host.socket)
-            .field("incomingBandwidth", &host.incomingBandwidth)
-            .field("incomingBandwidth", &host.incomingBandwidth)
-            .field("outgoingBandwidth", &host.outgoingBandwidth)
-            .field("bandwidthThrottleEpoch", &host.bandwidthThrottleEpoch)
+            .field("incomingBandwidth", &host.incoming_bandwidth)
+            .field("incomingBandwidth", &host.incoming_bandwidth)
+            .field("outgoingBandwidth", &host.outgoing_bandwidth)
+            .field("bandwidthThrottleEpoch", &host.bandwidth_throttle_epoch)
             .field("mtu", &host.mtu)
-            .field("randomSeed", &host.randomSeed)
+            .field("randomSeed", &host.random_seed)
             .field(
                 "recalculateBandwidthLimits",
-                &host.recalculateBandwidthLimits,
+                &host.recalculate_bandwidth_limits,
             )
             .field("peers", &host.peers)
-            .field("peerCount", &host.peerCount)
-            .field("channelLimit", &host.channelLimit)
-            .field("serviceTime", &host.serviceTime)
-            .field("dispatchQueue", &(&host.dispatchQueue as *const ENetList))
-            .field("totalQueued", &host.totalQueued)
-            .field("packetSize", &host.packetSize)
-            .field("headerFlags", &host.headerFlags)
+            .field("peerCount", &host.peer_count)
+            .field("channelLimit", &host.channel_limit)
+            .field("serviceTime", &host.service_time)
+            .field("dispatchQueue", &(&host.dispatch_queue as *const ENetList))
+            .field("totalQueued", &host.total_queued)
+            .field("packetSize", &host.packet_size)
+            .field("headerFlags", &host.header_flags)
             .field("commands", &(&host.commands as *const [ENetProtocol; 32]))
-            .field("commandCount", &host.commandCount)
+            .field("commandCount", &host.command_count)
             .field("buffers", &(&host.buffers as *const [ENetBuffer; 65]))
-            .field("bufferCount", &host.bufferCount)
+            .field("bufferCount", &host.buffer_count)
             .field("checksum", &host.checksum)
             .field("time", &host.time)
             .field("compressor", &host.compressor)
-            .field("packetData", &host.packetData)
-            .field("receivedAddress", &host.receivedAddress)
-            .field("receivedData", &host.receivedData)
-            .field("receivedDataLength", &host.receivedDataLength)
-            .field("totalSentData", &host.totalSentData)
-            .field("totalSentPackets", &host.totalSentPackets)
-            .field("totalReceivedData", &host.totalReceivedData)
-            .field("totalReceivedPackets", &host.totalReceivedPackets)
-            .field("connectedPeers", &host.connectedPeers)
-            .field("bandwidthLimitedPeers", &host.bandwidthLimitedPeers)
-            .field("duplicatePeers", &host.duplicatePeers)
-            .field("maximumPacketSize", &host.maximumPacketSize)
-            .field("maximumWaitingData", &host.maximumWaitingData)
+            .field("packetData", &host.packet_data)
+            .field("receivedAddress", &host.received_address)
+            .field("receivedData", &host.received_data)
+            .field("receivedDataLength", &host.received_data_length)
+            .field("totalSentData", &host.total_sent_data)
+            .field("totalSentPackets", &host.total_sent_packets)
+            .field("totalReceivedData", &host.total_received_data)
+            .field("totalReceivedPackets", &host.total_received_packets)
+            .field("connectedPeers", &host.connected_peers)
+            .field("bandwidthLimitedPeers", &host.bandwidth_limited_peers)
+            .field("duplicatePeers", &host.duplicate_peers)
+            .field("maximumPacketSize", &host.maximum_packet_size)
+            .field("maximumWaitingData", &host.maximum_waiting_data)
             .field("peers", &self.peers)
             .finish()
     }

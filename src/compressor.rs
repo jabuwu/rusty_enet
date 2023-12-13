@@ -34,7 +34,7 @@ impl Compressor for RangeCoder {
             for in_buffer in in_buffers {
                 buffers.push(ENetBuffer {
                     data: in_buffer.as_ptr() as *mut u8,
-                    dataLength: in_buffer.len(),
+                    data_length: in_buffer.len(),
                 });
             }
             enet_range_coder_compress(

@@ -200,64 +200,64 @@ impl<S: Socket> Peer<S> {
 
     /// Number of channels allocated for communication with peer.
     pub fn channel_count(&self) -> usize {
-        unsafe { (*self.0).channelCount }
+        unsafe { (*self.0).channel_count }
     }
 
     /// Downstream bandwidth of the client in bytes/second.
     pub fn incoming_bandwidth(&self) -> u32 {
-        unsafe { (*self.0).incomingBandwidth }
+        unsafe { (*self.0).incoming_bandwidth }
     }
 
     /// Upstream bandwidth of the client in bytes/second.
     pub fn outgoing_bandwidth(&self) -> u32 {
-        unsafe { (*self.0).outgoingBandwidth }
+        unsafe { (*self.0).outgoing_bandwidth }
     }
 
     /// Total amount of downstream data received.
     pub fn incoming_data_total(&self) -> u32 {
-        unsafe { (*self.0).incomingDataTotal }
+        unsafe { (*self.0).incoming_data_total }
     }
 
     /// Total amount of upstream data sent.
     pub fn outgoing_data_total(&self) -> u32 {
-        unsafe { (*self.0).outgoingDataTotal }
+        unsafe { (*self.0).outgoing_data_total }
     }
 
     /// Total number of packets sent.
     pub fn packets_sent(&self) -> u32 {
-        unsafe { (*self.0).packetsSent }
+        unsafe { (*self.0).packets_sent }
     }
 
     /// Total number of packets lost.
     pub fn packets_lost(&self) -> u32 {
-        unsafe { (*self.0).packetsLost }
+        unsafe { (*self.0).packets_lost }
     }
 
     /// Mean packet loss of reliable packets as a ratio with respect to the constant
     /// [`ENET_PEER_PACKET_LOSS_SCALE`](crate::consts::ENET_PEER_PACKET_LOSS_SCALE).
     pub fn packet_loss(&self) -> u32 {
-        unsafe { (*self.0).packetLoss }
+        unsafe { (*self.0).packet_loss }
     }
 
     /// Variance of the mean packet loss.
     pub fn packet_loss_variance(&self) -> u32 {
-        unsafe { (*self.0).packetLossVariance }
+        unsafe { (*self.0).packet_loss_variance }
     }
 
     /// Ping interval. See [`Peer::set_ping_interval`].
     pub fn ping_interval(&self) -> Duration {
-        Duration::from_millis(unsafe { (*self.0).pingInterval } as u64)
+        Duration::from_millis(unsafe { (*self.0).ping_interval } as u64)
     }
 
     /// Mean round trip time (RTT), between sending a reliable packet and receiving its
     /// acknowledgement.
     pub fn round_trip_time(&self) -> Duration {
-        Duration::from_millis(unsafe { (*self.0).roundTripTime } as u64)
+        Duration::from_millis(unsafe { (*self.0).round_trip_time } as u64)
     }
 
     /// Round trip time (RTT) variance. See [`Peer::round_trip_time`].
     pub fn round_trip_time_variance(&self) -> Duration {
-        Duration::from_millis(unsafe { (*self.0).roundTripTimeVariance } as u64)
+        Duration::from_millis(unsafe { (*self.0).round_trip_time_variance } as u64)
     }
 
     /// Address of the remote peer, or [`None`] if this peer has never been connected.
@@ -272,71 +272,77 @@ impl<S: Socket> Debug for Peer<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let peer = unsafe { &(*self.0) };
         f.debug_struct("Peer")
-            .field("dispatchList", &(&peer.dispatchList as *const ENetListNode))
+            .field(
+                "dispatchList",
+                &(&peer.dispatch_list as *const ENetListNode),
+            )
             .field("host", &peer.host)
-            .field("outgoingPeerID", &peer.outgoingPeerID)
-            .field("incomingPeerID", &peer.incomingPeerID)
-            .field("connectID", &peer.connectID)
-            .field("outgoingSessionID", &peer.outgoingSessionID)
-            .field("incomingSessionID", &peer.incomingSessionID)
+            .field("outgoingPeerID", &peer.outgoing_peer_id)
+            .field("incomingPeerID", &peer.incoming_peer_id)
+            .field("connectID", &peer.connect_id)
+            .field("outgoingSessionID", &peer.outgoing_session_id)
+            .field("incomingSessionID", &peer.incoming_session_id)
             .field("address", &peer.address)
             .field("data", &peer.data)
             .field("state", &peer.state)
             .field("channels", &peer.channels)
-            .field("channelCount", &peer.channelCount)
-            .field("incomingBandwidth", &peer.incomingBandwidth)
-            .field("outgoingBandwidth", &peer.outgoingBandwidth)
+            .field("channelCount", &peer.channel_count)
+            .field("incomingBandwidth", &peer.incoming_bandwidth)
+            .field("outgoingBandwidth", &peer.outgoing_bandwidth)
             .field(
                 "incomingBandwidthThrottleEpoch",
-                &peer.incomingBandwidthThrottleEpoch,
+                &peer.incoming_bandwidth_throttle_epoch,
             )
             .field(
                 "outgoingBandwidthThrottleEpoch",
-                &peer.outgoingBandwidthThrottleEpoch,
+                &peer.outgoing_bandwidth_throttle_epoch,
             )
-            .field("incomingDataTotal", &peer.incomingDataTotal)
-            .field("outgoingDataTotal", &peer.outgoingDataTotal)
-            .field("lastSendTime", &peer.lastSendTime)
-            .field("lastReceiveTime", &peer.lastReceiveTime)
-            .field("nextTimeout", &peer.nextTimeout)
-            .field("earliestTimeout", &peer.earliestTimeout)
-            .field("packetLossEpoch", &peer.packetLossEpoch)
-            .field("packetsSent", &peer.packetsSent)
-            .field("packetsLost", &peer.packetsLost)
-            .field("packetLoss", &peer.packetLoss)
-            .field("packetLossVariance", &peer.packetLossVariance)
-            .field("packetThrottle", &peer.packetThrottle)
-            .field("packetThrottleLimit", &peer.packetThrottleLimit)
-            .field("packetThrottleCounter", &peer.packetThrottleCounter)
-            .field("packetThrottleEpoch", &peer.packetThrottleEpoch)
+            .field("incomingDataTotal", &peer.incoming_data_total)
+            .field("outgoingDataTotal", &peer.outgoing_data_total)
+            .field("lastSendTime", &peer.last_send_time)
+            .field("lastReceiveTime", &peer.last_receive_time)
+            .field("nextTimeout", &peer.next_timeout)
+            .field("earliestTimeout", &peer.earliest_timeout)
+            .field("packetLossEpoch", &peer.packet_loss_epoch)
+            .field("packetsSent", &peer.packets_sent)
+            .field("packetsLost", &peer.packets_lost)
+            .field("packetLoss", &peer.packet_loss)
+            .field("packetLossVariance", &peer.packet_loss_variance)
+            .field("packetThrottle", &peer.packet_throttle)
+            .field("packetThrottleLimit", &peer.packet_throttle_limit)
+            .field("packetThrottleCounter", &peer.packet_throttle_counter)
+            .field("packetThrottleEpoch", &peer.packet_throttle_epoch)
             .field(
                 "packetThrottleAcceleration",
-                &peer.packetThrottleAcceleration,
+                &peer.packet_throttle_acceleration,
             )
             .field(
                 "packetThrottleDeceleration",
-                &peer.packetThrottleDeceleration,
+                &peer.packet_throttle_deceleration,
             )
-            .field("packetThrottleInterval", &peer.packetThrottleInterval)
-            .field("pingInterval", &peer.pingInterval)
-            .field("timeoutLimit", &peer.timeoutLimit)
-            .field("timeoutMinimum", &peer.timeoutMinimum)
-            .field("timeoutMaximum", &peer.timeoutMaximum)
-            .field("lastRoundTripTime", &peer.lastRoundTripTime)
-            .field("lowestRoundTripTime", &peer.lowestRoundTripTime)
-            .field("lastRoundTripTimeVariance", &peer.lastRoundTripTimeVariance)
+            .field("packetThrottleInterval", &peer.packet_throttle_interval)
+            .field("pingInterval", &peer.ping_interval)
+            .field("timeoutLimit", &peer.timeout_limit)
+            .field("timeoutMinimum", &peer.timeout_minimum)
+            .field("timeoutMaximum", &peer.timeout_maximum)
+            .field("lastRoundTripTime", &peer.last_round_trip_time)
+            .field("lowestRoundTripTime", &peer.lowest_round_trip_time)
+            .field(
+                "lastRoundTripTimeVariance",
+                &peer.last_round_trip_time_variance,
+            )
             .field(
                 "highestRoundTripTimeVariance",
-                &peer.highestRoundTripTimeVariance,
+                &peer.highest_round_trip_time_variance,
             )
-            .field("roundTripTime", &peer.roundTripTime)
-            .field("roundTripTimeVariance", &peer.roundTripTimeVariance)
+            .field("roundTripTime", &peer.round_trip_time)
+            .field("roundTripTimeVariance", &peer.round_trip_time_variance)
             .field("mtu", &peer.mtu)
-            .field("windowSize", &peer.windowSize)
-            .field("reliableDataInTransit", &peer.reliableDataInTransit)
+            .field("windowSize", &peer.window_size)
+            .field("reliableDataInTransit", &peer.reliable_data_in_transit)
             .field(
                 "outgoingReliableSequenceNumber",
-                &peer.outgoingReliableSequenceNumber,
+                &peer.outgoing_reliable_sequence_number,
             )
             .field(
                 "acknowledgements",
@@ -344,27 +350,27 @@ impl<S: Socket> Debug for Peer<S> {
             )
             .field(
                 "sentReliableCommands",
-                &(&peer.sentReliableCommands as *const ENetList),
+                &(&peer.sent_reliable_commands as *const ENetList),
             )
             .field(
                 "outgoingSendReliableCommands",
-                &(&peer.outgoingSendReliableCommands as *const ENetList),
+                &(&peer.outgoing_send_reliable_commands as *const ENetList),
             )
             .field(
                 "outgoingCommands",
-                &(&peer.outgoingCommands as *const ENetList),
+                &(&peer.outgoing_commands as *const ENetList),
             )
             .field(
                 "dispatchedCommands",
-                &(&peer.dispatchedCommands as *const ENetList),
+                &(&peer.dispatched_commands as *const ENetList),
             )
             .field("flags", &peer.flags)
             .field("reserved", &peer.reserved)
-            .field("incomingUnsequencedGroup", &peer.incomingUnsequencedGroup)
-            .field("outgoingUnsequencedGroup", &peer.outgoingUnsequencedGroup)
-            .field("unsequencedWindow", &peer.unsequencedWindow)
-            .field("eventData", &peer.eventData)
-            .field("totalWaitingData", &peer.totalWaitingData)
+            .field("incomingUnsequencedGroup", &peer.incoming_unsequenced_group)
+            .field("outgoingUnsequencedGroup", &peer.outgoing_unsequenced_group)
+            .field("unsequencedWindow", &peer.unsequenced_window)
+            .field("eventData", &peer.event_data)
+            .field("totalWaitingData", &peer.total_waiting_data)
             .finish()
     }
 }

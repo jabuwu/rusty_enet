@@ -32,11 +32,11 @@ pub(crate) unsafe fn enet_list_remove(position: ENetListIterator) -> *mut u8 {
 }
 pub(crate) unsafe fn enet_list_move(
     position: ENetListIterator,
-    dataFirst: *mut u8,
-    dataLast: *mut u8,
+    data_first: *mut u8,
+    data_last: *mut u8,
 ) -> ENetListIterator {
-    let first: ENetListIterator = dataFirst as ENetListIterator;
-    let last: ENetListIterator = dataLast as ENetListIterator;
+    let first: ENetListIterator = data_first as ENetListIterator;
+    let last: ENetListIterator = data_last as ENetListIterator;
     (*(*first).previous).next = (*last).next;
     (*(*last).next).previous = (*first).previous;
     (*first).previous = (*position).previous;

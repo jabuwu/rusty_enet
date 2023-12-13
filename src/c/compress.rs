@@ -27,19 +27,19 @@ pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: u32 = 5;
 pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: u32 = 3;
 pub(crate) const ENET_RANGE_CODER_TOP: u32 = 16777216;
 pub(crate) unsafe fn enet_range_coder_create() -> *mut u8 {
-    let rangeCoder: *mut ENetRangeCoder =
+    let range_coder: *mut ENetRangeCoder =
         enet_malloc(::core::mem::size_of::<ENetRangeCoder>()) as *mut ENetRangeCoder;
-    if rangeCoder.is_null() {
+    if range_coder.is_null() {
         return std::ptr::null_mut();
     }
-    rangeCoder as *mut u8
+    range_coder as *mut u8
 }
 pub(crate) unsafe fn enet_range_coder_destroy(context: *mut u8) {
-    let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
-    if rangeCoder.is_null() {
+    let range_coder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    if range_coder.is_null() {
         return;
     }
-    enet_free(rangeCoder as *mut u8);
+    enet_free(range_coder as *mut u8);
 }
 unsafe fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
     let mut total: u16 = 0_i32 as u16;
@@ -61,33 +61,33 @@ unsafe fn enet_symbol_rescale(mut symbol: *mut ENetSymbol) -> u16 {
 }
 pub(crate) unsafe fn enet_range_coder_compress(
     context: *mut u8,
-    mut inBuffers: *const ENetBuffer,
-    mut inBufferCount: usize,
-    inLimit: usize,
-    mut outData: *mut u8,
-    outLimit: usize,
+    mut in_buffers: *const ENetBuffer,
+    mut in_buffer_count: usize,
+    in_limit: usize,
+    mut out_data: *mut u8,
+    out_limit: usize,
 ) -> usize {
-    let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
-    let outStart: *mut u8 = outData;
-    let outEnd: *mut u8 = outData.add(outLimit);
-    let mut inData: *const u8;
-    let mut inEnd: *const u8;
-    let mut encodeLow: u32 = 0_i32 as u32;
-    let mut encodeRange: u32 = !0_i32 as u32;
+    let range_coder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    let out_start: *mut u8 = out_data;
+    let out_end: *mut u8 = out_data.add(out_limit);
+    let mut in_data: *const u8;
+    let mut in_end: *const u8;
+    let mut encode_low: u32 = 0_i32 as u32;
+    let mut encode_range: u32 = !0_i32 as u32;
     let mut root: *mut ENetSymbol;
     let mut predicted: u16 = 0_i32 as u16;
     let mut order: usize = 0_i32 as usize;
-    let mut nextSymbol: usize = 0_i32 as usize;
-    if rangeCoder.is_null() || inBufferCount <= 0_i32 as usize || inLimit <= 0_i32 as usize {
+    let mut next_symbol: usize = 0_i32 as usize;
+    if range_coder.is_null() || in_buffer_count <= 0_i32 as usize || in_limit <= 0_i32 as usize {
         return 0_i32 as usize;
     }
-    inData = (*inBuffers).data as *const u8;
-    inEnd = inData.add((*inBuffers).dataLength);
-    inBuffers = inBuffers.offset(1);
-    inBufferCount = inBufferCount.wrapping_sub(1);
-    let fresh0 = nextSymbol;
-    nextSymbol = nextSymbol.wrapping_add(1);
-    root = ((*rangeCoder).symbols).as_mut_ptr().add(fresh0);
+    in_data = (*in_buffers).data as *const u8;
+    in_end = in_data.add((*in_buffers).data_length);
+    in_buffers = in_buffers.offset(1);
+    in_buffer_count = in_buffer_count.wrapping_sub(1);
+    let fresh0 = next_symbol;
+    next_symbol = next_symbol.wrapping_add(1);
+    root = ((*range_coder).symbols).as_mut_ptr().add(fresh0);
     (*root).value = 0_i32 as u8;
     (*root).count = 0_i32 as u8;
     (*root).under = 0_i32 as u16;
@@ -109,19 +109,19 @@ pub(crate) unsafe fn enet_range_coder_compress(
         let mut under: u16;
         let mut parent: *mut u16 = &mut predicted;
         let mut total: u16;
-        if inData >= inEnd {
-            if inBufferCount <= 0_i32 as usize {
+        if in_data >= in_end {
+            if in_buffer_count <= 0_i32 as usize {
                 break;
             }
-            inData = (*inBuffers).data as *const u8;
-            inEnd = inData.add((*inBuffers).dataLength);
-            inBuffers = inBuffers.offset(1);
-            inBufferCount = inBufferCount.wrapping_sub(1);
+            in_data = (*in_buffers).data as *const u8;
+            in_end = in_data.add((*in_buffers).data_length);
+            in_buffers = in_buffers.offset(1);
+            in_buffer_count = in_buffer_count.wrapping_sub(1);
         }
-        let fresh1 = inData;
-        inData = inData.offset(1);
+        let fresh1 = in_data;
+        in_data = in_data.offset(1);
         let value = *fresh1;
-        subcontext = ((*rangeCoder).symbols)
+        subcontext = ((*range_coder).symbols)
             .as_mut_ptr()
             .offset(predicted as isize);
         loop {
@@ -132,9 +132,9 @@ pub(crate) unsafe fn enet_range_coder_compress(
             under = 0_u16;
             count = 0_i32 as u16;
             if (*subcontext).symbols == 0 {
-                let fresh2 = nextSymbol;
-                nextSymbol = nextSymbol.wrapping_add(1);
-                symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh2);
+                let fresh2 = next_symbol;
+                next_symbol = next_symbol.wrapping_add(1);
+                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh2);
                 (*symbol).value = value;
                 (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
                 (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -155,9 +155,9 @@ pub(crate) unsafe fn enet_range_coder_compress(
                         if (*node).left != 0 {
                             node = node.offset((*node).left as i32 as isize);
                         } else {
-                            let fresh3 = nextSymbol;
-                            nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh3);
+                            let fresh3 = next_symbol;
+                            next_symbol = next_symbol.wrapping_add(1);
+                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh3);
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
                             (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -175,9 +175,9 @@ pub(crate) unsafe fn enet_range_coder_compress(
                         if (*node).right != 0 {
                             node = node.offset((*node).right as i32 as isize);
                         } else {
-                            let fresh4 = nextSymbol;
-                            nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh4);
+                            let fresh4 = next_symbol;
+                            next_symbol = next_symbol.wrapping_add(1);
+                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh4);
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
                             (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -203,60 +203,60 @@ pub(crate) unsafe fn enet_range_coder_compress(
                     }
                 }
             }
-            *parent = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as i64 as u16;
+            *parent = symbol.offset_from(((*range_coder).symbols).as_mut_ptr()) as i64 as u16;
             parent = &mut (*symbol).parent;
             total = (*subcontext).total;
             if count as i32 > 0_i32 {
-                encodeRange = encodeRange.wrapping_div(total as u32);
-                encodeLow = encodeLow.wrapping_add(
+                encode_range = encode_range.wrapping_div(total as u32);
+                encode_low = encode_low.wrapping_add(
                     (((*subcontext).escapes as i32 + under as i32) as u32)
-                        .wrapping_mul(encodeRange),
+                        .wrapping_mul(encode_range),
                 );
-                encodeRange = encodeRange.wrapping_mul(count as u32);
+                encode_range = encode_range.wrapping_mul(count as u32);
                 loop {
-                    if encodeLow ^ encodeLow.wrapping_add(encodeRange)
+                    if encode_low ^ encode_low.wrapping_add(encode_range)
                         >= ENET_RANGE_CODER_TOP as i32 as u32
                     {
-                        if encodeRange >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
+                        if encode_range >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
                             break;
                         }
-                        encodeRange = encodeLow.wrapping_neg()
+                        encode_range = encode_low.wrapping_neg()
                             & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
                     }
-                    if outData >= outEnd {
+                    if out_data >= out_end {
                         return 0_i32 as usize;
                     }
-                    let fresh5 = outData;
-                    outData = outData.offset(1);
-                    *fresh5 = (encodeLow >> 24_i32) as u8;
-                    encodeRange <<= 8_i32;
-                    encodeLow <<= 8_i32;
+                    let fresh5 = out_data;
+                    out_data = out_data.offset(1);
+                    *fresh5 = (encode_low >> 24_i32) as u8;
+                    encode_range <<= 8_i32;
+                    encode_low <<= 8_i32;
                 }
             } else {
                 if (*subcontext).escapes as i32 > 0_i32
                     && ((*subcontext).escapes as i32) < total as i32
                 {
-                    encodeRange = encodeRange.wrapping_div(total as u32);
-                    encodeLow = encodeLow.wrapping_add((0_i32 as u32).wrapping_mul(encodeRange));
-                    encodeRange = encodeRange.wrapping_mul((*subcontext).escapes as u32);
+                    encode_range = encode_range.wrapping_div(total as u32);
+                    encode_low = encode_low.wrapping_add((0_i32 as u32).wrapping_mul(encode_range));
+                    encode_range = encode_range.wrapping_mul((*subcontext).escapes as u32);
                     loop {
-                        if encodeLow ^ encodeLow.wrapping_add(encodeRange)
+                        if encode_low ^ encode_low.wrapping_add(encode_range)
                             >= ENET_RANGE_CODER_TOP as i32 as u32
                         {
-                            if encodeRange >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
+                            if encode_range >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
                                 break;
                             }
-                            encodeRange = encodeLow.wrapping_neg()
+                            encode_range = encode_low.wrapping_neg()
                                 & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
                         }
-                        if outData >= outEnd {
+                        if out_data >= out_end {
                             return 0_i32 as usize;
                         }
-                        let fresh6 = outData;
-                        outData = outData.offset(1);
-                        *fresh6 = (encodeLow >> 24_i32) as u8;
-                        encodeRange <<= 8_i32;
-                        encodeLow <<= 8_i32;
+                        let fresh6 = out_data;
+                        out_data = out_data.offset(1);
+                        *fresh6 = (encode_low >> 24_i32) as u8;
+                        encode_range <<= 8_i32;
+                        encode_low <<= 8_i32;
                     }
                 }
                 (*subcontext).escapes =
@@ -284,7 +284,7 @@ pub(crate) unsafe fn enet_range_coder_compress(
                 current_block_237 = 836937598693885467;
                 break;
             }
-            subcontext = ((*rangeCoder).symbols)
+            subcontext = ((*range_coder).symbols)
                 .as_mut_ptr()
                 .offset((*subcontext).parent as isize);
         }
@@ -292,9 +292,9 @@ pub(crate) unsafe fn enet_range_coder_compress(
             under = (value as i32 * ENET_CONTEXT_SYMBOL_MINIMUM as i32) as u16;
             count = ENET_CONTEXT_SYMBOL_MINIMUM as i32 as u16;
             if (*root).symbols == 0 {
-                let fresh7 = nextSymbol;
-                nextSymbol = nextSymbol.wrapping_add(1);
-                symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh7);
+                let fresh7 = next_symbol;
+                next_symbol = next_symbol.wrapping_add(1);
+                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh7);
                 (*symbol).value = value;
                 (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
                 (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -314,9 +314,9 @@ pub(crate) unsafe fn enet_range_coder_compress(
                         if (*node_0).left != 0 {
                             node_0 = node_0.offset((*node_0).left as i32 as isize);
                         } else {
-                            let fresh8 = nextSymbol;
-                            nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh8);
+                            let fresh8 = next_symbol;
+                            next_symbol = next_symbol.wrapping_add(1);
+                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh8);
                             (*symbol).value = value;
                             (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
                             (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -334,9 +334,9 @@ pub(crate) unsafe fn enet_range_coder_compress(
                         if (*node_0).right != 0 {
                             node_0 = node_0.offset((*node_0).right as i32 as isize);
                         } else {
-                            let fresh9 = nextSymbol;
-                            nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh9);
+                            let fresh9 = next_symbol;
+                            next_symbol = next_symbol.wrapping_add(1);
+                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh9);
                             (*symbol).value = value;
                             (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
                             (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -362,31 +362,31 @@ pub(crate) unsafe fn enet_range_coder_compress(
                     }
                 }
             }
-            *parent = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as i64 as u16;
+            *parent = symbol.offset_from(((*range_coder).symbols).as_mut_ptr()) as i64 as u16;
             total = (*root).total;
-            encodeRange = encodeRange.wrapping_div(total as u32);
-            encodeLow = encodeLow.wrapping_add(
-                (((*root).escapes as i32 + under as i32) as u32).wrapping_mul(encodeRange),
+            encode_range = encode_range.wrapping_div(total as u32);
+            encode_low = encode_low.wrapping_add(
+                (((*root).escapes as i32 + under as i32) as u32).wrapping_mul(encode_range),
             );
-            encodeRange = encodeRange.wrapping_mul(count as u32);
+            encode_range = encode_range.wrapping_mul(count as u32);
             loop {
-                if encodeLow ^ encodeLow.wrapping_add(encodeRange)
+                if encode_low ^ encode_low.wrapping_add(encode_range)
                     >= ENET_RANGE_CODER_TOP as i32 as u32
                 {
-                    if encodeRange >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
+                    if encode_range >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
                         break;
                     }
-                    encodeRange =
-                        encodeLow.wrapping_neg() & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
+                    encode_range =
+                        encode_low.wrapping_neg() & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
                 }
-                if outData >= outEnd {
+                if out_data >= out_end {
                     return 0_i32 as usize;
                 }
-                let fresh10 = outData;
-                outData = outData.offset(1);
-                *fresh10 = (encodeLow >> 24_i32) as u8;
-                encodeRange <<= 8_i32;
-                encodeLow <<= 8_i32;
+                let fresh10 = out_data;
+                out_data = out_data.offset(1);
+                *fresh10 = (encode_low >> 24_i32) as u8;
+                encode_range <<= 8_i32;
+                encode_low <<= 8_i32;
             }
             (*root).total = ((*root).total as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u16;
             if count as i32
@@ -407,19 +407,19 @@ pub(crate) unsafe fn enet_range_coder_compress(
             }
         }
         if order >= ENET_SUBCONTEXT_ORDER as i32 as usize {
-            predicted = (*rangeCoder).symbols[predicted as usize].parent;
+            predicted = (*range_coder).symbols[predicted as usize].parent;
         } else {
             order = order.wrapping_add(1);
         }
-        if nextSymbol
+        if next_symbol
             >= ::core::mem::size_of::<[ENetSymbol; 4096]>()
                 .wrapping_div(::core::mem::size_of::<ENetSymbol>())
                 .wrapping_sub(ENET_SUBCONTEXT_ORDER as i32 as usize)
         {
-            nextSymbol = 0_i32 as usize;
-            let fresh11 = nextSymbol;
-            nextSymbol = nextSymbol.wrapping_add(1);
-            root = ((*rangeCoder).symbols).as_mut_ptr().add(fresh11);
+            next_symbol = 0_i32 as usize;
+            let fresh11 = next_symbol;
+            next_symbol = next_symbol.wrapping_add(1);
+            root = ((*range_coder).symbols).as_mut_ptr().add(fresh11);
             (*root).value = 0_i32 as u8;
             (*root).count = 0_i32 as u8;
             (*root).under = 0_i32 as u16;
@@ -437,41 +437,41 @@ pub(crate) unsafe fn enet_range_coder_compress(
             order = 0_i32 as usize;
         }
     }
-    while encodeLow != 0 {
-        if outData >= outEnd {
+    while encode_low != 0 {
+        if out_data >= out_end {
             return 0_i32 as usize;
         }
-        let fresh12 = outData;
-        outData = outData.offset(1);
-        *fresh12 = (encodeLow >> 24_i32) as u8;
-        encodeLow <<= 8_i32;
+        let fresh12 = out_data;
+        out_data = out_data.offset(1);
+        *fresh12 = (encode_low >> 24_i32) as u8;
+        encode_low <<= 8_i32;
     }
-    outData.offset_from(outStart) as i64 as usize
+    out_data.offset_from(out_start) as i64 as usize
 }
 pub(crate) unsafe fn enet_range_coder_decompress(
     context: *mut u8,
-    mut inData: *const u8,
-    inLimit: usize,
-    mut outData: *mut u8,
-    outLimit: usize,
+    mut in_data: *const u8,
+    in_limit: usize,
+    mut out_data: *mut u8,
+    out_limit: usize,
 ) -> usize {
-    let rangeCoder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
-    let outStart: *mut u8 = outData;
-    let outEnd: *mut u8 = outData.add(outLimit);
-    let inEnd: *const u8 = inData.add(inLimit);
-    let mut decodeLow: u32 = 0_i32 as u32;
-    let mut decodeCode: u32 = 0_i32 as u32;
-    let mut decodeRange: u32 = !0_i32 as u32;
+    let range_coder: *mut ENetRangeCoder = context as *mut ENetRangeCoder;
+    let out_start: *mut u8 = out_data;
+    let out_end: *mut u8 = out_data.add(out_limit);
+    let in_end: *const u8 = in_data.add(in_limit);
+    let mut decode_low: u32 = 0_i32 as u32;
+    let mut decode_code: u32 = 0_i32 as u32;
+    let mut decode_range: u32 = !0_i32 as u32;
     let mut root: *mut ENetSymbol;
     let mut predicted: u16 = 0_i32 as u16;
     let mut order: usize = 0_i32 as usize;
-    let mut nextSymbol: usize = 0_i32 as usize;
-    if rangeCoder.is_null() || inLimit <= 0_i32 as usize {
+    let mut next_symbol: usize = 0_i32 as usize;
+    if range_coder.is_null() || in_limit <= 0_i32 as usize {
         return 0_i32 as usize;
     }
-    let fresh13 = nextSymbol;
-    nextSymbol = nextSymbol.wrapping_add(1);
-    root = ((*rangeCoder).symbols).as_mut_ptr().add(fresh13);
+    let fresh13 = next_symbol;
+    next_symbol = next_symbol.wrapping_add(1);
+    root = ((*range_coder).symbols).as_mut_ptr().add(fresh13);
     (*root).value = 0_i32 as u8;
     (*root).count = 0_i32 as u8;
     (*root).under = 0_i32 as u16;
@@ -485,25 +485,25 @@ pub(crate) unsafe fn enet_range_coder_decompress(
     (*root).total =
         (ENET_CONTEXT_ESCAPE_MINIMUM as i32 + 256_i32 * ENET_CONTEXT_SYMBOL_MINIMUM as i32) as u16;
     (*root).symbols = 0_i32 as u16;
-    if inData < inEnd {
-        let fresh14 = inData;
-        inData = inData.offset(1);
-        decodeCode |= ((*fresh14 as i32) << 24_i32) as u32;
+    if in_data < in_end {
+        let fresh14 = in_data;
+        in_data = in_data.offset(1);
+        decode_code |= ((*fresh14 as i32) << 24_i32) as u32;
     }
-    if inData < inEnd {
-        let fresh15 = inData;
-        inData = inData.offset(1);
-        decodeCode |= ((*fresh15 as i32) << 16_i32) as u32;
+    if in_data < in_end {
+        let fresh15 = in_data;
+        in_data = in_data.offset(1);
+        decode_code |= ((*fresh15 as i32) << 16_i32) as u32;
     }
-    if inData < inEnd {
-        let fresh16 = inData;
-        inData = inData.offset(1);
-        decodeCode |= ((*fresh16 as i32) << 8_i32) as u32;
+    if in_data < in_end {
+        let fresh16 = in_data;
+        in_data = in_data.offset(1);
+        decode_code |= ((*fresh16 as i32) << 8_i32) as u32;
     }
-    if inData < inEnd {
-        let fresh17 = inData;
-        inData = inData.offset(1);
-        decodeCode |= *fresh17 as u32;
+    if in_data < in_end {
+        let fresh17 = in_data;
+        in_data = in_data.offset(1);
+        decode_code |= *fresh17 as u32;
     }
     let mut current_block_297: u64;
     loop {
@@ -517,7 +517,7 @@ pub(crate) unsafe fn enet_range_coder_decompress(
         let mut bottom: u16 = 0;
         let mut parent: *mut u16 = &mut predicted;
         let mut total: u16;
-        subcontext = ((*rangeCoder).symbols)
+        subcontext = ((*range_coder).symbols)
             .as_mut_ptr()
             .offset(predicted as isize);
         loop {
@@ -528,30 +528,32 @@ pub(crate) unsafe fn enet_range_coder_decompress(
             if (*subcontext).escapes as i32 > 0_i32 {
                 total = (*subcontext).total;
                 if ((*subcontext).escapes as i32) < total as i32 {
-                    decodeRange = decodeRange.wrapping_div(total as u32);
-                    code = decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as u16;
+                    decode_range = decode_range.wrapping_div(total as u32);
+                    code = decode_code
+                        .wrapping_sub(decode_low)
+                        .wrapping_div(decode_range) as u16;
                     if (code as i32) < (*subcontext).escapes as i32 {
-                        decodeLow =
-                            decodeLow.wrapping_add((0_i32 as u32).wrapping_mul(decodeRange));
-                        decodeRange = decodeRange.wrapping_mul((*subcontext).escapes as u32);
+                        decode_low =
+                            decode_low.wrapping_add((0_i32 as u32).wrapping_mul(decode_range));
+                        decode_range = decode_range.wrapping_mul((*subcontext).escapes as u32);
                         loop {
-                            if decodeLow ^ decodeLow.wrapping_add(decodeRange)
+                            if decode_low ^ decode_low.wrapping_add(decode_range)
                                 >= ENET_RANGE_CODER_TOP as i32 as u32
                             {
-                                if decodeRange >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
+                                if decode_range >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
                                     break;
                                 }
-                                decodeRange = decodeLow.wrapping_neg()
+                                decode_range = decode_low.wrapping_neg()
                                     & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
                             }
-                            decodeCode <<= 8_i32;
-                            if inData < inEnd {
-                                let fresh18 = inData;
-                                inData = inData.offset(1);
-                                decodeCode |= *fresh18 as u32;
+                            decode_code <<= 8_i32;
+                            if in_data < in_end {
+                                let fresh18 = in_data;
+                                in_data = in_data.offset(1);
+                                decode_code |= *fresh18 as u32;
                             }
-                            decodeRange <<= 8_i32;
-                            decodeLow <<= 8_i32;
+                            decode_range <<= 8_i32;
+                            decode_low <<= 8_i32;
                         }
                     } else {
                         code = (code as i32 - (*subcontext).escapes as i32) as u16;
@@ -597,30 +599,30 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                             }
                         }
                         bottom =
-                            symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as i64 as u16;
-                        decodeLow = decodeLow.wrapping_add(
+                            symbol.offset_from(((*range_coder).symbols).as_mut_ptr()) as i64 as u16;
+                        decode_low = decode_low.wrapping_add(
                             (((*subcontext).escapes as i32 + under as i32) as u32)
-                                .wrapping_mul(decodeRange),
+                                .wrapping_mul(decode_range),
                         );
-                        decodeRange = decodeRange.wrapping_mul(count as u32);
+                        decode_range = decode_range.wrapping_mul(count as u32);
                         loop {
-                            if decodeLow ^ decodeLow.wrapping_add(decodeRange)
+                            if decode_low ^ decode_low.wrapping_add(decode_range)
                                 >= ENET_RANGE_CODER_TOP as i32 as u32
                             {
-                                if decodeRange >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
+                                if decode_range >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
                                     break;
                                 }
-                                decodeRange = decodeLow.wrapping_neg()
+                                decode_range = decode_low.wrapping_neg()
                                     & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
                             }
-                            decodeCode <<= 8_i32;
-                            if inData < inEnd {
-                                let fresh19 = inData;
-                                inData = inData.offset(1);
-                                decodeCode |= *fresh19 as u32;
+                            decode_code <<= 8_i32;
+                            if in_data < in_end {
+                                let fresh19 = in_data;
+                                in_data = in_data.offset(1);
+                                decode_code |= *fresh19 as u32;
                             }
-                            decodeRange <<= 8_i32;
-                            decodeLow <<= 8_i32;
+                            decode_range <<= 8_i32;
+                            decode_low <<= 8_i32;
                         }
                         (*subcontext).total = ((*subcontext).total as i32
                             + ENET_SUBCONTEXT_SYMBOL_DELTA as i32)
@@ -647,35 +649,37 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                     }
                 }
             }
-            subcontext = ((*rangeCoder).symbols)
+            subcontext = ((*range_coder).symbols)
                 .as_mut_ptr()
                 .offset((*subcontext).parent as isize);
         }
         if let 18325745679564279244 = current_block_297 {
             total = (*root).total;
-            decodeRange = decodeRange.wrapping_div(total as u32);
-            code = decodeCode.wrapping_sub(decodeLow).wrapping_div(decodeRange) as u16;
+            decode_range = decode_range.wrapping_div(total as u32);
+            code = decode_code
+                .wrapping_sub(decode_low)
+                .wrapping_div(decode_range) as u16;
             if (code as i32) < (*root).escapes as i32 {
-                decodeLow = decodeLow.wrapping_add((0_i32 as u32).wrapping_mul(decodeRange));
-                decodeRange = decodeRange.wrapping_mul((*root).escapes as u32);
+                decode_low = decode_low.wrapping_add((0_i32 as u32).wrapping_mul(decode_range));
+                decode_range = decode_range.wrapping_mul((*root).escapes as u32);
                 loop {
-                    if decodeLow ^ decodeLow.wrapping_add(decodeRange)
+                    if decode_low ^ decode_low.wrapping_add(decode_range)
                         >= ENET_RANGE_CODER_TOP as i32 as u32
                     {
-                        if decodeRange >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
+                        if decode_range >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
                             break;
                         }
-                        decodeRange = decodeLow.wrapping_neg()
+                        decode_range = decode_low.wrapping_neg()
                             & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
                     }
-                    decodeCode <<= 8_i32;
-                    if inData < inEnd {
-                        let fresh20 = inData;
-                        inData = inData.offset(1);
-                        decodeCode |= *fresh20 as u32;
+                    decode_code <<= 8_i32;
+                    if in_data < in_end {
+                        let fresh20 = in_data;
+                        in_data = in_data.offset(1);
+                        decode_code |= *fresh20 as u32;
                     }
-                    decodeRange <<= 8_i32;
-                    decodeLow <<= 8_i32;
+                    decode_range <<= 8_i32;
+                    decode_low <<= 8_i32;
                 }
                 break;
             } else {
@@ -685,9 +689,9 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                 if (*root).symbols == 0 {
                     value = (code as i32 / ENET_CONTEXT_SYMBOL_MINIMUM as i32) as u8;
                     under = (code as i32 - code as i32 % ENET_CONTEXT_SYMBOL_MINIMUM as i32) as u16;
-                    let fresh21 = nextSymbol;
-                    nextSymbol = nextSymbol.wrapping_add(1);
-                    symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh21);
+                    let fresh21 = next_symbol;
+                    next_symbol = next_symbol.wrapping_add(1);
+                    symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh21);
                     (*symbol).value = value;
                     (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
                     (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -721,9 +725,9 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                                     - (code as i32 - after_0 as i32)
                                         % ENET_CONTEXT_SYMBOL_MINIMUM as i32)
                                     as u16;
-                                let fresh22 = nextSymbol;
-                                nextSymbol = nextSymbol.wrapping_add(1);
-                                symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh22);
+                                let fresh22 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh22);
                                 (*symbol).value = value;
                                 (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
                                 (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -751,9 +755,9 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                                     - (after_0 as i32 - before_0 as i32 - code as i32 - 1_i32)
                                         % ENET_CONTEXT_SYMBOL_MINIMUM as i32)
                                     as u16;
-                                let fresh23 = nextSymbol;
-                                nextSymbol = nextSymbol.wrapping_add(1);
-                                symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh23);
+                                let fresh23 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh23);
                                 (*symbol).value = value;
                                 (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
                                 (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -779,29 +783,29 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                         }
                     }
                 }
-                bottom = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as i64 as u16;
-                decodeLow = decodeLow.wrapping_add(
-                    (((*root).escapes as i32 + under as i32) as u32).wrapping_mul(decodeRange),
+                bottom = symbol.offset_from(((*range_coder).symbols).as_mut_ptr()) as i64 as u16;
+                decode_low = decode_low.wrapping_add(
+                    (((*root).escapes as i32 + under as i32) as u32).wrapping_mul(decode_range),
                 );
-                decodeRange = decodeRange.wrapping_mul(count as u32);
+                decode_range = decode_range.wrapping_mul(count as u32);
                 loop {
-                    if decodeLow ^ decodeLow.wrapping_add(decodeRange)
+                    if decode_low ^ decode_low.wrapping_add(decode_range)
                         >= ENET_RANGE_CODER_TOP as i32 as u32
                     {
-                        if decodeRange >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
+                        if decode_range >= ENET_RANGE_CODER_BOTTOM as i32 as u32 {
                             break;
                         }
-                        decodeRange = decodeLow.wrapping_neg()
+                        decode_range = decode_low.wrapping_neg()
                             & (ENET_RANGE_CODER_BOTTOM as i32 - 1_i32) as u32;
                     }
-                    decodeCode <<= 8_i32;
-                    if inData < inEnd {
-                        let fresh24 = inData;
-                        inData = inData.offset(1);
-                        decodeCode |= *fresh24 as u32;
+                    decode_code <<= 8_i32;
+                    if in_data < in_end {
+                        let fresh24 = in_data;
+                        in_data = in_data.offset(1);
+                        decode_code |= *fresh24 as u32;
                     }
-                    decodeRange <<= 8_i32;
-                    decodeLow <<= 8_i32;
+                    decode_range <<= 8_i32;
+                    decode_low <<= 8_i32;
                 }
                 (*root).total = ((*root).total as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u16;
                 if count as i32
@@ -822,16 +826,16 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                 }
             }
         }
-        patch = ((*rangeCoder).symbols)
+        patch = ((*range_coder).symbols)
             .as_mut_ptr()
             .offset(predicted as isize);
         while patch != subcontext {
             under = 0_u16;
             count = 0_i32 as u16;
             if (*patch).symbols == 0 {
-                let fresh25 = nextSymbol;
-                nextSymbol = nextSymbol.wrapping_add(1);
-                symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh25);
+                let fresh25 = next_symbol;
+                next_symbol = next_symbol.wrapping_add(1);
+                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh25);
                 (*symbol).value = value;
                 (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
                 (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -851,9 +855,9 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                         if (*node_1).left != 0 {
                             node_1 = node_1.offset((*node_1).left as i32 as isize);
                         } else {
-                            let fresh26 = nextSymbol;
-                            nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh26);
+                            let fresh26 = next_symbol;
+                            next_symbol = next_symbol.wrapping_add(1);
+                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh26);
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
                             (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -871,9 +875,9 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                         if (*node_1).right != 0 {
                             node_1 = node_1.offset((*node_1).right as i32 as isize);
                         } else {
-                            let fresh27 = nextSymbol;
-                            nextSymbol = nextSymbol.wrapping_add(1);
-                            symbol = ((*rangeCoder).symbols).as_mut_ptr().add(fresh27);
+                            let fresh27 = next_symbol;
+                            next_symbol = next_symbol.wrapping_add(1);
+                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh27);
                             (*symbol).value = value;
                             (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
                             (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
@@ -897,7 +901,7 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                     }
                 }
             }
-            *parent = symbol.offset_from(((*rangeCoder).symbols).as_mut_ptr()) as i64 as u16;
+            *parent = symbol.offset_from(((*range_coder).symbols).as_mut_ptr()) as i64 as u16;
             parent = &mut (*symbol).parent;
             if count as i32 <= 0_i32 {
                 (*patch).escapes =
@@ -918,31 +922,31 @@ pub(crate) unsafe fn enet_range_coder_decompress(
                     ((*patch).escapes as i32 - ((*patch).escapes as i32 >> 1_i32)) as u16;
                 (*patch).total = ((*patch).total as i32 + (*patch).escapes as i32) as u16;
             }
-            patch = ((*rangeCoder).symbols)
+            patch = ((*range_coder).symbols)
                 .as_mut_ptr()
                 .offset((*patch).parent as isize);
         }
         *parent = bottom;
-        if outData >= outEnd {
+        if out_data >= out_end {
             return 0_i32 as usize;
         }
-        let fresh28 = outData;
-        outData = outData.offset(1);
+        let fresh28 = out_data;
+        out_data = out_data.offset(1);
         *fresh28 = value;
         if order >= ENET_SUBCONTEXT_ORDER as i32 as usize {
-            predicted = (*rangeCoder).symbols[predicted as usize].parent;
+            predicted = (*range_coder).symbols[predicted as usize].parent;
         } else {
             order = order.wrapping_add(1);
         }
-        if nextSymbol
+        if next_symbol
             >= ::core::mem::size_of::<[ENetSymbol; 4096]>()
                 .wrapping_div(::core::mem::size_of::<ENetSymbol>())
                 .wrapping_sub(ENET_SUBCONTEXT_ORDER as i32 as usize)
         {
-            nextSymbol = 0_i32 as usize;
-            let fresh29 = nextSymbol;
-            nextSymbol = nextSymbol.wrapping_add(1);
-            root = ((*rangeCoder).symbols).as_mut_ptr().add(fresh29);
+            next_symbol = 0_i32 as usize;
+            let fresh29 = next_symbol;
+            next_symbol = next_symbol.wrapping_add(1);
+            root = ((*range_coder).symbols).as_mut_ptr().add(fresh29);
             (*root).value = 0_i32 as u8;
             (*root).count = 0_i32 as u8;
             (*root).under = 0_i32 as u16;
@@ -960,5 +964,5 @@ pub(crate) unsafe fn enet_range_coder_decompress(
             order = 0_i32 as usize;
         }
     }
-    outData.offset_from(outStart) as i64 as usize
+    out_data.offset_from(out_start) as i64 as usize
 }

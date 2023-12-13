@@ -107,7 +107,7 @@
 //! normal network connections to rectify various types of network congestion by further limiting
 //! the volume of packets sent.
 
-#![allow(non_camel_case_types, non_snake_case, clippy::comparison_chain)]
+#![allow(clippy::comparison_chain)]
 #![warn(missing_docs)]
 // https://github.com/rust-lang/rust-clippy/issues/11382
 #![allow(clippy::arc_with_non_send_sync)]

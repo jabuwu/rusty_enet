@@ -72,7 +72,7 @@ impl Packet {
             )
         };
         unsafe {
-            (*packet).referenceCount += 1;
+            (*packet).reference_count += 1;
         }
         Self { packet }
     }
@@ -121,12 +121,12 @@ impl Packet {
 
     /// Get the byte array contained in this packet.
     pub fn data(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).dataLength) }
+        unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).data_length) }
     }
 
     pub(crate) fn new_from_ptr(packet: *mut ENetPacket) -> Self {
         unsafe {
-            (*packet).referenceCount += 1;
+            (*packet).reference_count += 1;
         }
         Self { packet }
     }
@@ -135,7 +135,7 @@ impl Packet {
 impl Clone for Packet {
     fn clone(&self) -> Self {
         unsafe {
-            (*self.packet).referenceCount += 1;
+            (*self.packet).reference_count += 1;
         }
         Self {
             packet: self.packet,
@@ -146,8 +146,8 @@ impl Clone for Packet {
 impl Drop for Packet {
     fn drop(&mut self) {
         unsafe {
-            (*self.packet).referenceCount -= 1;
-            if (*self.packet).referenceCount == 0 {
+            (*self.packet).reference_count -= 1;
+            if (*self.packet).reference_count == 0 {
                 enet_packet_destroy(self.packet);
             }
         }
@@ -159,7 +159,7 @@ impl Debug for Packet {
         let packet = unsafe { &(*self.packet) };
         f.debug_struct("Packet")
             .field("data", &packet.data)
-            .field("dataLength", &packet.dataLength)
+            .field("dataLength", &packet.data_length)
             .field("flags", &packet.flags)
             .field("kind", &self.kind())
             .finish()

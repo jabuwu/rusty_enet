@@ -22,51 +22,51 @@ pub(crate) use protocol::*;
 #[repr(C)]
 pub(crate) struct ENetBuffer {
     pub(crate) data: *mut u8,
-    pub(crate) dataLength: usize,
+    pub(crate) data_length: usize,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct ENetChannel {
-    pub(crate) outgoingReliableSequenceNumber: u16,
-    pub(crate) outgoingUnreliableSequenceNumber: u16,
-    pub(crate) usedReliableWindows: u16,
-    pub(crate) reliableWindows: [u16; 16],
-    pub(crate) incomingReliableSequenceNumber: u16,
-    pub(crate) incomingUnreliableSequenceNumber: u16,
-    pub(crate) incomingReliableCommands: ENetList,
-    pub(crate) incomingUnreliableCommands: ENetList,
+    pub(crate) outgoing_reliable_sequence_number: u16,
+    pub(crate) outgoing_unreliable_sequence_number: u16,
+    pub(crate) used_reliable_windows: u16,
+    pub(crate) reliable_windows: [u16; 16],
+    pub(crate) incoming_reliable_sequence_number: u16,
+    pub(crate) incoming_unreliable_sequence_number: u16,
+    pub(crate) incoming_reliable_commands: ENetList,
+    pub(crate) incoming_unreliable_commands: ENetList,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct ENetAcknowledgement {
-    pub(crate) acknowledgementList: ENetListNode,
-    pub(crate) sentTime: u32,
+    pub(crate) acknowledgement_list: ENetListNode,
+    pub(crate) sent_time: u32,
     pub(crate) command: ENetProtocol,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct ENetOutgoingCommand {
-    pub(crate) outgoingCommandList: ENetListNode,
-    pub(crate) reliableSequenceNumber: u16,
-    pub(crate) unreliableSequenceNumber: u16,
-    pub(crate) sentTime: u32,
-    pub(crate) roundTripTimeout: u32,
-    pub(crate) queueTime: u32,
-    pub(crate) fragmentOffset: u32,
-    pub(crate) fragmentLength: u16,
-    pub(crate) sendAttempts: u16,
+    pub(crate) outgoing_command_list: ENetListNode,
+    pub(crate) reliable_sequence_number: u16,
+    pub(crate) unreliable_sequence_number: u16,
+    pub(crate) sent_time: u32,
+    pub(crate) round_trip_timeout: u32,
+    pub(crate) queue_time: u32,
+    pub(crate) fragment_offset: u32,
+    pub(crate) fragment_length: u16,
+    pub(crate) send_attempts: u16,
     pub(crate) command: ENetProtocol,
     pub(crate) packet: *mut ENetPacket,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct ENetIncomingCommand {
-    pub(crate) incomingCommandList: ENetListNode,
-    pub(crate) reliableSequenceNumber: u16,
-    pub(crate) unreliableSequenceNumber: u16,
+    pub(crate) incoming_command_list: ENetListNode,
+    pub(crate) reliable_sequence_number: u16,
+    pub(crate) unreliable_sequence_number: u16,
     pub(crate) command: ENetProtocol,
-    pub(crate) fragmentCount: u32,
-    pub(crate) fragmentsRemaining: u32,
+    pub(crate) fragment_count: u32,
+    pub(crate) fragments_remaining: u32,
     pub(crate) fragments: *mut u32,
     pub(crate) packet: *mut ENetPacket,
 }

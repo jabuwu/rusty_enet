@@ -5,14 +5,14 @@ use crate::{enet_free, enet_malloc, ENET_PACKET_FLAG_NO_ALLOCATE};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub(crate) struct ENetPacket {
-    pub(crate) referenceCount: usize,
+    pub(crate) reference_count: usize,
     pub(crate) flags: u32,
     pub(crate) data: *mut u8,
-    pub(crate) dataLength: usize,
+    pub(crate) data_length: usize,
 }
 pub(crate) unsafe fn enet_packet_create(
     data: *const u8,
-    dataLength: usize,
+    data_length: usize,
     flags: u32,
 ) -> *mut ENetPacket {
     let packet: *mut ENetPacket =
@@ -22,21 +22,21 @@ pub(crate) unsafe fn enet_packet_create(
     }
     if flags & ENET_PACKET_FLAG_NO_ALLOCATE as i32 as u32 != 0 {
         (*packet).data = data as *mut u8;
-    } else if dataLength <= 0_i32 as usize {
+    } else if data_length <= 0_i32 as usize {
         (*packet).data = std::ptr::null_mut();
     } else {
-        (*packet).data = enet_malloc(dataLength);
+        (*packet).data = enet_malloc(data_length);
         if ((*packet).data).is_null() {
             enet_free(packet as *mut u8);
             return std::ptr::null_mut();
         }
         if !data.is_null() {
-            copy_nonoverlapping(data, (*packet).data, dataLength);
+            copy_nonoverlapping(data, (*packet).data, data_length);
         }
     }
-    (*packet).referenceCount = 0_i32 as usize;
+    (*packet).reference_count = 0_i32 as usize;
     (*packet).flags = flags;
-    (*packet).dataLength = dataLength;
+    (*packet).data_length = data_length;
     packet
 }
 pub(crate) unsafe fn enet_packet_destroy(packet: *mut ENetPacket) {

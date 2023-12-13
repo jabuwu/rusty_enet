@@ -17,7 +17,7 @@ pub(crate) const ENET_PACKET_FLAG_RELIABLE: ENetPacketFlag = 1;
 pub(crate) struct ENetEvent<S: Socket> {
     pub(crate) type_0: ENetEventType,
     pub(crate) peer: *mut ENetPeer<S>,
-    pub(crate) channelID: u8,
+    pub(crate) channel_id: u8,
     pub(crate) data: u32,
     pub(crate) packet: *mut ENetPacket,
 }
