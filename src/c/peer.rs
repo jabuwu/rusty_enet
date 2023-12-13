@@ -1194,9 +1194,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     ((*packet).reference_count).wrapping_add(1);
                                                 (*peer).total_waiting_data = (*peer)
                                                     .total_waiting_data
-                                                    .wrapping_add((*packet).data_length)
-                                                    as usize
-                                                    as usize;
+                                                    .wrapping_add((*packet).data_length);
                                             }
                                             enet_list_insert(
                                                 (*current_command).next,
@@ -1439,9 +1437,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     ((*packet).reference_count).wrapping_add(1);
                                                 (*peer).total_waiting_data = (*peer)
                                                     .total_waiting_data
-                                                    .wrapping_add((*packet).data_length)
-                                                    as usize
-                                                    as usize;
+                                                    .wrapping_add((*packet).data_length);
                                             }
                                             enet_list_insert(
                                                 (*current_command).next,
@@ -1684,9 +1680,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                     ((*packet).reference_count).wrapping_add(1);
                                                 (*peer).total_waiting_data = (*peer)
                                                     .total_waiting_data
-                                                    .wrapping_add((*packet).data_length)
-                                                    as usize
-                                                    as usize;
+                                                    .wrapping_add((*packet).data_length);
                                             }
                                             enet_list_insert(
                                                 (*current_command).next,

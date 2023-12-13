@@ -126,7 +126,8 @@
     clippy::borrow_as_ptr,
     clippy::items_after_statements,
     clippy::single_match_else,
-    clippy::bool_to_int_with_if
+    clippy::bool_to_int_with_if,
+    clippy::unnecessary_cast
 )]
 // https://github.com/rust-lang/rust-clippy/issues/11382
 #![allow(clippy::arc_with_non_send_sync)]

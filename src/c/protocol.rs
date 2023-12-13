@@ -451,8 +451,7 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
         if was_sent != 0 {
             (*peer).reliable_data_in_transit = (*peer)
                 .reliable_data_in_transit
-                .wrapping_sub((*outgoing_command).fragment_length as u32)
-                as u32 as u32;
+                .wrapping_sub((*outgoing_command).fragment_length as u32);
         }
         (*(*outgoing_command).packet).reference_count =
             ((*(*outgoing_command).packet).reference_count).wrapping_sub(1);
@@ -1687,8 +1686,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
         (*host).received_data_length = received_length as usize;
         (*host).total_received_data = (*host)
             .total_received_data
-            .wrapping_add(received_length as u32) as u32
-            as u32;
+            .wrapping_add(received_length as u32);
         (*host).total_received_packets = ((*host).total_received_packets).wrapping_add(1);
         match enet_protocol_handle_incoming_commands(host, event) {
             1 => return 1_i32,
@@ -2001,8 +1999,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                     as u16;
                 (*peer).reliable_data_in_transit = (*peer)
                     .reliable_data_in_transit
-                    .wrapping_add((*outgoing_command).fragment_length as u32)
-                    as u32 as u32;
+                    .wrapping_add((*outgoing_command).fragment_length as u32);
             } else {
                 if !((*outgoing_command).packet).is_null()
                     && (*outgoing_command).fragment_offset == 0_i32 as u32
@@ -2063,7 +2060,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 (*buffer).data_length = (*outgoing_command).fragment_length as usize;
                 (*host).packet_size = ((*host).packet_size as u64)
                     .wrapping_add((*outgoing_command).fragment_length as u64)
-                    as usize as usize;
+                    as usize;
             } else if (*outgoing_command).command.header.command as i32
                 & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32
                 == 0
