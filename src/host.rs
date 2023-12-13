@@ -1,4 +1,4 @@
-use std::{fmt::Debug, mem::zeroed, time::Duration};
+use std::{cmp::Ordering, fmt::Debug, mem::zeroed, time::Duration};
 
 use crate::{
     enet_host_bandwidth_limit, enet_host_broadcast, enet_host_channel_limit,
@@ -148,12 +148,10 @@ impl<S: Socket> Host<S> {
         unsafe {
             let mut event: ENetEvent<S> = zeroed();
             let result = enet_host_check_events(self.host, &mut event);
-            if result > 0 {
-                Ok(Some(self.create_event(&event)))
-            } else if result < 0 {
-                Err(Error::FailedToCheckEvents)
-            } else {
-                Ok(None)
+            match result.cmp(&0) {
+                Ordering::Greater => Ok(Some(self.create_event(&event))),
+                Ordering::Less => Err(Error::FailedToCheckEvents),
+                Ordering::Equal => Ok(None),
             }
         }
     }
@@ -169,12 +167,10 @@ impl<S: Socket> Host<S> {
         unsafe {
             let mut event: ENetEvent<S> = zeroed();
             let result = enet_host_service(self.host, &mut event);
-            if result > 0 {
-                Ok(Some(self.create_event(&event)))
-            } else if result < 0 {
-                Err(Error::FailedToServiceHost)
-            } else {
-                Ok(None)
+            match result.cmp(&0) {
+                Ordering::Greater => Ok(Some(self.create_event(&event))),
+                Ordering::Less => Err(Error::FailedToServiceHost),
+                Ordering::Equal => Ok(None),
             }
         }
     }

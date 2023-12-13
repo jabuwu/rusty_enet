@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::{enet_free, enet_malloc, ENetBuffer};
 
 #[derive(Copy, Clone)]
@@ -149,57 +151,61 @@ pub(crate) unsafe fn enet_range_coder_compress(
                 let mut node: *mut ENetSymbol =
                     subcontext.offset((*subcontext).symbols as i32 as isize);
                 loop {
-                    if (value as i32) < (*node).value as i32 {
-                        (*node).under =
-                            ((*node).under as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u16;
-                        if (*node).left != 0 {
-                            node = node.offset((*node).left as i32 as isize);
-                        } else {
-                            let fresh3 = next_symbol;
-                            next_symbol = next_symbol.wrapping_add(1);
-                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh3);
-                            (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
-                            (*symbol).left = 0_i32 as u16;
-                            (*symbol).right = 0_i32 as u16;
-                            (*symbol).symbols = 0_i32 as u16;
-                            (*symbol).escapes = 0_i32 as u16;
-                            (*symbol).total = 0_i32 as u16;
-                            (*symbol).parent = 0_i32 as u16;
-                            (*node).left = symbol.offset_from(node) as i64 as u16;
+                    match (value as i32).cmp(&((*node).value as i32)) {
+                        Ordering::Less => {
+                            (*node).under =
+                                ((*node).under as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u16;
+                            if (*node).left != 0 {
+                                node = node.offset((*node).left as i32 as isize);
+                            } else {
+                                let fresh3 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh3);
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
+                                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
+                                (*symbol).left = 0_i32 as u16;
+                                (*symbol).right = 0_i32 as u16;
+                                (*symbol).symbols = 0_i32 as u16;
+                                (*symbol).escapes = 0_i32 as u16;
+                                (*symbol).total = 0_i32 as u16;
+                                (*symbol).parent = 0_i32 as u16;
+                                (*node).left = symbol.offset_from(node) as i64 as u16;
+                                break;
+                            }
+                        }
+                        Ordering::Greater => {
+                            under = (under as i32 + (*node).under as i32) as u16;
+                            if (*node).right != 0 {
+                                node = node.offset((*node).right as i32 as isize);
+                            } else {
+                                let fresh4 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh4);
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
+                                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
+                                (*symbol).left = 0_i32 as u16;
+                                (*symbol).right = 0_i32 as u16;
+                                (*symbol).symbols = 0_i32 as u16;
+                                (*symbol).escapes = 0_i32 as u16;
+                                (*symbol).total = 0_i32 as u16;
+                                (*symbol).parent = 0_i32 as u16;
+                                (*node).right = symbol.offset_from(node) as i64 as u16;
+                                break;
+                            }
+                        }
+                        Ordering::Equal => {
+                            count = (count as i32 + (*node).count as i32) as u16;
+                            under = (under as i32 + ((*node).under as i32 - (*node).count as i32))
+                                as u16;
+                            (*node).under =
+                                ((*node).under as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u16;
+                            (*node).count =
+                                ((*node).count as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u8;
+                            symbol = node;
                             break;
                         }
-                    } else if value as i32 > (*node).value as i32 {
-                        under = (under as i32 + (*node).under as i32) as u16;
-                        if (*node).right != 0 {
-                            node = node.offset((*node).right as i32 as isize);
-                        } else {
-                            let fresh4 = next_symbol;
-                            next_symbol = next_symbol.wrapping_add(1);
-                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh4);
-                            (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
-                            (*symbol).left = 0_i32 as u16;
-                            (*symbol).right = 0_i32 as u16;
-                            (*symbol).symbols = 0_i32 as u16;
-                            (*symbol).escapes = 0_i32 as u16;
-                            (*symbol).total = 0_i32 as u16;
-                            (*symbol).parent = 0_i32 as u16;
-                            (*node).right = symbol.offset_from(node) as i64 as u16;
-                            break;
-                        }
-                    } else {
-                        count = (count as i32 + (*node).count as i32) as u16;
-                        under =
-                            (under as i32 + ((*node).under as i32 - (*node).count as i32)) as u16;
-                        (*node).under =
-                            ((*node).under as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u16;
-                        (*node).count =
-                            ((*node).count as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u8;
-                        symbol = node;
-                        break;
                     }
                 }
             }
@@ -308,57 +314,62 @@ pub(crate) unsafe fn enet_range_coder_compress(
             } else {
                 let mut node_0: *mut ENetSymbol = root.offset((*root).symbols as i32 as isize);
                 loop {
-                    if (value as i32) < (*node_0).value as i32 {
-                        (*node_0).under =
-                            ((*node_0).under as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u16;
-                        if (*node_0).left != 0 {
-                            node_0 = node_0.offset((*node_0).left as i32 as isize);
-                        } else {
-                            let fresh8 = next_symbol;
-                            next_symbol = next_symbol.wrapping_add(1);
-                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh8);
-                            (*symbol).value = value;
-                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
-                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
-                            (*symbol).left = 0_i32 as u16;
-                            (*symbol).right = 0_i32 as u16;
-                            (*symbol).symbols = 0_i32 as u16;
-                            (*symbol).escapes = 0_i32 as u16;
-                            (*symbol).total = 0_i32 as u16;
-                            (*symbol).parent = 0_i32 as u16;
-                            (*node_0).left = symbol.offset_from(node_0) as i64 as u16;
+                    match (value as i32).cmp(&((*node_0).value as i32)) {
+                        Ordering::Less => {
+                            (*node_0).under =
+                                ((*node_0).under as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u16;
+                            if (*node_0).left != 0 {
+                                node_0 = node_0.offset((*node_0).left as i32 as isize);
+                            } else {
+                                let fresh8 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh8);
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
+                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
+                                (*symbol).left = 0_i32 as u16;
+                                (*symbol).right = 0_i32 as u16;
+                                (*symbol).symbols = 0_i32 as u16;
+                                (*symbol).escapes = 0_i32 as u16;
+                                (*symbol).total = 0_i32 as u16;
+                                (*symbol).parent = 0_i32 as u16;
+                                (*node_0).left = symbol.offset_from(node_0) as i64 as u16;
+                                break;
+                            }
+                        }
+                        Ordering::Greater => {
+                            under = (under as i32 + (*node_0).under as i32) as u16;
+                            if (*node_0).right != 0 {
+                                node_0 = node_0.offset((*node_0).right as i32 as isize);
+                            } else {
+                                let fresh9 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh9);
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
+                                (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
+                                (*symbol).left = 0_i32 as u16;
+                                (*symbol).right = 0_i32 as u16;
+                                (*symbol).symbols = 0_i32 as u16;
+                                (*symbol).escapes = 0_i32 as u16;
+                                (*symbol).total = 0_i32 as u16;
+                                (*symbol).parent = 0_i32 as u16;
+                                (*node_0).right = symbol.offset_from(node_0) as i64 as u16;
+                                break;
+                            }
+                        }
+                        Ordering::Equal => {
+                            count = (count as i32 + (*node_0).count as i32) as u16;
+                            under = (under as i32
+                                + ((*node_0).under as i32 - (*node_0).count as i32))
+                                as u16;
+                            (*node_0).under =
+                                ((*node_0).under as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u16;
+                            (*node_0).count =
+                                ((*node_0).count as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u8;
+                            symbol = node_0;
                             break;
                         }
-                    } else if value as i32 > (*node_0).value as i32 {
-                        under = (under as i32 + (*node_0).under as i32) as u16;
-                        if (*node_0).right != 0 {
-                            node_0 = node_0.offset((*node_0).right as i32 as isize);
-                        } else {
-                            let fresh9 = next_symbol;
-                            next_symbol = next_symbol.wrapping_add(1);
-                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh9);
-                            (*symbol).value = value;
-                            (*symbol).count = ENET_CONTEXT_SYMBOL_DELTA as i32 as u8;
-                            (*symbol).under = ENET_CONTEXT_SYMBOL_DELTA as i32 as u16;
-                            (*symbol).left = 0_i32 as u16;
-                            (*symbol).right = 0_i32 as u16;
-                            (*symbol).symbols = 0_i32 as u16;
-                            (*symbol).escapes = 0_i32 as u16;
-                            (*symbol).total = 0_i32 as u16;
-                            (*symbol).parent = 0_i32 as u16;
-                            (*node_0).right = symbol.offset_from(node_0) as i64 as u16;
-                            break;
-                        }
-                    } else {
-                        count = (count as i32 + (*node_0).count as i32) as u16;
-                        under = (under as i32 + ((*node_0).under as i32 - (*node_0).count as i32))
-                            as u16;
-                        (*node_0).under =
-                            ((*node_0).under as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u16;
-                        (*node_0).count =
-                            ((*node_0).count as i32 + ENET_CONTEXT_SYMBOL_DELTA as i32) as u8;
-                        symbol = node_0;
-                        break;
                     }
                 }
             }
@@ -849,55 +860,62 @@ pub(crate) unsafe fn enet_range_coder_decompress(
             } else {
                 let mut node_1: *mut ENetSymbol = patch.offset((*patch).symbols as i32 as isize);
                 loop {
-                    if (value as i32) < (*node_1).value as i32 {
-                        (*node_1).under =
-                            ((*node_1).under as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u16;
-                        if (*node_1).left != 0 {
-                            node_1 = node_1.offset((*node_1).left as i32 as isize);
-                        } else {
-                            let fresh26 = next_symbol;
-                            next_symbol = next_symbol.wrapping_add(1);
-                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh26);
-                            (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
-                            (*symbol).left = 0_i32 as u16;
-                            (*symbol).right = 0_i32 as u16;
-                            (*symbol).symbols = 0_i32 as u16;
-                            (*symbol).escapes = 0_i32 as u16;
-                            (*symbol).total = 0_i32 as u16;
-                            (*symbol).parent = 0_i32 as u16;
-                            (*node_1).left = symbol.offset_from(node_1) as i64 as u16;
+                    match (value as i32).cmp(&((*node_1).value as i32)) {
+                        Ordering::Less => {
+                            (*node_1).under = ((*node_1).under as i32
+                                + ENET_SUBCONTEXT_SYMBOL_DELTA as i32)
+                                as u16;
+                            if (*node_1).left != 0 {
+                                node_1 = node_1.offset((*node_1).left as i32 as isize);
+                            } else {
+                                let fresh26 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh26);
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
+                                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
+                                (*symbol).left = 0_i32 as u16;
+                                (*symbol).right = 0_i32 as u16;
+                                (*symbol).symbols = 0_i32 as u16;
+                                (*symbol).escapes = 0_i32 as u16;
+                                (*symbol).total = 0_i32 as u16;
+                                (*symbol).parent = 0_i32 as u16;
+                                (*node_1).left = symbol.offset_from(node_1) as i64 as u16;
+                                break;
+                            }
+                        }
+                        Ordering::Greater => {
+                            under = (under as i32 + (*node_1).under as i32) as u16;
+                            if (*node_1).right != 0 {
+                                node_1 = node_1.offset((*node_1).right as i32 as isize);
+                            } else {
+                                let fresh27 = next_symbol;
+                                next_symbol = next_symbol.wrapping_add(1);
+                                symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh27);
+                                (*symbol).value = value;
+                                (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
+                                (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
+                                (*symbol).left = 0_i32 as u16;
+                                (*symbol).right = 0_i32 as u16;
+                                (*symbol).symbols = 0_i32 as u16;
+                                (*symbol).escapes = 0_i32 as u16;
+                                (*symbol).total = 0_i32 as u16;
+                                (*symbol).parent = 0_i32 as u16;
+                                (*node_1).right = symbol.offset_from(node_1) as i64 as u16;
+                                break;
+                            }
+                        }
+                        Ordering::Equal => {
+                            count = (count as i32 + (*node_1).count as i32) as u16;
+                            (*node_1).under = ((*node_1).under as i32
+                                + ENET_SUBCONTEXT_SYMBOL_DELTA as i32)
+                                as u16;
+                            (*node_1).count = ((*node_1).count as i32
+                                + ENET_SUBCONTEXT_SYMBOL_DELTA as i32)
+                                as u8;
+                            symbol = node_1;
                             break;
                         }
-                    } else if value as i32 > (*node_1).value as i32 {
-                        under = (under as i32 + (*node_1).under as i32) as u16;
-                        if (*node_1).right != 0 {
-                            node_1 = node_1.offset((*node_1).right as i32 as isize);
-                        } else {
-                            let fresh27 = next_symbol;
-                            next_symbol = next_symbol.wrapping_add(1);
-                            symbol = ((*range_coder).symbols).as_mut_ptr().add(fresh27);
-                            (*symbol).value = value;
-                            (*symbol).count = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u8;
-                            (*symbol).under = ENET_SUBCONTEXT_SYMBOL_DELTA as i32 as u16;
-                            (*symbol).left = 0_i32 as u16;
-                            (*symbol).right = 0_i32 as u16;
-                            (*symbol).symbols = 0_i32 as u16;
-                            (*symbol).escapes = 0_i32 as u16;
-                            (*symbol).total = 0_i32 as u16;
-                            (*symbol).parent = 0_i32 as u16;
-                            (*node_1).right = symbol.offset_from(node_1) as i64 as u16;
-                            break;
-                        }
-                    } else {
-                        count = (count as i32 + (*node_1).count as i32) as u16;
-                        (*node_1).under =
-                            ((*node_1).under as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u16;
-                        (*node_1).count =
-                            ((*node_1).count as i32 + ENET_SUBCONTEXT_SYMBOL_DELTA as i32) as u8;
-                        symbol = node_1;
-                        break;
                     }
                 }
             }

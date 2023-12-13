@@ -107,7 +107,6 @@
 //! normal network connections to rectify various types of network congestion by further limiting
 //! the volume of packets sent.
 
-#![allow(clippy::comparison_chain)]
 #![warn(missing_docs)]
 // https://github.com/rust-lang/rust-clippy/issues/11382
 #![allow(clippy::arc_with_non_send_sync)]
