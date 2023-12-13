@@ -146,12 +146,12 @@ impl Network {
     pub fn new() -> Self {
         Self {
             rng: ChaCha20Rng::seed_from_u64(0),
-            sockets: Default::default(),
-            events: Default::default(),
-            hosts: Default::default(),
-            conditions: Default::default(),
-            connections: Default::default(),
-            time: Default::default(),
+            sockets: Vec::default(),
+            events: Vec::default(),
+            hosts: Vec::default(),
+            conditions: HashMap::default(),
+            connections: HashMap::default(),
+            time: Arc::default(),
         }
     }
 

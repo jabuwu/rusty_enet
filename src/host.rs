@@ -3,9 +3,9 @@ use std::{cmp::Ordering, fmt::Debug, mem::zeroed, time::Duration};
 use crate::{
     consts::ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, enet_host_bandwidth_limit, enet_host_broadcast,
     enet_host_channel_limit, enet_host_check_events, enet_host_compress, enet_host_connect,
-    enet_host_create, enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetEvent, ENetHost, ENetPeer, Error, Event, Packet, Peer,
-    PeerID, PeerState, Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT,
-    ENET_EVENT_TYPE_RECEIVE,
+    enet_host_create, enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetEvent,
+    ENetHost, ENetPeer, Error, Event, Packet, Peer, PeerID, PeerState, Socket,
+    ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
 };
 
 /// Settings for a newly created host, passed into [`Host::create`].

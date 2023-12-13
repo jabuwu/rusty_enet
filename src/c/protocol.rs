@@ -870,8 +870,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     }
     let mut current_block_23: u64;
     current_command = (*channel).incoming_reliable_commands.sentinel.previous;
-    while current_command
-        != std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
+    while current_command != std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
     {
         let incoming_command: *mut ENetIncomingCommand = current_command.cast();
         if start_sequence_number >= (*channel).incoming_reliable_sequence_number as u32 {
@@ -2142,14 +2141,18 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             .outgoing_send_reliable_commands
                             .sentinel
                             .next
-                            == std::ptr::addr_of_mut!((*current_peer).outgoing_send_reliable_commands.sentinel)
+                            == std::ptr::addr_of_mut!(
+                                (*current_peer).outgoing_send_reliable_commands.sentinel
+                            )
                         || enet_protocol_check_outgoing_commands(
                             host,
                             current_peer,
                             &mut sent_unreliable_commands,
                         ) != 0)
                         && (*current_peer).sent_reliable_commands.sentinel.next
-                            == std::ptr::addr_of_mut!((*current_peer).sent_reliable_commands.sentinel)
+                            == std::ptr::addr_of_mut!(
+                                (*current_peer).sent_reliable_commands.sentinel
+                            )
                         && (if ((*host).service_time)
                             .wrapping_sub((*current_peer).last_receive_time)
                             >= 86400000_i32 as u32

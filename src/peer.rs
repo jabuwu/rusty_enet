@@ -3,10 +3,9 @@ use std::{fmt::Debug, time::Duration};
 use crate::{
     consts::ENET_PROTOCOL_MAXIMUM_PEER_ID, enet_peer_disconnect, enet_peer_disconnect_later,
     enet_peer_disconnect_now, enet_peer_ping, enet_peer_ping_interval, enet_peer_reset,
-    enet_peer_send, enet_peer_throttle_configure, enet_peer_timeout,
-    ENetPeer, Error, Packet, Socket, ENET_PEER_STATE_ACKNOWLEDGING_CONNECT,
-    ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT, ENET_PEER_STATE_CONNECTED,
-    ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
+    enet_peer_send, enet_peer_throttle_configure, enet_peer_timeout, ENetPeer, Error, Packet,
+    Socket, ENET_PEER_STATE_ACKNOWLEDGING_CONNECT, ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT,
+    ENET_PEER_STATE_CONNECTED, ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
     ENET_PEER_STATE_CONNECTION_SUCCEEDED, ENET_PEER_STATE_DISCONNECTED,
     ENET_PEER_STATE_DISCONNECTING, ENET_PEER_STATE_DISCONNECT_LATER, ENET_PEER_STATE_ZOMBIE,
 };
@@ -288,10 +287,7 @@ impl<S: Socket> Debug for Peer<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let peer = unsafe { &(*self.0) };
         f.debug_struct("Peer")
-            .field(
-                "dispatchList",
-                &std::ptr::addr_of!(peer.dispatch_list),
-            )
+            .field("dispatchList", &std::ptr::addr_of!(peer.dispatch_list))
             .field("host", &peer.host)
             .field("outgoingPeerID", &peer.outgoing_peer_id)
             .field("incomingPeerID", &peer.incoming_peer_id)

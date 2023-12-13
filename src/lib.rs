@@ -107,7 +107,8 @@
 //! normal network connections to rectify various types of network congestion by further limiting
 //! the volume of packets sent.
 
-#![deny(
+#![warn(
+    missing_docs,
     clippy::missing_panics_doc,
     clippy::missing_errors_doc,
     clippy::manual_assert,
@@ -121,9 +122,12 @@
     clippy::option_if_let_else,
     clippy::redundant_feature_names,
     clippy::semicolon_if_nothing_returned,
-    clippy::must_use_candidate
+    clippy::must_use_candidate,
+    clippy::borrow_as_ptr,
+    clippy::items_after_statements,
+    clippy::single_match_else,
+    clippy::bool_to_int_with_if
 )]
-#![warn(missing_docs)]
 // https://github.com/rust-lang/rust-clippy/issues/11382
 #![allow(clippy::arc_with_non_send_sync)]
 

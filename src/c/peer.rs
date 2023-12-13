@@ -876,8 +876,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
 ) {
     let mut current_command: ENetListIterator;
     current_command = (*channel).incoming_reliable_commands.sentinel.next;
-    while current_command
-        != std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
+    while current_command != std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
     {
         let incoming_command: *mut ENetIncomingCommand = current_command.cast();
         if (*incoming_command).fragments_remaining > 0_i32 as u32
@@ -1001,7 +1000,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
+                                        == std::ptr::addr_of_mut!(
+                                            (*channel).incoming_reliable_commands.sentinel
+                                        )
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -1060,7 +1061,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
+                                        == std::ptr::addr_of_mut!(
+                                            (*channel).incoming_unreliable_commands.sentinel
+                                        )
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -1242,7 +1245,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
+                                        == std::ptr::addr_of_mut!(
+                                            (*channel).incoming_reliable_commands.sentinel
+                                        )
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -1301,7 +1306,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
+                                        == std::ptr::addr_of_mut!(
+                                            (*channel).incoming_unreliable_commands.sentinel
+                                        )
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -1483,7 +1490,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
+                                        == std::ptr::addr_of_mut!(
+                                            (*channel).incoming_reliable_commands.sentinel
+                                        )
                                     {
                                         current_block = 7746103178988627676;
                                         break;
@@ -1542,7 +1551,9 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
+                                        == std::ptr::addr_of_mut!(
+                                            (*channel).incoming_unreliable_commands.sentinel
+                                        )
                                     {
                                         current_block = 7746103178988627676;
                                         break;
