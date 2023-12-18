@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 /// An address type, for use with the [`Socket`](`crate::Socket`) trait.
-pub trait Address: Clone {
+pub trait Address: Sized + Clone {
     /// Are the two addresses the same host?
     ///
     /// For IP based addresses, this checks if the IP of two addresses are the same.

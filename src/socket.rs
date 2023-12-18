@@ -23,7 +23,7 @@ pub trait Socket: Sized {
     ///
     /// An example is the standard library's [`std::net::SocketAddr`], used with
     /// [`std::net::UdpSocket`].
-    type PeerAddress: Address;
+    type PeerAddress: Address + 'static;
     /// Errors returned by this socket.
     type Error: std::error::Error + Send + Sync + 'static;
 

@@ -12,6 +12,9 @@ pub enum Error {
     /// Failed to send.
     #[error("Failed to send.")]
     FailedToSend,
+    /// Failed to receive.
+    #[error("Failed to receive.")]
+    FailedToReceive,
     /// A bad parameter was passed to the function.
     #[error("A bad parameter was passed to the function.")]
     BadParameter,
