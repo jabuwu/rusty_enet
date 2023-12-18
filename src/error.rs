@@ -9,6 +9,9 @@ pub enum Error {
     /// The requested peer is disconnected.
     #[error("The requested peer is disconnected.")]
     PeerDisconnected,
+    /// Failed to initialize socket.
+    #[error("Failed to initialize socket.")]
+    FailedToInitializeSocket,
     /// Failed to send.
     #[error("Failed to send.")]
     FailedToSend,

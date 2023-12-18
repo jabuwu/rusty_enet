@@ -183,6 +183,7 @@ impl<S: Socket> Host<S> {
     }
 
     /// Get the maximum number of peers that can connect to this host.
+    #[must_use]
     pub fn peer_limit(&self) -> usize {
         self.peers.len()
     }
