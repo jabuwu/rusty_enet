@@ -222,11 +222,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         enet_list_clear(&mut (*channel).incoming_reliable_commands);
         enet_list_clear(&mut (*channel).incoming_unreliable_commands);
         (*channel).used_reliable_windows = 0_i32 as u16;
-        write_bytes(
-            ((*channel).reliable_windows).as_mut_ptr().cast::<u8>(),
-            0,
-            1,
-        );
+        write_bytes(((*channel).reliable_windows).as_mut_ptr(), 0, 16);
         channel = channel.offset(1);
     }
     command.header.command = (ENET_PROTOCOL_COMMAND_CONNECT as i32

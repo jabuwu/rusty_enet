@@ -451,7 +451,7 @@ pub(crate) unsafe fn enet_peer_reset<S: Socket>(peer: *mut ENetPeer<S>) {
     (*peer).event_data = 0_i32 as u32;
     (*peer).total_waiting_data = 0_i32 as usize;
     (*peer).flags = 0_i32 as u16;
-    write_bytes(((*peer).unsequenced_window).as_mut_ptr(), 0, 1);
+    write_bytes(((*peer).unsequenced_window).as_mut_ptr(), 0, 32);
     enet_peer_reset_queues(peer);
 }
 pub(crate) unsafe fn enet_peer_ping<S: Socket>(peer: *mut ENetPeer<S>) {

@@ -600,7 +600,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         enet_list_clear(&mut (*channel).incoming_reliable_commands);
         enet_list_clear(&mut (*channel).incoming_unreliable_commands);
         (*channel).used_reliable_windows = 0_i32 as u16;
-        write_bytes(((*channel).reliable_windows).as_mut_ptr(), 0, 1);
+        write_bytes(((*channel).reliable_windows).as_mut_ptr(), 0, 16);
         channel = channel.offset(1);
     }
     mtu = u32::from_be((*command).connect.mtu);
@@ -753,7 +753,7 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
     unsequenced_group &= 0xffff_i32 as u32;
     if unsequenced_group.wrapping_sub(index) != (*peer).incoming_unsequenced_group as u32 {
         (*peer).incoming_unsequenced_group = unsequenced_group.wrapping_sub(index) as u16;
-        write_bytes((*peer).unsequenced_window.as_mut_ptr(), 0, 1);
+        write_bytes((*peer).unsequenced_window.as_mut_ptr(), 0, 32);
     } else if (*peer).unsequenced_window[index.wrapping_div(32_i32 as u32) as usize]
         & (1_i32 << index.wrapping_rem(32_i32 as u32)) as u32
         != 0
