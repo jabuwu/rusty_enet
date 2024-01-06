@@ -183,6 +183,7 @@ impl<S: Socket> Host<S> {
     }
 
     /// Get a reference to the underlying socket.
+    #[must_use]
     pub fn socket(&self) -> &S {
         unsafe { (*self.host).socket.assume_init_ref() }
     }
