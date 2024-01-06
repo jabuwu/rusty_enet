@@ -182,6 +182,16 @@ impl<S: Socket> Host<S> {
         }
     }
 
+    /// Get a reference to the underlying socket.
+    pub fn socket(&self) -> &S {
+        unsafe { (*self.host).socket.assume_init_ref() }
+    }
+
+    /// Get a mutable reference to the underlying socket.
+    pub fn socket_mut(&mut self) -> &S {
+        unsafe { (*self.host).socket.assume_init_mut() }
+    }
+
     /// Get the maximum number of peers that can connect to this host.
     #[must_use]
     pub fn peer_limit(&self) -> usize {
