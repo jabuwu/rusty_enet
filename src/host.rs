@@ -189,7 +189,7 @@ impl<S: Socket> Host<S> {
     }
 
     /// Get a mutable reference to the underlying socket.
-    pub fn socket_mut(&mut self) -> &S {
+    pub fn socket_mut(&mut self) -> &mut S {
         unsafe { (*self.host).socket.assume_init_mut() }
     }
 
