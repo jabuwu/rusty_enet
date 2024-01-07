@@ -117,7 +117,6 @@
     clippy::default_trait_access,
     clippy::explicit_iter_loop,
     clippy::explicit_into_iter_loop,
-    clippy::missing_const_for_fn,
     clippy::needless_pass_by_value,
     clippy::option_if_let_else,
     clippy::redundant_feature_names,

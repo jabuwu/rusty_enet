@@ -16,6 +16,20 @@ pub trait Address: Sized + Clone {
     fn is_broadcast(&self) -> bool;
 }
 
+impl Address for () {
+    fn same_host(&self, _other: &()) -> bool {
+        true
+    }
+
+    fn same(&self, _other: &()) -> bool {
+        true
+    }
+
+    fn is_broadcast(&self) -> bool {
+        false
+    }
+}
+
 impl Address for SocketAddr {
     fn same_host(&self, other: &SocketAddr) -> bool {
         self.ip() == other.ip()
