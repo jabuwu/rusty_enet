@@ -29,8 +29,10 @@ pub trait Socket: Sized {
 
     /// Initialize the socket with options passed down by ENet.
     ///
-    /// Called in [`Host::create`](`crate::Host::create`).
-    fn init(&mut self, socket_options: SocketOptions) -> Result<(), Self::Error>;
+    /// Called in [`Host::new`](`crate::Host::new`).
+    fn init(&mut self, _socket_options: SocketOptions) -> Result<(), Self::Error> {
+        Ok(())
+    }
     /// Try to send data. Should return the number of bytes successfully sent, or an error.
     fn send(&mut self, address: Self::PeerAddress, buffer: &[u8]) -> Result<usize, Self::Error>;
     /// Try to receive data. May return an error, or optionally, a data packet.

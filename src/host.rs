@@ -8,7 +8,7 @@ use crate::{
     ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
 };
 
-/// Settings for a newly created host, passed into [`Host::create`].
+/// Settings for a newly created host, passed into [`Host::new`].
 #[allow(clippy::type_complexity)]
 pub struct HostSettings {
     /// The maximum number of peers that should be allocated for the host.
@@ -72,7 +72,7 @@ impl<S: Socket> Host<S> {
     /// Returns [`Error::BadParameter`] if one of the host settings was invalid, or
     /// [`Error::FailedToCreateHost`] if the underlying ENet call failed.
     #[allow(clippy::missing_panics_doc)]
-    pub fn create(socket: S, settings: HostSettings) -> Result<Host<S>, Error> {
+    pub fn new(socket: S, settings: HostSettings) -> Result<Host<S>, Error> {
         if settings.channel_limit == 0 {
             return Err(Error::BadParameter);
         }

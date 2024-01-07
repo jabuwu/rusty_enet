@@ -8,7 +8,7 @@ use rusty_enet as enet;
 
 fn main() {
     let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:6060").unwrap()).unwrap();
-    let mut host = enet::Host::create(
+    let mut host = enet::Host::new(
         socket,
         enet::HostSettings {
             peer_limit: 32,

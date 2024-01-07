@@ -237,7 +237,7 @@ impl Network {
         let (network_socket, host_socket) = Socket::connect();
         self.sockets.push(network_socket);
         self.hosts
-            .push(enet::Host::create(host_socket, settings).unwrap());
+            .push(enet::Host::new(host_socket, settings).unwrap());
         index
     }
 
