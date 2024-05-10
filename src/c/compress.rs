@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ptr::NonNull};
 
 use crate::{enet_free, enet_malloc, ENetBuffer};
 
@@ -120,9 +120,14 @@ pub(crate) unsafe fn enet_range_coder_compress(
             in_buffers = in_buffers.offset(1);
             in_buffer_count = in_buffer_count.wrapping_sub(1);
         }
-        let fresh1 = in_data;
-        in_data = in_data.offset(1);
-        let value = *fresh1;
+        let value = if in_data == NonNull::dangling().as_ptr() {
+            in_data = in_data.offset(1);
+            0
+        } else {
+            let fresh1 = in_data;
+            in_data = in_data.offset(1);
+            *fresh1
+        };
         subcontext = ((*range_coder).symbols)
             .as_mut_ptr()
             .offset(predicted as isize);

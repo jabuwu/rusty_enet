@@ -1,4 +1,4 @@
-use std::{fmt::Debug, slice};
+use std::fmt::Debug;
 
 use crate::{
     enet_packet_create, enet_packet_destroy, ENetPacket, ENET_PACKET_FLAG_RELIABLE,
@@ -129,7 +129,7 @@ impl Packet {
     /// Get the byte array contained in this packet.
     #[must_use]
     pub fn data(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts((*self.packet).data, (*self.packet).data_length) }
+        unsafe { super::from_raw_parts_or_empty((*self.packet).data, (*self.packet).data_length) }
     }
 
     pub(crate) fn new_from_ptr(packet: *mut ENetPacket) -> Self {

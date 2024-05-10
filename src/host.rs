@@ -3,9 +3,9 @@ use std::{cmp::Ordering, fmt::Debug, mem::zeroed, time::Duration};
 use crate::{
     consts::ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, enet_host_bandwidth_limit, enet_host_broadcast,
     enet_host_channel_limit, enet_host_check_events, enet_host_compress, enet_host_connect,
-    enet_host_create, enet_host_destroy, enet_host_flush, enet_host_service, Compressor, ENetEvent,
-    ENetHost, ENetPeer, Error, Event, Packet, Peer, PeerID, PeerState, Socket,
-    ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
+    enet_host_create, enet_host_destroy, enet_host_flush, enet_host_service, time_since_epoch,
+    Compressor, ENetEvent, ENetHost, ENetPeer, Error, Event, Packet, Peer, PeerID, PeerState,
+    Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
 };
 
 /// Settings for a newly created host, passed into [`Host::new`].
@@ -31,8 +31,8 @@ pub struct HostSettings {
     /// checksum.
     pub checksum: Option<Box<dyn Fn(&[&[u8]]) -> u32>>,
     /// A custom time function to use, or [`None`] to use the default one. Should return an
-    /// an accurate, incrementally increasing [`Duration`].
-    pub time: Option<Box<dyn Fn() -> Duration>>,
+    /// an accurate, incrementally increasing [`Duration`]. Defaults to [`time_since_epoch`].
+    pub time: Box<dyn Fn() -> Duration>,
     /// Seed the host with a specific random seed, or set to [`None`] to use a random seed.
     pub seed: Option<u32>,
 }
@@ -46,7 +46,7 @@ impl Default for HostSettings {
             outgoing_bandwidth_limit: None,
             compressor: None,
             checksum: None,
-            time: None,
+            time: Box::new(time_since_epoch),
             seed: None,
         }
     }
@@ -89,12 +89,7 @@ impl<S: Socket> Host<S> {
                 settings.channel_limit,
                 settings.incoming_bandwidth_limit.unwrap_or(0),
                 settings.outgoing_bandwidth_limit.unwrap_or(0),
-                settings.time.unwrap_or(Box::new(|| {
-                    use wasm_timer::{SystemTime, UNIX_EPOCH};
-                    SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .expect("Time went backwards")
-                })),
+                settings.time,
                 settings.seed,
             );
             let mut peers = vec![];

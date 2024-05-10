@@ -141,6 +141,7 @@ mod host;
 mod packet;
 mod peer;
 mod socket;
+mod time;
 mod version;
 
 pub use address::*;
@@ -153,6 +154,7 @@ pub use host::*;
 pub use packet::*;
 pub use peer::*;
 pub use socket::*;
+pub use time::*;
 pub use version::*;
 
 /// Constants provided by ENet.

@@ -230,9 +230,7 @@ impl Network {
     pub fn create_host(&mut self, mut settings: enet::HostSettings) -> usize {
         let index = self.hosts.len();
         let time = self.time.clone();
-        settings.time = Some(Box::new(move || {
-            Duration::from_millis(*time.read().unwrap() as u64)
-        }));
+        settings.time = Box::new(move || Duration::from_millis(*time.read().unwrap() as u64));
         settings.seed = Some(0);
         let (network_socket, host_socket) = Socket::connect();
         self.sockets.push(network_socket);

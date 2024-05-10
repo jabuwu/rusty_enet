@@ -1,4 +1,7 @@
-use std::{mem::MaybeUninit, ptr::write_bytes};
+use std::{
+    mem::MaybeUninit,
+    ptr::{addr_of_mut, write_bytes},
+};
 
 use crate::{
     consts::*, enet_free, enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move,
@@ -1723,7 +1726,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
             if !packet.is_null() && (*packet).reference_count == 0_i32 as usize {
                 enet_packet_destroy(packet);
             }
-            return &mut DUMMY_COMMAND;
+            return addr_of_mut!(DUMMY_COMMAND);
         }
     }
     if !packet.is_null() && (*packet).reference_count == 0_i32 as usize {

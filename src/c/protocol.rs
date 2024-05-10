@@ -1442,11 +1442,11 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         let Some(compressor) = (*host).compressor.assume_init_mut() else {
             return 0_i32;
         };
-        let in_data = std::slice::from_raw_parts(
+        let in_data = super::from_raw_parts_or_empty(
             ((*host).received_data).add(header_size),
             ((*host).received_data_length).wrapping_sub(header_size),
         );
-        let out = std::slice::from_raw_parts_mut(
+        let out = super::from_raw_parts_or_empty_mut(
             ((*host).packet_data[1_i32 as usize])
                 .as_mut_ptr()
                 .add(header_size),
@@ -1491,7 +1491,10 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         );
         buffer.data = (*host).received_data;
         buffer.data_length = (*host).received_data_length;
-        let in_buffers = [std::slice::from_raw_parts(buffer.data, buffer.data_length)];
+        let in_buffers = [super::from_raw_parts_or_empty(
+            buffer.data,
+            buffer.data_length,
+        )];
         if checksum_fn(&in_buffers) != desired_checksum {
             return 0_i32;
         }
@@ -2216,7 +2219,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             let mut in_buffers = vec![];
                             for i in 0..((*host).buffer_count).wrapping_sub(1) {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(1 + i);
-                                in_buffers.push(std::slice::from_raw_parts(
+                                in_buffers.push(super::from_raw_parts_or_empty(
                                     (*buffer).data,
                                     (*buffer).data_length,
                                 ));
@@ -2224,7 +2227,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             let compressed_size: usize = compressor.compress(
                                 in_buffers,
                                 original_size,
-                                std::slice::from_raw_parts_mut(
+                                super::from_raw_parts_or_empty_mut(
                                     ((*host).packet_data[1_i32 as usize]).as_mut_ptr(),
                                     original_size,
                                 ),
@@ -2271,7 +2274,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             let mut in_buffers = vec![];
                             for i in 0..(*host).buffer_count {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(i);
-                                in_buffers.push(std::slice::from_raw_parts(
+                                in_buffers.push(super::from_raw_parts_or_empty(
                                     (*buffer).data,
                                     (*buffer).data_length,
                                 ));
@@ -2293,7 +2296,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         let mut conglomerate_buffer = vec![];
                         for buffer_index in 0..(*host).buffer_count {
                             let buffer = &(*host).buffers[buffer_index];
-                            conglomerate_buffer.extend_from_slice(std::slice::from_raw_parts(
+                            conglomerate_buffer.extend_from_slice(super::from_raw_parts_or_empty(
                                 buffer.data,
                                 buffer.data_length,
                             ));
