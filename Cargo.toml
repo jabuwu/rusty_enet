@@ -3,9 +3,8 @@ name = "rusty_enet"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-thiserror = "1.0.50"
-wasm-timer = "0.2.5"
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "0.3.69"
 
 [dev-dependencies]
 rand = "0.8.5"
