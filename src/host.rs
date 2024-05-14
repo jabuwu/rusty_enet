@@ -303,7 +303,7 @@ impl<S: Socket> Host<S> {
     ///
     /// # Errors
     ///
-    /// Returns [`BadParameter`] if `channel_limit` is `0``.
+    /// Returns [`BadParameter`] if `channel_limit` is `0`.
     pub fn set_channel_limit(&mut self, channel_limit: usize) -> Result<(), BadParameter> {
         if channel_limit == 0 {
             return Err(BadParameter {
