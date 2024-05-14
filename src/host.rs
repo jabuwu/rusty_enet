@@ -56,7 +56,7 @@ impl Default for HostSettings {
 }
 
 /// A host for communicating with peers.
-/// 
+///
 /// Requires a [`Socket`] implementation.
 pub struct Host<S: Socket> {
     host: *mut ENetHost<S>,

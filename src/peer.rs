@@ -39,7 +39,7 @@ pub enum PeerState {
 }
 
 /// A peer, associated with a [`Host`](`crate::Host`), which may or may not be connected.
-/// 
+///
 /// To check on the connectivity of a peer, see [`Peer::state`].
 pub struct Peer<S: Socket>(pub(crate) *mut ENetPeer<S>);
 
