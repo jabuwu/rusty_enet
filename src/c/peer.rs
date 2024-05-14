@@ -6,9 +6,9 @@ use std::{
 use crate::{
     consts::*, enet_free, enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move,
     enet_list_remove, enet_malloc, enet_packet_create, enet_packet_destroy,
-    enet_protocol_command_size, ENetAcknowledgement, ENetChannel, ENetIncomingCommand, ENetList,
-    ENetListIterator, ENetListNode, ENetOutgoingCommand, ENetPacket, ENetProtocol,
-    ENetProtocolAcknowledge, ENetProtocolCommandHeader, ENetProtocolHeader,
+    enet_protocol_command_size, error::PeerSendError, ENetAcknowledgement, ENetChannel,
+    ENetIncomingCommand, ENetList, ENetListIterator, ENetListNode, ENetOutgoingCommand, ENetPacket,
+    ENetProtocol, ENetProtocolAcknowledge, ENetProtocolCommandHeader, ENetProtocolHeader,
     ENetProtocolSendFragment, Socket, ENET_PACKET_FLAG_RELIABLE,
     ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
     ENET_PROTOCOL_COMMAND_DISCONNECT, ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE,
@@ -158,7 +158,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     peer: *mut ENetPeer<S>,
     channel_id: u8,
     packet: *mut ENetPacket,
-) -> i32 {
+) -> Result<(), PeerSendError> {
     let mut command: ENetProtocol = ENetProtocol {
         header: ENetProtocolCommandHeader {
             command: 0,
@@ -167,11 +167,14 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
         },
     };
     let mut fragment_length: usize;
-    if (*peer).state != ENET_PEER_STATE_CONNECTED as i32 as u32
-        || channel_id as usize >= (*peer).channel_count
-        || (*packet).data_length > (*(*peer).host).maximum_packet_size
-    {
-        return -1_i32;
+    if (*peer).state != ENET_PEER_STATE_CONNECTED as i32 as u32 {
+        return Err(PeerSendError::NotConnected);
+    }
+    if channel_id as usize >= (*peer).channel_count {
+        return Err(PeerSendError::InvalidChannel);
+    }
+    if (*packet).data_length > (*(*peer).host).maximum_packet_size {
+        return Err(PeerSendError::PacketTooLarge);
     }
     let channel = ((*peer).channels).offset(channel_id as isize);
     fragment_length = ((*peer).mtu as usize)
@@ -198,7 +201,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
         };
         let mut fragment: *mut ENetOutgoingCommand;
         if fragment_count > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32 {
-            return -1_i32;
+            return Err(PeerSendError::FragmentsExceeded);
         }
         if (*packet).flags
             & (ENET_PACKET_FLAG_RELIABLE as i32 | ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT as i32)
@@ -223,13 +226,6 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
                 fragment_length = ((*packet).data_length).wrapping_sub(fragment_offset as usize);
             }
             fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>()).cast();
-            if fragment.is_null() {
-                while fragments.sentinel.next != std::ptr::addr_of_mut!(fragments.sentinel) {
-                    fragment = enet_list_remove(fragments.sentinel.next).cast();
-                    enet_free(fragment.cast());
-                }
-                return -1_i32;
-            }
             (*fragment).fragment_offset = fragment_offset;
             (*fragment).fragment_length = fragment_length as u16;
             (*fragment).packet = packet;
@@ -251,7 +247,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             fragment = enet_list_remove(fragments.sentinel.next).cast();
             enet_peer_setup_outgoing_command(peer, fragment);
         }
-        return 0_i32;
+        return Ok(());
     }
     command.header.channel_id = channel_id;
     if (*packet).flags
@@ -280,9 +276,9 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
     ))
     .is_null()
     {
-        return -1_i32;
+        return Err(PeerSendError::FailedToQueue);
     }
-    0_i32
+    Ok(())
 }
 pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     peer: *mut ENetPeer<S>,

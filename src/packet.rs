@@ -8,7 +8,7 @@ use crate::{
 /// Types of packets supported by ENet, used with [`Packet::new`].
 ///
 /// See [`Sequencing`](`crate#sequencing`).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PacketKind {
     /// An unreliable packet, with optional sequencing. A sequenced unreliable packet will cause
     /// unsequenced packets to simply be discarded if they were to be dispatched out of order.

@@ -8,9 +8,11 @@ use crate::{Address, PacketReceived, Socket};
 /// interfacing with multiple kinds of sockets at once.
 ///
 /// ```
-/// use rusty_enet::{Error, Host, HostSettings, ReadWrite};
+/// use std::convert::Infallible;
 ///
-/// let mut host = Host::new(ReadWrite::<(), Error>::new(), HostSettings::default()).unwrap();
+/// use rusty_enet::{Host, HostSettings, ReadWrite};
+///
+/// let mut host = Host::new(ReadWrite::<(), Infallible>::new(), HostSettings::default()).unwrap();
 ///
 /// // Write packets to the host (usually from one or more sockets)
 /// host.socket_mut().write((/*some address*/), vec![]);
@@ -44,7 +46,7 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> ReadWri
         self.outbound.pop_front()
     }
 
-    /// Send an error to the ENet host.
+    /// Send an error to the ENet host, which will bubble up as a receive error.
     pub fn error(&mut self, error: E) {
         self.error = Some(error);
     }

@@ -5,7 +5,8 @@ use std::{
 
 use crate::Address;
 
-/// Socket options provided by ENet while creating a [`Host`](`crate::Host`).
+/// Socket options provided by ENet and passed to [`Socket::init`] when creating a
+/// [`Host`](`crate::Host`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SocketOptions {
     /// Size of the receive buffer desired by ENet.
@@ -17,6 +18,9 @@ pub struct SocketOptions {
 /// A trait for implementing the underlying data transport layer ENet uses.
 ///
 /// An implementation for [`std::net::UdpSocket`] is provided out of the box.
+///
+/// If implementing this trait is cumbersome, is may be easier to use
+/// [`ReadWrite`](`crate::ReadWrite`).
 #[allow(clippy::type_complexity, clippy::missing_errors_doc)]
 pub trait Socket: Sized {
     /// The address type to use, which must implement [`Address`].
@@ -25,7 +29,7 @@ pub trait Socket: Sized {
     /// [`std::net::UdpSocket`].
     type PeerAddress: Address + 'static;
     /// Errors returned by this socket.
-    type Error: std::error::Error + Send + Sync + 'static;
+    type Error: std::error::Error + std::fmt::Debug + Send + Sync + 'static;
 
     /// Initialize the socket with options passed down by ENet.
     ///

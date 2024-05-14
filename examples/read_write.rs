@@ -1,15 +1,15 @@
-use std::time::Duration;
+use std::{convert::Infallible, time::Duration};
 
 use rusty_enet as enet;
 
 fn main() {
     let mut host1 = enet::Host::new(
-        enet::ReadWrite::<(), enet::Error>::new(),
+        enet::ReadWrite::<(), Infallible>::new(),
         enet::HostSettings::default(),
     )
     .unwrap();
     let mut host2 = enet::Host::new(
-        enet::ReadWrite::<(), enet::Error>::new(),
+        enet::ReadWrite::<(), Infallible>::new(),
         enet::HostSettings::default(),
     )
     .unwrap();
@@ -42,8 +42,8 @@ fn main() {
 
 fn update_host(
     name: &str,
-    host: &mut enet::Host<enet::ReadWrite<(), enet::Error>>,
-    other_host: &mut enet::Host<enet::ReadWrite<(), enet::Error>>,
+    host: &mut enet::Host<enet::ReadWrite<(), Infallible>>,
+    other_host: &mut enet::Host<enet::ReadWrite<(), Infallible>>,
 ) {
     while let Some(event) = host.service().unwrap() {
         match event {

@@ -1,5 +1,5 @@
 use std::{
-    alloc::Layout,
+    alloc::{handle_alloc_error, Layout},
     collections::HashMap,
     sync::{Arc, Mutex, Once},
 };
@@ -29,6 +29,9 @@ impl Allocator {
                 .align_to(8)
                 .unwrap();
             let ptr = unsafe { std::alloc::alloc(layout) };
+            if ptr.is_null() {
+                handle_alloc_error(layout);
+            }
             self.allocations.insert(ptr.cast_const(), layout);
             ptr.cast::<u8>()
         } else {
@@ -44,6 +47,10 @@ impl Allocator {
     }
 }
 
+/// Mimics `malloc` for the transpiled C code.
+/// Returns `null` if the `size` provided is 0.
+/// Panics (with [`handle_alloc_error`]) if allocation failed.
+/// Callers can safely assume a valid allocation if `size` > 0.
 pub(crate) unsafe fn enet_malloc(size: usize) -> *mut u8 {
     let singleton = Allocator::singleton();
     let mut allocator = singleton.lock().unwrap();

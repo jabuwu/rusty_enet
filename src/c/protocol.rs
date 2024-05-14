@@ -232,8 +232,8 @@ unsafe fn enet_protocol_dispatch_state<S: Socket>(
 }
 unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
     host: *mut ENetHost<S>,
-    event: *mut ENetEvent<S>,
-) -> i32 {
+    event: *mut ENetEvent<S>, // SAFETY: should not be null
+) -> bool {
     while (*host).dispatch_queue.sentinel.next
         != std::ptr::addr_of_mut!((*host).dispatch_queue.sentinel)
     {
@@ -245,7 +245,7 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
                 (*event).type_0 = ENET_EVENT_TYPE_CONNECT;
                 (*event).peer = peer;
                 (*event).data = (*peer).event_data;
-                return 1_i32;
+                return true;
             }
             9 => {
                 (*host).recalculate_bandwidth_limits = 1_i32;
@@ -253,7 +253,7 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
                 (*event).peer = peer;
                 (*event).data = (*peer).event_data;
                 enet_peer_reset(peer);
-                return 1_i32;
+                return true;
             }
             5 => {
                 if (*peer).dispatched_commands.sentinel.next
@@ -277,12 +277,12 @@ unsafe fn enet_protocol_dispatch_incoming_commands<S: Socket>(
                         std::ptr::addr_of_mut!((*peer).dispatch_list).cast::<u8>(),
                     );
                 }
-                return 1_i32;
+                return true;
             }
             _ => {}
         }
     }
-    0_i32
+    false
 }
 unsafe fn enet_protocol_notify_connect<S: Socket>(
     host: *mut ENetHost<S>,
@@ -1386,14 +1386,14 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
 unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
     host: *mut ENetHost<S>,
     event: *mut ENetEvent<S>,
-) -> i32 {
+) -> bool {
     let mut command: *mut ENetProtocol;
     let mut peer: *mut ENetPeer<S>;
     let mut current_data: *mut u8;
     let mut header_size: usize;
     let mut peer_id: u16;
     if (*host).received_data_length < 2_usize {
-        return 0_i32;
+        return false;
     }
     let header: *mut ENetProtocolHeader = (*host).received_data.cast();
     peer_id = u16::from_be((*header).peer_id);
@@ -1415,7 +1415,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
     if peer_id as i32 == ENET_PROTOCOL_MAXIMUM_PEER_ID as i32 {
         peer = std::ptr::null_mut();
     } else if peer_id as usize >= (*host).peer_count {
-        return 0_i32;
+        return false;
     } else {
         peer = ((*host).peers).offset(peer_id as isize);
         if (*peer).state == ENET_PEER_STATE_DISCONNECTED as i32 as u32
@@ -1435,12 +1435,12 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             || ((*peer).outgoing_peer_id as i32) < ENET_PROTOCOL_MAXIMUM_PEER_ID as i32
                 && session_id as i32 != (*peer).incoming_session_id as i32
         {
-            return 0_i32;
+            return false;
         }
     }
     if flags as i32 & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED as i32 != 0 {
         let Some(compressor) = (*host).compressor.assume_init_mut() else {
-            return 0_i32;
+            return false;
         };
         let in_data = super::from_raw_parts_or_empty(
             ((*host).received_data).add(header_size),
@@ -1456,7 +1456,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         if original_size <= 0_i32 as usize
             || original_size > ::core::mem::size_of::<[u8; 4096]>().wrapping_sub(header_size)
         {
-            return 0_i32;
+            return false;
         }
         copy_nonoverlapping(
             header as *const u8,
@@ -1496,7 +1496,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             buffer.data_length,
         )];
         if checksum_fn(&in_buffers) != desired_checksum {
-            return 0_i32;
+            return false;
         }
     }
     if !peer.is_null() {
@@ -1641,14 +1641,14 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         }
     }
     if !event.is_null() && (*event).type_0 != ENET_EVENT_TYPE_NONE as i32 as u32 {
-        return 1_i32;
+        return true;
     }
-    0_i32
+    false
 }
 unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
     host: *mut ENetHost<S>,
     event: *mut ENetEvent<S>,
-) -> i32 {
+) -> Result<bool, S::Error> {
     let mut packets: i32;
     packets = 0_i32;
     while packets < 256_i32 {
@@ -1665,36 +1665,31 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
                     copy_nonoverlapping(received_data.as_ptr(), buffer.data, received_data.len());
                     received_data.len() as i32
                 } else {
-                    -2
+                    continue;
                 }
             }
-            Ok(Some((_, PacketReceived::Partial))) => -2,
-            Ok(None) => 0,
-            Err(_) => -1,
+            Ok(Some((_, PacketReceived::Partial))) => {
+                continue;
+            }
+            Ok(None) => {
+                return Ok(false);
+            }
+            Err(err) => {
+                return Err(err);
+            }
         };
-        if received_length == -2_i32 {
-            continue;
-        }
-        if received_length < 0_i32 {
-            return -1_i32;
-        }
-        if received_length == 0_i32 {
-            return 0_i32;
-        }
         (*host).received_data = ((*host).packet_data[0_i32 as usize]).as_mut_ptr();
         (*host).received_data_length = received_length as usize;
         (*host).total_received_data = (*host)
             .total_received_data
             .wrapping_add(received_length as u32);
         (*host).total_received_packets = ((*host).total_received_packets).wrapping_add(1);
-        match enet_protocol_handle_incoming_commands(host, event) {
-            1 => return 1_i32,
-            -1 => return -1_i32,
-            _ => {}
+        if enet_protocol_handle_incoming_commands(host, event) {
+            return Ok(true);
         }
         packets += 1;
     }
-    0_i32
+    Ok(false)
 }
 unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
     host: *mut ENetHost<S>,
@@ -2086,10 +2081,9 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
     host: *mut ENetHost<S>,
     event: *mut ENetEvent<S>,
     check_for_timeouts: i32,
-) -> i32 {
+) -> Result<bool, S::Error> {
     let mut header_data: [u8; 8] = [0; 8];
     let header: *mut ENetProtocolHeader = header_data.as_mut_ptr().cast();
-    let mut sent_length: i32;
     let mut should_compress: usize;
     let mut sent_unreliable_commands: ENetList = ENetList {
         sentinel: ENetListNode {
@@ -2128,7 +2122,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                     && enet_protocol_check_timeouts(host, current_peer, event) == 1_i32
                 {
                     if !event.is_null() && (*event).type_0 != ENET_EVENT_TYPE_NONE as i32 as u32 {
-                        return 1_i32;
+                        return Ok(true);
                     }
                 } else {
                     if ((*current_peer).outgoing_commands.sentinel.next
@@ -2301,28 +2295,26 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                 buffer.data_length,
                             ));
                         }
-                        sent_length = (*host)
-                            .socket
-                            .assume_init_mut()
-                            .send(
-                                (*current_peer)
-                                    .address
-                                    .assume_init_ref()
-                                    .as_ref()
-                                    .cloned()
-                                    .unwrap(),
-                                &conglomerate_buffer,
-                            )
-                            .map_or(-1, |sent| sent as i32);
+                        let sent_length = (*host).socket.assume_init_mut().send(
+                            (*current_peer)
+                                .address
+                                .assume_init_ref()
+                                .as_ref()
+                                .cloned()
+                                .unwrap(),
+                            &conglomerate_buffer,
+                        );
                         enet_protocol_remove_sent_unreliable_commands(
                             current_peer,
                             &mut sent_unreliable_commands,
                         );
-                        if sent_length < 0_i32 {
-                            return -1_i32;
+                        match sent_length {
+                            Err(err) => return Err(err),
+                            Ok(sent_length) => {
+                                (*host).total_sent_data =
+                                    (*host).total_sent_data.wrapping_add(sent_length as u32);
+                            }
                         }
-                        (*host).total_sent_data =
-                            (*host).total_sent_data.wrapping_add(sent_length as u32);
                         (*host).total_sent_packets = ((*host).total_sent_packets).wrapping_add(1);
                     }
                 }
@@ -2334,19 +2326,18 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
         }
         send_pass += 1;
     }
-    0_i32
+    Ok(false)
 }
 pub(crate) unsafe fn enet_host_flush<S: Socket>(host: *mut ENetHost<S>) {
     (*host).service_time = enet_time_get(host);
-    enet_protocol_send_outgoing_commands(host, std::ptr::null_mut(), 0_i32);
+    // TODO: enet ignores the error here, but is that really what we want?
+    // a socket's send could error and no one would know
+    _ = enet_protocol_send_outgoing_commands(host, std::ptr::null_mut(), 0_i32);
 }
 pub(crate) unsafe fn enet_host_check_events<S: Socket>(
     host: *mut ENetHost<S>,
-    event: *mut ENetEvent<S>,
-) -> i32 {
-    if event.is_null() {
-        return -1_i32;
-    }
+    event: *mut ENetEvent<S>, // SAFETY: should not be null
+) -> bool {
     (*event).type_0 = ENET_EVENT_TYPE_NONE;
     (*event).peer = std::ptr::null_mut();
     (*event).packet = std::ptr::null_mut();
@@ -2354,17 +2345,13 @@ pub(crate) unsafe fn enet_host_check_events<S: Socket>(
 }
 pub(crate) unsafe fn enet_host_service<S: Socket>(
     host: *mut ENetHost<S>,
-    event: *mut ENetEvent<S>,
-) -> i32 {
-    if !event.is_null() {
-        (*event).type_0 = ENET_EVENT_TYPE_NONE;
-        (*event).peer = std::ptr::null_mut();
-        (*event).packet = std::ptr::null_mut();
-        match enet_protocol_dispatch_incoming_commands(host, event) {
-            1 => return 1_i32,
-            -1 => return -1_i32,
-            _ => {}
-        }
+    event: *mut ENetEvent<S>, // SAFETY: should not be null
+) -> Result<bool, S::Error> {
+    (*event).type_0 = ENET_EVENT_TYPE_NONE;
+    (*event).peer = std::ptr::null_mut();
+    (*event).packet = std::ptr::null_mut();
+    if enet_protocol_dispatch_incoming_commands(host, event) {
+        return Ok(true);
     }
     (*host).service_time = enet_time_get(host);
     if (if ((*host).service_time).wrapping_sub((*host).bandwidth_throttle_epoch)
@@ -2378,26 +2365,22 @@ pub(crate) unsafe fn enet_host_service<S: Socket>(
         enet_host_bandwidth_throttle(host);
     }
     match enet_protocol_send_outgoing_commands(host, event, 1_i32) {
-        1 => return 1_i32,
-        -1 => return -1_i32,
-        _ => {}
+        Ok(true) => return Ok(true),
+        Ok(false) => {}
+        Err(err) => return Err(err),
     }
     match enet_protocol_receive_incoming_commands(host, event) {
-        1 => return 1_i32,
-        -1 => return -1_i32,
-        _ => {}
+        Ok(true) => return Ok(true),
+        Ok(false) => {}
+        Err(err) => return Err(err),
     }
     match enet_protocol_send_outgoing_commands(host, event, 1_i32) {
-        1 => return 1_i32,
-        -1 => return -1_i32,
-        _ => {}
+        Ok(true) => return Ok(true),
+        Ok(false) => {}
+        Err(err) => return Err(err),
     }
-    if !event.is_null() {
-        match enet_protocol_dispatch_incoming_commands(host, event) {
-            1 => return 1_i32,
-            -1 => return -1_i32,
-            _ => {}
-        }
+    if enet_protocol_dispatch_incoming_commands(host, event) {
+        return Ok(true);
     }
-    0_i32
+    Ok(false)
 }

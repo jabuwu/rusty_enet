@@ -31,9 +31,6 @@ pub(crate) const ENET_RANGE_CODER_TOP: u32 = 16777216;
 pub(crate) unsafe fn enet_range_coder_create() -> *mut u8 {
     let range_coder: *mut ENetRangeCoder =
         enet_malloc(::core::mem::size_of::<ENetRangeCoder>()).cast();
-    if range_coder.is_null() {
-        return std::ptr::null_mut();
-    }
     range_coder.cast()
 }
 pub(crate) unsafe fn enet_range_coder_destroy(context: *mut u8) {

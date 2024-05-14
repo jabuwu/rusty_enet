@@ -34,7 +34,7 @@ const CRC_TABLE: [u32; 256] = [
 ];
 
 /// ENet implementation of CRC32 checksum, for use with
-/// [`HostSettings::checksum_fn`](`crate::HostSettings::checksum`).
+/// [`HostSettings::checksum`](`crate::HostSettings::checksum`).
 #[must_use]
 pub fn crc32(in_buffers: &[&[u8]]) -> u32 {
     let mut crc: u32 = 0xFFFFFFFF;

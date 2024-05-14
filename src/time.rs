@@ -1,6 +1,7 @@
 use std::time::Duration;
 
-/// Get the amount of time since the Unix epoch.
+/// Get the amount of time since the Unix epoch, for use with
+/// [`HostSettings::time`](`crate::HostSettings::time`).
 ///
 /// # Panics
 ///

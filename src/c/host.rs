@@ -56,27 +56,18 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     outgoing_bandwidth: u32,
     time: Box<dyn Fn() -> Duration>,
     seed: Option<u32>,
-) -> *mut ENetHost<S> {
+) -> Result<*mut ENetHost<S>, S::Error> {
     let mut current_peer: *mut ENetPeer<S>;
-    if peer_count > ENET_PROTOCOL_MAXIMUM_PEER_ID as i32 as usize {
-        return std::ptr::null_mut();
-    }
+    // note: allocations cannot be null, see enet_malloc docs
     let host: *mut ENetHost<S> = enet_malloc(::core::mem::size_of::<ENetHost<S>>()).cast();
-    if host.is_null() {
-        return std::ptr::null_mut();
-    }
     write_bytes(host, 0, 1);
     (*host).peers =
         enet_malloc(peer_count.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>())).cast();
-    if ((*host).peers).is_null() {
-        enet_free(host.cast());
-        return std::ptr::null_mut();
-    }
     write_bytes((*host).peers, 0, peer_count);
-    _ = socket.init(SocketOptions {
+    socket.init(SocketOptions {
         receive_buffer: ENET_HOST_RECEIVE_BUFFER_SIZE as usize,
         send_buffer: ENET_HOST_SEND_BUFFER_SIZE as usize,
-    });
+    })?;
     (*host).socket.write(socket);
     if channel_limit == 0 || channel_limit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize {
         channel_limit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
@@ -133,7 +124,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
         enet_peer_reset(current_peer);
         current_peer = current_peer.offset(1);
     }
-    host
+    Ok(host)
 }
 pub(crate) unsafe fn enet_host_destroy<S: Socket>(host: *mut ENetHost<S>) {
     let mut current_peer: *mut ENetPeer<S>;
@@ -193,9 +184,6 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
     }
     (*current_peer).channels =
         enet_malloc(channel_count.wrapping_mul(::core::mem::size_of::<ENetChannel>())).cast();
-    if ((*current_peer).channels).is_null() {
-        return std::ptr::null_mut();
-    }
     (*current_peer).channel_count = channel_count;
     (*current_peer).state = ENET_PEER_STATE_CONNECTING;
     *(*current_peer).address.assume_init_mut() = Some(address);
@@ -261,7 +249,8 @@ pub(crate) unsafe fn enet_host_broadcast<S: Socket>(
     current_peer = (*host).peers;
     while current_peer < ((*host).peers).add((*host).peer_count) {
         if (*current_peer).state == ENET_PEER_STATE_CONNECTED as i32 as u32 {
-            enet_peer_send(current_peer, channel_id, packet);
+            // TODO: do we really want to ignore the result type here?
+            _ = enet_peer_send(current_peer, channel_id, packet);
         }
         current_peer = current_peer.offset(1);
     }

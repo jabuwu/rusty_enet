@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    convert::Infallible,
     ops::{Deref, DerefMut},
     sync::{mpsc, Arc, RwLock},
     time::Duration,
@@ -46,7 +47,7 @@ impl Socket {
 
 impl enet::Socket for Socket {
     type PeerAddress = usize;
-    type Error = enet::Error;
+    type Error = Infallible;
 
     fn init(&mut self, _socket_options: enet::SocketOptions) -> Result<(), Self::Error> {
         Ok(())

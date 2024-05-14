@@ -1,11 +1,14 @@
-use std::{cmp::Ordering, fmt::Debug, mem::zeroed, time::Duration};
+use std::{fmt::Debug, mem::zeroed, time::Duration};
 
 use crate::{
-    consts::ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, enet_host_bandwidth_limit, enet_host_broadcast,
-    enet_host_channel_limit, enet_host_check_events, enet_host_compress, enet_host_connect,
-    enet_host_create, enet_host_destroy, enet_host_flush, enet_host_service, time_since_epoch,
-    Compressor, ENetEvent, ENetHost, ENetPeer, Error, Event, Packet, Peer, PeerID, PeerState,
-    Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_RECEIVE,
+    consts::{ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, ENET_PROTOCOL_MAXIMUM_PEER_ID},
+    enet_host_bandwidth_limit, enet_host_broadcast, enet_host_channel_limit,
+    enet_host_check_events, enet_host_compress, enet_host_connect, enet_host_create,
+    enet_host_destroy, enet_host_flush, enet_host_service,
+    error::{BadParameter, HostNewError, NoAvailablePeers},
+    time_since_epoch, Compressor, ENetEvent, ENetHost, ENetPeer, Event, Packet, Peer, PeerID,
+    PeerState, Socket, ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT,
+    ENET_EVENT_TYPE_RECEIVE,
 };
 
 /// Settings for a newly created host, passed into [`Host::new`].
@@ -53,6 +56,8 @@ impl Default for HostSettings {
 }
 
 /// A host for communicating with peers.
+/// 
+/// Requires a [`Socket`] implementation.
 pub struct Host<S: Socket> {
     host: *mut ENetHost<S>,
     peers: Vec<Peer<S>>,
@@ -69,18 +74,26 @@ impl<S: Socket> Host<S> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::BadParameter`] if one of the host settings was invalid, or
-    /// [`Error::FailedToCreateHost`] if the underlying ENet call failed.
-    #[allow(clippy::missing_panics_doc)]
-    pub fn new(socket: S, settings: HostSettings) -> Result<Host<S>, Error> {
+    /// Returns [`HostNewError::BadParameter`] if one of the host settings was invalid:
+    /// - If [`HostSettings::channel_limit`] is equal to `0`.
+    /// - If [`HostSettings::incoming_bandwidth_limit`] is equal to `Some(0)`.
+    /// - If [`HostSettings::outgoing_bandwidth_limit`] is equal to `Some(0)`.
+    /// - If [`HostSettings::peer_limit`] is equal to `0` or [`ENET_PROTOCOL_MAXIMUM_PEER_ID`].
+    ///
+    /// Returns [`HostNewError::FailedToInitializeSocket`] if the call to [`Socket::init`] fails.
+    pub fn new(socket: S, settings: HostSettings) -> Result<Host<S>, HostNewError<S>> {
         if settings.channel_limit == 0 {
-            return Err(Error::BadParameter);
+            return Err(HostNewError::BadParameter);
         }
         if settings.incoming_bandwidth_limit == Some(0) {
-            return Err(Error::BadParameter);
+            return Err(HostNewError::BadParameter);
         }
         if settings.outgoing_bandwidth_limit == Some(0) {
-            return Err(Error::BadParameter);
+            return Err(HostNewError::BadParameter);
+        }
+        if settings.peer_limit == 0 || settings.peer_limit > ENET_PROTOCOL_MAXIMUM_PEER_ID as usize
+        {
+            return Err(HostNewError::BadParameter);
         }
         unsafe {
             let host = enet_host_create::<S>(
@@ -91,7 +104,8 @@ impl<S: Socket> Host<S> {
                 settings.outgoing_bandwidth_limit.unwrap_or(0),
                 settings.time,
                 settings.seed,
-            );
+            )
+            .map_err(|err| HostNewError::FailedToInitializeSocket(err))?;
             let mut peers = vec![];
             for peer_index in 0..(*host).peer_count {
                 peers.push(Peer((*host).peers.add(peer_index)));
@@ -102,11 +116,7 @@ impl<S: Socket> Host<S> {
             if let Some(checksum) = settings.checksum {
                 *(*host).checksum.assume_init_mut() = Some(checksum);
             }
-            if !host.is_null() {
-                Ok(Self { host, peers })
-            } else {
-                Err(Error::FailedToCreateHost)
-            }
+            Ok(Self { host, peers })
         }
     }
 
@@ -117,36 +127,31 @@ impl<S: Socket> Host<S> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::FailedToConnect`] if the underlying ENet call failed.
+    /// Returns [`NoAvailablePeers`] if all peer slots have been filled.
     pub fn connect(
         &mut self,
         address: S::PeerAddress,
         channel_count: usize,
         data: u32,
-    ) -> Result<&mut Peer<S>, Error> {
+    ) -> Result<&mut Peer<S>, NoAvailablePeers> {
         unsafe {
             let peer = enet_host_connect(self.host, address, channel_count, data);
             if !peer.is_null() {
                 Ok(self.peer_mut(self.peer_index(peer)))
             } else {
-                Err(Error::FailedToConnect)
+                Err(NoAvailablePeers)
             }
         }
     }
 
     /// Checks for any queued events on the host and dispatches one if available.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::FailedToCheckEvents`] if the underlying ENet call failed.
-    pub fn check_events(&mut self) -> Result<Option<Event<S>>, Error> {
+    pub fn check_events(&mut self) -> Option<Event<S>> {
         unsafe {
             let mut event: ENetEvent<S> = zeroed();
-            let result = enet_host_check_events(self.host, &mut event);
-            match result.cmp(&0) {
-                Ordering::Greater => Ok(Some(self.create_event(&event))),
-                Ordering::Less => Err(Error::FailedToCheckEvents),
-                Ordering::Equal => Ok(None),
+            if enet_host_check_events(self.host, &mut event) {
+                Some(self.create_event(&event))
+            } else {
+                None
             }
         }
     }
@@ -157,15 +162,15 @@ impl<S: Socket> Host<S> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::FailedToServiceHost`] if the underlying ENet call failed.
-    pub fn service(&mut self) -> Result<Option<Event<S>>, Error> {
+    /// Returns any error reported by the socket implementation during [`Socket::receive`] or
+    /// [`Socket::send`].
+    pub fn service(&mut self) -> Result<Option<Event<S>>, S::Error> {
         unsafe {
             let mut event: ENetEvent<S> = zeroed();
-            let result = enet_host_service(self.host, &mut event);
-            match result.cmp(&0) {
-                Ordering::Greater => Ok(Some(self.create_event(&event))),
-                Ordering::Less => Err(Error::FailedToServiceHost),
-                Ordering::Equal => Ok(None),
+            if enet_host_service(self.host, &mut event)? {
+                Ok(Some(self.create_event(&event)))
+            } else {
+                Ok(None)
             }
         }
     }
@@ -194,7 +199,7 @@ impl<S: Socket> Host<S> {
         self.peers.len()
     }
 
-    /// Get a reference to a single peer.
+    /// Get a reference to a single peer, if it exists.
     ///
     /// # Note
     ///
@@ -202,7 +207,8 @@ impl<S: Socket> Host<S> {
     ///
     /// # Panics
     ///
-    /// Panics if the peer ID is outside the bounds of peers allocated for this host.
+    /// Panics if the peer ID is outside the bounds of peers allocated for this host. Use
+    /// [`Host::get_peer`] for a non-panicking version.
     #[must_use]
     pub fn peer(&self, peer: PeerID) -> &Peer<S> {
         self.peers
@@ -215,13 +221,9 @@ impl<S: Socket> Host<S> {
     /// # Note
     ///
     /// Acquires the peer object, even if the peer is not in a connected state. See [`Peer::state`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::InvalidPeerID`] if the requested peer ID is outside the bounds of peers
-    /// allocated for this host.
-    pub fn get_peer(&self, peer: PeerID) -> Result<&Peer<S>, Error> {
-        self.peers.get(peer.0).ok_or(Error::InvalidPeerID)
+    #[must_use]
+    pub fn get_peer(&self, peer: PeerID) -> Option<&Peer<S>> {
+        self.peers.get(peer.0)
     }
 
     /// Get a mutable reference to a single peer.
@@ -232,25 +234,22 @@ impl<S: Socket> Host<S> {
     ///
     /// # Panics
     ///
-    /// Panics if the peer ID is outside the bounds of peers allocated for this host.
+    /// Panics if the peer ID is outside the bounds of peers allocated for this host. Use
+    /// [`Host::get_peer_mut`] for a non-panicking version.
     pub fn peer_mut(&mut self, peer: PeerID) -> &mut Peer<S> {
         self.peers
             .get_mut(peer.0)
             .expect("Expected the peer id to be in bounds.")
     }
 
-    /// Get a mutable reference to a single peer.
+    /// Get a mutable reference to a single peer, if it exists.
     ///
     /// # Note
     ///
     /// Acquires the peer object, even if the peer is not in a connected state. See [`Peer::state`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::InvalidPeerID`] if the requested peer ID is outside the bounds of peers
-    /// allocated for this host.
-    pub fn get_peer_mut(&mut self, peer: PeerID) -> Result<&mut Peer<S>, Error> {
-        self.peers.get_mut(peer.0).ok_or(Error::InvalidPeerID)
+    #[must_use]
+    pub fn get_peer_mut(&mut self, peer: PeerID) -> Option<&mut Peer<S>> {
+        self.peers.get_mut(peer.0)
     }
 
     /// Iterate over all peer objects.
@@ -304,10 +303,13 @@ impl<S: Socket> Host<S> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::BadParameter`] if `channel_limit` is `0``.
-    pub fn set_channel_limit(&mut self, channel_limit: usize) -> Result<(), Error> {
+    /// Returns [`BadParameter`] if `channel_limit` is `0``.
+    pub fn set_channel_limit(&mut self, channel_limit: usize) -> Result<(), BadParameter> {
         if channel_limit == 0 {
-            return Err(Error::BadParameter);
+            return Err(BadParameter {
+                method: "Host::set_channel_limit",
+                parameter: "channel_limit",
+            });
         }
         unsafe {
             enet_host_channel_limit(self.host, channel_limit);
@@ -344,18 +346,24 @@ impl<S: Socket> Host<S> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::BadParameter`] if `incoming_bandwidth_limit` or `outgoing_bandwidth_limit`
-    /// is `Some(0)``.
+    /// Returns [`BadParameter`] if `incoming_bandwidth_limit` or `outgoing_bandwidth_limit`
+    /// is `Some(0)`.
     pub fn set_bandwidth_limit(
         &mut self,
         incoming_bandwidth_limit: Option<u32>,
         outgoing_bandwidth_limit: Option<u32>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), BadParameter> {
         if incoming_bandwidth_limit == Some(0) {
-            return Err(Error::BadParameter);
+            return Err(BadParameter {
+                method: "Host::set_bandwidth_limit",
+                parameter: "incoming_bandwidth_limit",
+            });
         }
         if outgoing_bandwidth_limit == Some(0) {
-            return Err(Error::BadParameter);
+            return Err(BadParameter {
+                method: "Host::set_bandwidth_limit",
+                parameter: "outgoing_bandwidth_limit",
+            });
         }
         unsafe {
             enet_host_bandwidth_limit(

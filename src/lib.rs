@@ -135,7 +135,6 @@ mod address;
 mod c;
 mod compressor;
 mod crc32;
-mod error;
 mod event;
 mod host;
 mod packet;
@@ -149,7 +148,6 @@ pub use address::*;
 pub(crate) use c::*;
 pub use compressor::*;
 pub use crc32::*;
-pub use error::*;
 pub use event::*;
 pub use host::*;
 pub use packet::*;
@@ -159,12 +157,12 @@ pub use socket::*;
 pub use time::*;
 pub use version::*;
 
+/// Error types.
+pub mod error;
+
 /// Constants provided by ENet.
 #[allow(missing_docs)]
 pub mod consts;
 
 #[cfg(test)]
 mod test;
-
-/// A [`Result`](`core::result::Result`) type alias with this crate's [`Error`] type.
-pub type Result<T> = core::result::Result<T, Error>;

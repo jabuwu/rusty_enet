@@ -1,45 +1,105 @@
-/// Error type for all ENet functions.
-#[derive(Debug)]
-pub enum Error {
-    /// Invalid peer ID.
-    InvalidPeerID,
-    /// The requested peer is disconnected.
-    PeerDisconnected,
-    /// Failed to initialize socket.
-    FailedToInitializeSocket,
-    /// Failed to send.
-    FailedToSend,
-    /// Failed to receive.
-    FailedToReceive,
-    /// A bad parameter was passed to the function.
+use crate::Socket;
+
+/// Error for [`Host::new`](`crate::Host::new`).
+pub enum HostNewError<S: Socket> {
+    /// Failed to create a new ENet host due to a bad parameter.
     BadParameter,
-    /// Failed to create host.
-    FailedToCreateHost,
-    /// Failed to connect.
-    FailedToConnect,
-    /// Failed to check events.
-    FailedToCheckEvents,
-    /// Failed to service host.
-    FailedToServiceHost,
+    /// Failed to create a new ENet host because socket initialization failed.
+    FailedToInitializeSocket(S::Error),
 }
 
-impl std::error::Error for Error {}
-
-impl std::fmt::Display for Error {
+impl<S: Socket> std::fmt::Debug for HostNewError<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::InvalidPeerID => f.write_str("Invalid peer ID."),
-            Error::PeerDisconnected => f.write_str("The requested peer is disconnected."),
-            Error::FailedToInitializeSocket => f.write_str("Failed to initialize socket."),
-            Error::FailedToSend => f.write_str("Failed to send."),
-            Error::FailedToReceive => f.write_str("Failed to receive."),
-            Error::BadParameter => {
-                ::core::write!(f, "A bad parameter was passed to the function.")
-            }
-            Error::FailedToCreateHost => f.write_str("Failed to create host."),
-            Error::FailedToConnect => f.write_str("Failed to connect."),
-            Error::FailedToCheckEvents => f.write_str("Failed to check events."),
-            Error::FailedToServiceHost => f.write_str("Failed to service host."),
+            HostNewError::BadParameter => f.write_str("BadParameter"),
+            HostNewError::FailedToInitializeSocket(f0) => f
+                .debug_tuple("FailedToInitializeSocket")
+                .field(&f0)
+                .finish(),
         }
+    }
+}
+
+impl<S: Socket> std::fmt::Display for HostNewError<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            HostNewError::BadParameter => {
+                f.write_str("Failed to create a new ENet host due to a bad parameter.")
+            }
+            HostNewError::FailedToInitializeSocket(_) => f.write_str(
+                "Failed to create a new ENet host because socket initialization failed.",
+            ),
+        }
+    }
+}
+
+/// Error for [`Peer::send`](`crate::Peer::send`).
+#[derive(Debug)]
+pub enum PeerSendError {
+    /// Cannot send to peer because it is not connected.
+    NotConnected,
+    /// Cannot send to peer on an invalid channel.
+    InvalidChannel,
+    /// Cannot send to peer because the packet is too large.
+    PacketTooLarge,
+    /// Cannot send to peer because the fragment count was exceeded.
+    FragmentsExceeded,
+    /// Cannot send to peer because the packet failed to queue.
+    FailedToQueue,
+}
+
+impl std::error::Error for PeerSendError {}
+
+impl std::fmt::Display for PeerSendError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            PeerSendError::NotConnected => {
+                f.write_str("Cannot send to an ENet peer because it is not connected.")
+            }
+            PeerSendError::InvalidChannel => {
+                f.write_str("Cannot send to an ENet peer on an invalid channel.")
+            }
+            PeerSendError::PacketTooLarge => {
+                f.write_str("Cannot send to an ENet peer because the packet is too large.")
+            }
+            PeerSendError::FragmentsExceeded => {
+                f.write_str("Cannot send to an ENet peer because the fragment count was exceeded.")
+            }
+            PeerSendError::FailedToQueue => {
+                f.write_str("Cannot send to an ENet peer because the packet failed to queue.")
+            }
+        }
+    }
+}
+
+/// A bad parameter was passed to a method.
+#[derive(Debug)]
+pub struct BadParameter {
+    /// The name of the method where this parameter was checked.
+    pub method: &'static str,
+    /// The name of the parameter itself.
+    pub parameter: &'static str,
+}
+
+impl std::error::Error for BadParameter {}
+
+impl std::fmt::Display for BadParameter {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str(&format!(
+            "A bad parameter ({}) was passed to {}",
+            self.parameter, self.method
+        ))
+    }
+}
+
+/// Failed to connect because there were no available ENet peer slots.
+#[derive(Debug)]
+pub struct NoAvailablePeers;
+
+impl std::error::Error for NoAvailablePeers {}
+
+impl std::fmt::Display for NoAvailablePeers {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("Failed to connect because there were no available ENet peer slots.")
     }
 }

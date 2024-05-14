@@ -3,9 +3,10 @@ use std::{fmt::Debug, time::Duration};
 use crate::{
     consts::ENET_PROTOCOL_MAXIMUM_PEER_ID, enet_peer_disconnect, enet_peer_disconnect_later,
     enet_peer_disconnect_now, enet_peer_ping, enet_peer_ping_interval, enet_peer_reset,
-    enet_peer_send, enet_peer_throttle_configure, enet_peer_timeout, ENetPeer, Error, Packet,
-    Socket, ENET_PEER_STATE_ACKNOWLEDGING_CONNECT, ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT,
-    ENET_PEER_STATE_CONNECTED, ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
+    enet_peer_send, enet_peer_throttle_configure, enet_peer_timeout, error::PeerSendError,
+    ENetPeer, Packet, Socket, ENET_PEER_STATE_ACKNOWLEDGING_CONNECT,
+    ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT, ENET_PEER_STATE_CONNECTED,
+    ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
     ENET_PEER_STATE_CONNECTION_SUCCEEDED, ENET_PEER_STATE_DISCONNECTED,
     ENET_PEER_STATE_DISCONNECTING, ENET_PEER_STATE_DISCONNECT_LATER, ENET_PEER_STATE_ZOMBIE,
 };
@@ -15,9 +16,9 @@ use crate::{
 pub struct PeerID(pub usize);
 
 impl PeerID {
-    /// The minimum valid value a [`PeerID`]` can be.
+    /// The minimum valid value a [`PeerID`] can be.
     pub const MIN: usize = 0;
-    /// The maximum valid value a [`PeerID`]` can be.
+    /// The maximum valid value a [`PeerID`] can be.
     pub const MAX: usize = ENET_PROTOCOL_MAXIMUM_PEER_ID as usize;
 }
 
@@ -38,6 +39,8 @@ pub enum PeerState {
 }
 
 /// A peer, associated with a [`Host`](`crate::Host`), which may or may not be connected.
+/// 
+/// To check on the connectivity of a peer, see [`Peer::state`].
 pub struct Peer<S: Socket>(pub(crate) *mut ENetPeer<S>);
 
 impl<S: Socket> Peer<S> {
@@ -62,15 +65,9 @@ impl<S: Socket> Peer<S> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::FailedToSend`] if the underlying ENet call failed.
-    pub fn send(&mut self, channel_id: u8, packet: &Packet) -> Result<(), Error> {
-        unsafe {
-            if enet_peer_send(self.0, channel_id, packet.packet) == 0 {
-                Ok(())
-            } else {
-                Err(Error::FailedToSend)
-            }
-        }
+    /// May return any of the [`PeerSendError`] variants on failure.
+    pub fn send(&mut self, channel_id: u8, packet: &Packet) -> Result<(), PeerSendError> {
+        unsafe { enet_peer_send(self.0, channel_id, packet.packet) }
     }
 
     /// Request a disconnection from a peer.
