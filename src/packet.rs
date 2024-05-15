@@ -54,12 +54,12 @@ impl Packet {
     /// - [`Packet::always_unreliable_unsequenced`]
     /// - [`Packet::reliable`]
     #[must_use]
-    pub fn new(data: &[u8], flags: PacketKind) -> Self {
+    pub fn new(data: &[u8], kind: PacketKind) -> Self {
         let packet = unsafe {
             enet_packet_create(
                 data.as_ptr(),
                 data.len(),
-                match flags {
+                match kind {
                     PacketKind::Unreliable { sequenced: true } => 0,
                     PacketKind::Unreliable { sequenced: false } => ENET_PACKET_FLAG_UNSEQUENCED,
                     PacketKind::AlwaysUnreliable { sequenced: true } => {
