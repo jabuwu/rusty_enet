@@ -1,4 +1,4 @@
-use std::{alloc::Layout, ptr::copy_nonoverlapping};
+use core::{alloc::Layout, ptr::copy_nonoverlapping};
 
 use crate::{enet_free, enet_malloc, ENET_PACKET_FLAG_NO_ALLOCATE};
 
@@ -19,7 +19,7 @@ pub(crate) unsafe fn enet_packet_create(
     if flags & ENET_PACKET_FLAG_NO_ALLOCATE as i32 as u32 != 0 {
         (*packet).data = data.cast_mut();
     } else if data_length <= 0_i32 as usize {
-        (*packet).data = std::ptr::null_mut();
+        (*packet).data = core::ptr::null_mut();
     } else {
         (*packet).data = enet_malloc(Layout::array::<u8>(data_length).unwrap());
         if !data.is_null() {
@@ -38,7 +38,10 @@ pub(crate) unsafe fn enet_packet_destroy(packet: *mut ENetPacket) {
     if (*packet).flags & ENET_PACKET_FLAG_NO_ALLOCATE as i32 as u32 == 0
         && !((*packet).data).is_null()
     {
-        enet_free((*packet).data, Layout::array::<u8>((*packet).data_length).unwrap());
+        enet_free(
+            (*packet).data,
+            Layout::array::<u8>((*packet).data_length).unwrap(),
+        );
     }
     enet_free(packet.cast(), Layout::new::<ENetPacket>());
 }

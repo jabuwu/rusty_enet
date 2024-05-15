@@ -107,6 +107,7 @@
 //! normal network connections to rectify various types of network congestion by further limiting
 //! the volume of packets sent.
 
+#![no_std]
 #![warn(
     missing_docs,
     clippy::missing_panics_doc,
@@ -131,6 +132,13 @@
 // https://github.com/rust-lang/rust-clippy/issues/11382
 #![allow(clippy::arc_with_non_send_sync)]
 
+#[cfg(feature = "std")]
+#[macro_use]
+extern crate std;
+
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 mod address;
 mod c;
 mod compressor;
@@ -139,7 +147,6 @@ mod event;
 mod host;
 mod packet;
 mod peer;
-mod read_write;
 mod socket;
 mod time;
 mod version;
@@ -152,10 +159,14 @@ pub use event::*;
 pub use host::*;
 pub use packet::*;
 pub use peer::*;
-pub use read_write::*;
 pub use socket::*;
 pub use time::*;
 pub use version::*;
+
+#[cfg(feature = "std")]
+mod read_write;
+#[cfg(feature = "std")]
+pub use read_write::*;
 
 /// Error types.
 pub mod error;
@@ -164,5 +175,16 @@ pub mod error;
 #[allow(missing_docs)]
 pub mod consts;
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod test;
+
+#[cfg(feature = "std")]
+pub(crate) use std::boxed::Box;
+#[cfg(feature = "std")]
+pub(crate) use std::vec::Vec;
+
+#[cfg(not(feature = "std"))]
+pub(crate) use alloc::boxed::Box;
+#[cfg(not(feature = "std"))]
+pub(crate) use alloc::vec::Vec;

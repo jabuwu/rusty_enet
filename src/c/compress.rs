@@ -1,4 +1,4 @@
-use std::{alloc::Layout, cmp::Ordering, ptr::NonNull};
+use core::{alloc::Layout, cmp::Ordering, ptr::NonNull};
 
 use crate::{enet_free, enet_malloc, ENetBuffer};
 
@@ -29,8 +29,7 @@ pub(crate) const ENET_SUBCONTEXT_ESCAPE_DELTA: u32 = 5;
 pub(crate) const ENET_CONTEXT_SYMBOL_DELTA: u32 = 3;
 pub(crate) const ENET_RANGE_CODER_TOP: u32 = 16777216;
 pub(crate) unsafe fn enet_range_coder_create() -> *mut u8 {
-    let range_coder: *mut ENetRangeCoder =
-        enet_malloc(Layout::new::<ENetRangeCoder>()).cast();
+    let range_coder: *mut ENetRangeCoder = enet_malloc(Layout::new::<ENetRangeCoder>()).cast();
     range_coder.cast()
 }
 pub(crate) unsafe fn enet_range_coder_destroy(context: *mut u8) {

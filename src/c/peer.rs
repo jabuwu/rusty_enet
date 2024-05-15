@@ -1,12 +1,12 @@
-use std::{
+use core::{
     alloc::Layout,
     mem::MaybeUninit,
     ptr::{addr_of_mut, write_bytes},
 };
 
 use crate::{
-    consts::*, enet_free, enet_host_flush, enet_list_clear, enet_list_insert,
-    enet_list_move, enet_list_remove, enet_malloc, enet_packet_create, enet_packet_destroy,
+    consts::*, enet_free, enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move,
+    enet_list_remove, enet_malloc, enet_packet_create, enet_packet_destroy,
     enet_protocol_command_size, error::PeerSendError, ENetAcknowledgement, ENetChannel,
     ENetIncomingCommand, ENetList, ENetListIterator, ENetListNode, ENetOutgoingCommand, ENetPacket,
     ENetProtocol, ENetProtocolAcknowledge, ENetProtocolCommandHeader, ENetProtocolHeader,
@@ -124,7 +124,7 @@ pub(crate) unsafe fn enet_peer_throttle_configure<S: Socket>(
     enet_peer_queue_outgoing_command(
         peer,
         &command,
-        std::ptr::null_mut(),
+        core::ptr::null_mut(),
         0_i32 as u32,
         0_i32 as u16,
     );
@@ -196,8 +196,8 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
         let start_sequence_number: u16;
         let mut fragments: ENetList = ENetList {
             sentinel: ENetListNode {
-                next: std::ptr::null_mut(),
-                previous: std::ptr::null_mut(),
+                next: core::ptr::null_mut(),
+                previous: core::ptr::null_mut(),
             },
         };
         let mut fragment: *mut ENetOutgoingCommand;
@@ -244,7 +244,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
         }
         (*packet).reference_count =
             ((*packet).reference_count as u64).wrapping_add(fragment_number as u64) as usize;
-        while fragments.sentinel.next != std::ptr::addr_of_mut!(fragments.sentinel) {
+        while fragments.sentinel.next != core::ptr::addr_of_mut!(fragments.sentinel) {
             fragment = enet_list_remove(fragments.sentinel.next).cast();
             enet_peer_setup_outgoing_command(peer, fragment);
         }
@@ -286,9 +286,9 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     channel_id: *mut u8,
 ) -> *mut ENetPacket {
     if (*peer).dispatched_commands.sentinel.next
-        == std::ptr::addr_of_mut!((*peer).dispatched_commands.sentinel)
+        == core::ptr::addr_of_mut!((*peer).dispatched_commands.sentinel)
     {
-        return std::ptr::null_mut();
+        return core::ptr::null_mut();
     }
     let incoming_command: *mut ENetIncomingCommand =
         enet_list_remove((*peer).dispatched_commands.sentinel.next).cast();
@@ -318,7 +318,7 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
 }
 unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
     let mut outgoing_command: *mut ENetOutgoingCommand;
-    while (*queue).sentinel.next != std::ptr::addr_of_mut!((*queue).sentinel) {
+    while (*queue).sentinel.next != core::ptr::addr_of_mut!((*queue).sentinel) {
         outgoing_command = enet_list_remove((*queue).sentinel.next).cast();
         if !((*outgoing_command).packet).is_null() {
             (*(*outgoing_command).packet).reference_count =
@@ -376,7 +376,7 @@ unsafe fn enet_peer_reset_incoming_commands(queue: *mut ENetList) {
         queue,
         (*queue).sentinel.next,
         &mut (*queue).sentinel,
-        std::ptr::null_mut(),
+        core::ptr::null_mut(),
     );
 }
 pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
@@ -386,7 +386,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
         (*peer).flags = ((*peer).flags as i32 & !(ENET_PEER_FLAG_NEEDS_DISPATCH as i32)) as u16;
     }
     while (*peer).acknowledgements.sentinel.next
-        != std::ptr::addr_of_mut!((*peer).acknowledgements.sentinel)
+        != core::ptr::addr_of_mut!((*peer).acknowledgements.sentinel)
     {
         enet_free(
             enet_list_remove((*peer).acknowledgements.sentinel.next),
@@ -409,7 +409,7 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
             Layout::array::<ENetChannel>((*peer).channel_count).unwrap(),
         );
     }
-    (*peer).channels = std::ptr::null_mut();
+    (*peer).channels = core::ptr::null_mut();
     (*peer).channel_count = 0_i32 as usize;
 }
 pub(crate) unsafe fn enet_peer_on_connect<S: Socket>(peer: *mut ENetPeer<S>) {
@@ -500,7 +500,7 @@ pub(crate) unsafe fn enet_peer_ping<S: Socket>(peer: *mut ENetPeer<S>) {
     enet_peer_queue_outgoing_command(
         peer,
         &command,
-        std::ptr::null_mut(),
+        core::ptr::null_mut(),
         0_i32 as u32,
         0_i32 as u16,
     );
@@ -559,7 +559,7 @@ pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(peer: *mut ENetPeer<S>,
         enet_peer_queue_outgoing_command(
             peer,
             &command,
-            std::ptr::null_mut(),
+            core::ptr::null_mut(),
             0_i32 as u32,
             0_i32 as u16,
         );
@@ -598,7 +598,7 @@ pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, dat
     enet_peer_queue_outgoing_command(
         peer,
         &command,
-        std::ptr::null_mut(),
+        core::ptr::null_mut(),
         0_i32 as u32,
         0_i32 as u16,
     );
@@ -614,11 +614,11 @@ pub(crate) unsafe fn enet_peer_disconnect<S: Socket>(peer: *mut ENetPeer<S>, dat
 }
 pub(crate) unsafe fn enet_peer_has_outgoing_commands<S: Socket>(peer: *mut ENetPeer<S>) -> i32 {
     if (*peer).outgoing_commands.sentinel.next
-        == std::ptr::addr_of_mut!((*peer).outgoing_commands.sentinel)
+        == core::ptr::addr_of_mut!((*peer).outgoing_commands.sentinel)
         && (*peer).outgoing_send_reliable_commands.sentinel.next
-            == std::ptr::addr_of_mut!((*peer).outgoing_send_reliable_commands.sentinel)
+            == core::ptr::addr_of_mut!((*peer).outgoing_send_reliable_commands.sentinel)
         && (*peer).sent_reliable_commands.sentinel.next
-            == std::ptr::addr_of_mut!((*peer).sent_reliable_commands.sentinel)
+            == core::ptr::addr_of_mut!((*peer).sent_reliable_commands.sentinel)
     {
         return 0_i32;
     }
@@ -657,7 +657,7 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
             && reliable_window as i32
                 <= current_window as i32 + ENET_PEER_FREE_RELIABLE_WINDOWS as i32
         {
-            return std::ptr::null_mut();
+            return core::ptr::null_mut();
         }
     }
     let acknowledgement: *mut ENetAcknowledgement =
@@ -767,7 +767,7 @@ pub(crate) unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
     let outgoing_command: *mut ENetOutgoingCommand =
         enet_malloc(Layout::new::<ENetOutgoingCommand>()).cast();
     if outgoing_command.is_null() {
-        return std::ptr::null_mut();
+        return core::ptr::null_mut();
     }
     (*outgoing_command).command = *command;
     (*outgoing_command).fragment_offset = offset;
@@ -792,7 +792,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
     start_command = current_command;
     dropped_command = start_command;
     while current_command
-        != std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
+        != core::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
     {
         let incoming_command: *mut ENetIncomingCommand = current_command.cast();
         if (*incoming_command).command.header.command as i32 & ENET_PROTOCOL_COMMAND_MASK as i32
@@ -815,7 +815,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                         if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
                             enet_list_insert(
                                 &mut (*(*peer).host).dispatch_queue.sentinel,
-                                std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
+                                core::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
                             );
                             (*peer).flags = ((*peer).flags as i32
                                 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32)
@@ -856,7 +856,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                     if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
                         enet_list_insert(
                             &mut (*(*peer).host).dispatch_queue.sentinel,
-                            std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
+                            core::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
                         );
                         (*peer).flags =
                             ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
@@ -882,7 +882,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
         if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
             enet_list_insert(
                 &mut (*(*peer).host).dispatch_queue.sentinel,
-                std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
+                core::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
             );
             (*peer).flags = ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
         }
@@ -902,7 +902,7 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
 ) {
     let mut current_command: ENetListIterator;
     current_command = (*channel).incoming_reliable_commands.sentinel.next;
-    while current_command != std::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
+    while current_command != core::ptr::addr_of_mut!((*channel).incoming_reliable_commands.sentinel)
     {
         let incoming_command: *mut ENetIncomingCommand = current_command.cast();
         if (*incoming_command).fragments_remaining > 0_i32 as u32
@@ -932,12 +932,12 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_reliable_commands<S: Socket>(
     if (*peer).flags as i32 & ENET_PEER_FLAG_NEEDS_DISPATCH as i32 == 0 {
         enet_list_insert(
             &mut (*(*peer).host).dispatch_queue.sentinel,
-            std::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
+            core::ptr::addr_of_mut!((*peer).dispatch_list).cast(),
         );
         (*peer).flags = ((*peer).flags as i32 | ENET_PEER_FLAG_NEEDS_DISPATCH as i32) as u16;
     }
     if (*channel).incoming_unreliable_commands.sentinel.next
-        != std::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
+        != core::ptr::addr_of_mut!((*channel).incoming_unreliable_commands.sentinel)
     {
         enet_peer_dispatch_incoming_unreliable_commands(peer, channel, queued_command);
     }
@@ -966,8 +966,8 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         },
         fragment_count: 0,
         fragments_remaining: 0,
-        fragments: std::ptr::null_mut(),
-        packet: std::ptr::null_mut(),
+        fragments: core::ptr::null_mut(),
+        packet: core::ptr::null_mut(),
     };
     let mut current_block: u64;
     let channel: *mut ENetChannel =
@@ -977,8 +977,8 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     let mut reliable_window: u16;
     let current_window: u16;
     let mut incoming_command: *mut ENetIncomingCommand;
-    let mut current_command: ENetListIterator = std::ptr::null_mut();
-    let mut packet: *mut ENetPacket = std::ptr::null_mut();
+    let mut current_command: ENetListIterator = core::ptr::null_mut();
+    let mut packet: *mut ENetPacket = core::ptr::null_mut();
     if (*peer).state == ENET_PEER_STATE_DISCONNECT_LATER as i32 as u32 {
         current_block = 9207730764507465628;
     } else {
@@ -1026,7 +1026,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!(
+                                        == core::ptr::addr_of_mut!(
                                             (*channel).incoming_reliable_commands.sentinel
                                         )
                                     {
@@ -1087,7 +1087,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!(
+                                        == core::ptr::addr_of_mut!(
                                             (*channel).incoming_unreliable_commands.sentinel
                                         )
                                     {
@@ -1174,7 +1174,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incoming_command).fragment_count = fragment_count;
                                         (*incoming_command).fragments_remaining = fragment_count;
                                         (*incoming_command).packet = packet;
-                                        (*incoming_command).fragments = std::ptr::null_mut();
+                                        (*incoming_command).fragments = core::ptr::null_mut();
                                         if fragment_count > 0_i32 as u32 {
                                             if fragment_count
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
@@ -1267,7 +1267,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!(
+                                        == core::ptr::addr_of_mut!(
                                             (*channel).incoming_reliable_commands.sentinel
                                         )
                                     {
@@ -1328,7 +1328,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!(
+                                        == core::ptr::addr_of_mut!(
                                             (*channel).incoming_unreliable_commands.sentinel
                                         )
                                     {
@@ -1415,7 +1415,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incoming_command).fragment_count = fragment_count;
                                         (*incoming_command).fragments_remaining = fragment_count;
                                         (*incoming_command).packet = packet;
-                                        (*incoming_command).fragments = std::ptr::null_mut();
+                                        (*incoming_command).fragments = core::ptr::null_mut();
                                         if fragment_count > 0_i32 as u32 {
                                             if fragment_count
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
@@ -1508,7 +1508,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_reliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!(
+                                        == core::ptr::addr_of_mut!(
                                             (*channel).incoming_reliable_commands.sentinel
                                         )
                                     {
@@ -1569,7 +1569,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     (*channel).incoming_unreliable_commands.sentinel.previous;
                                 loop {
                                     if current_command
-                                        == std::ptr::addr_of_mut!(
+                                        == core::ptr::addr_of_mut!(
                                             (*channel).incoming_unreliable_commands.sentinel
                                         )
                                     {
@@ -1656,7 +1656,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incoming_command).fragment_count = fragment_count;
                                         (*incoming_command).fragments_remaining = fragment_count;
                                         (*incoming_command).packet = packet;
-                                        (*incoming_command).fragments = std::ptr::null_mut();
+                                        (*incoming_command).fragments = core::ptr::null_mut();
                                         if fragment_count > 0_i32 as u32 {
                                             if fragment_count
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
@@ -1749,5 +1749,5 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
     if !packet.is_null() && (*packet).reference_count == 0_i32 as usize {
         enet_packet_destroy(packet);
     }
-    std::ptr::null_mut()
+    core::ptr::null_mut()
 }

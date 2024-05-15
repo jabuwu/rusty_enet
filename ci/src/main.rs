@@ -49,10 +49,10 @@ fn main() -> anyhow::Result<()> {
 
     let sh = Shell::new()?;
     if what_to_run.contains(Check::CHECK) {
-        check(&sh, Target::Default)?;
+        check(&sh, Target::Default, Features(&["std"]))?;
     }
     if what_to_run.contains(Check::WASM_CHECK) {
-        check(&sh, Target::Wasm)?;
+        check(&sh, Target::Wasm, Features(&["std"]))?;
     }
     if what_to_run.contains(Check::EXAMPLE_CHECK) {
         example_check(&sh)?;
@@ -75,9 +75,16 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn check(sh: &Shell, target: Target) -> anyhow::Result<()> {
+fn check(sh: &Shell, target: Target, features: Features) -> anyhow::Result<()> {
     let target_flags = &target.flags();
-    cmd!(sh, "cargo rustc {target_flags...} -- -D warnings").run()?;
+    let feature_combination_flags = features.combination_flags();
+    for feature_flags in feature_combination_flags.iter() {
+        cmd!(
+            sh,
+            "cargo rustc {target_flags...} {feature_flags...} -- -D warnings"
+        )
+        .run()?;
+    }
     Ok(())
 }
 

@@ -8,8 +8,8 @@ pub enum HostNewError<S: Socket> {
     FailedToInitializeSocket(S::Error),
 }
 
-impl<S: Socket> std::fmt::Debug for HostNewError<S> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl<S: Socket> core::fmt::Debug for HostNewError<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             HostNewError::BadParameter => f.write_str("BadParameter"),
             HostNewError::FailedToInitializeSocket(f0) => f
@@ -20,8 +20,8 @@ impl<S: Socket> std::fmt::Debug for HostNewError<S> {
     }
 }
 
-impl<S: Socket> std::fmt::Display for HostNewError<S> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl<S: Socket> core::fmt::Display for HostNewError<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             HostNewError::BadParameter => {
                 f.write_str("Failed to create a new ENet host due to a bad parameter.")
@@ -48,10 +48,11 @@ pub enum PeerSendError {
     FailedToQueue,
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for PeerSendError {}
 
-impl std::fmt::Display for PeerSendError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for PeerSendError {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             PeerSendError::NotConnected => {
                 f.write_str("Cannot send to an ENet peer because it is not connected.")
@@ -81,14 +82,15 @@ pub struct BadParameter {
     pub parameter: &'static str,
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for BadParameter {}
 
-impl std::fmt::Display for BadParameter {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str(&format!(
-            "A bad parameter ({}) was passed to {}",
-            self.parameter, self.method
-        ))
+impl core::fmt::Display for BadParameter {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.write_str("A bad parameter (")?;
+        f.write_str(self.parameter)?;
+        f.write_str(") was passed to ")?;
+        f.write_str(self.method)
     }
 }
 
@@ -96,10 +98,11 @@ impl std::fmt::Display for BadParameter {
 #[derive(Debug)]
 pub struct NoAvailablePeers;
 
+#[cfg(feature = "std")]
 impl std::error::Error for NoAvailablePeers {}
 
-impl std::fmt::Display for NoAvailablePeers {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for NoAvailablePeers {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         f.write_str("Failed to connect because there were no available ENet peer slots.")
     }
 }

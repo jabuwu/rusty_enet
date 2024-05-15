@@ -1,4 +1,4 @@
-use std::{fmt::Debug, time::Duration};
+use core::{fmt::Debug, time::Duration};
 
 use crate::{
     consts::ENET_PROTOCOL_MAXIMUM_PEER_ID, enet_peer_disconnect, enet_peer_disconnect_later,
@@ -281,10 +281,10 @@ impl<S: Socket> Peer<S> {
 }
 
 impl<S: Socket> Debug for Peer<S> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let peer = unsafe { &(*self.0) };
         f.debug_struct("Peer")
-            .field("dispatchList", &std::ptr::addr_of!(peer.dispatch_list))
+            .field("dispatchList", &core::ptr::addr_of!(peer.dispatch_list))
             .field("host", &peer.host)
             .field("outgoingPeerID", &peer.outgoing_peer_id)
             .field("incomingPeerID", &peer.incoming_peer_id)
@@ -355,23 +355,23 @@ impl<S: Socket> Debug for Peer<S> {
             )
             .field(
                 "acknowledgements",
-                &std::ptr::addr_of!(peer.acknowledgements),
+                &core::ptr::addr_of!(peer.acknowledgements),
             )
             .field(
                 "sentReliableCommands",
-                &std::ptr::addr_of!(peer.sent_reliable_commands),
+                &core::ptr::addr_of!(peer.sent_reliable_commands),
             )
             .field(
                 "outgoingSendReliableCommands",
-                &std::ptr::addr_of!(peer.outgoing_send_reliable_commands),
+                &core::ptr::addr_of!(peer.outgoing_send_reliable_commands),
             )
             .field(
                 "outgoingCommands",
-                &std::ptr::addr_of!(peer.outgoing_commands),
+                &core::ptr::addr_of!(peer.outgoing_commands),
             )
             .field(
                 "dispatchedCommands",
-                &std::ptr::addr_of!(peer.dispatched_commands),
+                &core::ptr::addr_of!(peer.dispatched_commands),
             )
             .field("flags", &peer.flags)
             .field("reserved", &peer.reserved)

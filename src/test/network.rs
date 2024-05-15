@@ -10,6 +10,7 @@ use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
 use crate as enet;
+use crate::{Box, Vec};
 
 pub struct Socket {
     sender: mpsc::Sender<(usize, Vec<u8>)>,

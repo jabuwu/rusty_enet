@@ -1,9 +1,10 @@
+#[cfg(feature = "std")]
 use std::{
     io::{self, ErrorKind},
     net::{SocketAddr, UdpSocket},
 };
 
-use crate::Address;
+use crate::{Address, Vec};
 
 /// Socket options provided by ENet and passed to [`Socket::init`] when creating a
 /// [`Host`](`crate::Host`).
@@ -29,7 +30,7 @@ pub trait Socket: Sized {
     /// [`std::net::UdpSocket`].
     type PeerAddress: Address + 'static;
     /// Errors returned by this socket.
-    type Error: std::error::Error + std::fmt::Debug + Send + Sync + 'static;
+    type Error: core::fmt::Debug + Send + Sync + 'static;
 
     /// Initialize the socket with options passed down by ENet.
     ///
@@ -66,6 +67,7 @@ pub enum PacketReceived {
     Partial,
 }
 
+#[cfg(feature = "std")]
 impl Socket for UdpSocket {
     type PeerAddress = SocketAddr;
     type Error = io::Error;

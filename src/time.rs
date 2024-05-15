@@ -1,4 +1,4 @@
-use std::time::Duration;
+use core::time::Duration;
 
 /// Get the amount of time since the Unix epoch, for use with
 /// [`HostSettings::time`](`crate::HostSettings::time`).
@@ -10,9 +10,16 @@ use std::time::Duration;
 pub fn time_since_epoch() -> Duration {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .expect("Time went backwards")
+        #[cfg(not(feature = "std"))]
+        {
+            panic!("ENet host must be provided a custom time function in no_std environment.");
+        }
+        #[cfg(feature = "std")]
+        {
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("Time went backwards")
+        }
     }
     #[cfg(target_arch = "wasm32")]
     {

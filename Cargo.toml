@@ -13,6 +13,10 @@ exclude = [
     "/examples",
 ]
 
+[features]
+default = ["std"]
+std = []
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 js-sys = "0.3.69"
 

@@ -1,7 +1,12 @@
-use std::alloc::{handle_alloc_error, Layout};
+use core::alloc::Layout;
+
+#[cfg(not(feature = "std"))]
+use alloc::alloc::{alloc, dealloc, handle_alloc_error};
+#[cfg(feature = "std")]
+use std::alloc::{alloc, dealloc, handle_alloc_error};
 
 pub(crate) unsafe fn enet_malloc(layout: Layout) -> *mut u8 {
-    let ptr = unsafe { std::alloc::alloc(layout) };
+    let ptr = unsafe { alloc(layout) };
     if ptr.is_null() {
         handle_alloc_error(layout);
     }
@@ -9,5 +14,5 @@ pub(crate) unsafe fn enet_malloc(layout: Layout) -> *mut u8 {
 }
 
 pub(crate) unsafe fn enet_free(ptr: *mut u8, layout: Layout) {
-    std::alloc::dealloc(ptr, layout);
+    dealloc(ptr, layout);
 }

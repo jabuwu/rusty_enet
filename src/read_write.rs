@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{Address, PacketReceived, Socket};
+use crate::{Address, PacketReceived, Socket, Vec};
 
 /// Provides a Read/Write interface for use with [`Host`](`crate::Host`).
 ///

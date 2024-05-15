@@ -1,4 +1,4 @@
-use std::ptr::NonNull;
+use core::ptr::NonNull;
 
 use crate::Socket;
 
@@ -78,15 +78,15 @@ pub(crate) unsafe fn enet_time_get<S: Socket>(host: *mut ENetHost<S>) -> u32 {
 }
 pub unsafe fn from_raw_parts_or_empty<'a, T>(data: *const T, len: usize) -> &'a [T] {
     if len == 0 {
-        std::slice::from_raw_parts(NonNull::dangling().as_ptr(), 0)
+        core::slice::from_raw_parts(NonNull::dangling().as_ptr(), 0)
     } else {
-        std::slice::from_raw_parts(data, len)
+        core::slice::from_raw_parts(data, len)
     }
 }
 pub unsafe fn from_raw_parts_or_empty_mut<'a, T>(data: *mut T, len: usize) -> &'a mut [T] {
     if len == 0 {
-        std::slice::from_raw_parts_mut(NonNull::dangling().as_mut(), 0)
+        core::slice::from_raw_parts_mut(NonNull::dangling().as_mut(), 0)
     } else {
-        std::slice::from_raw_parts_mut(data, len)
+        core::slice::from_raw_parts_mut(data, len)
     }
 }

@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use core::net::SocketAddr;
 
 /// An address type, for use with the [`Socket`](`crate::Socket`) trait.
 pub trait Address: Sized + Clone {

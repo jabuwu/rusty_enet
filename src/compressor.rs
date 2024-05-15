@@ -1,6 +1,6 @@
 use crate::{
     enet_range_coder_compress, enet_range_coder_create, enet_range_coder_decompress,
-    enet_range_coder_destroy, ENetBuffer, ENetRangeCoder,
+    enet_range_coder_destroy, ENetBuffer, ENetRangeCoder, Vec,
 };
 
 /// An interface for compressing ENet packets.
@@ -31,7 +31,7 @@ impl Default for RangeCoder {
 impl Compressor for RangeCoder {
     fn compress(&mut self, in_buffers: Vec<&[u8]>, in_limit: usize, out: &mut [u8]) -> usize {
         unsafe {
-            let mut buffers = vec![];
+            let mut buffers = Vec::new();
             for in_buffer in in_buffers {
                 buffers.push(ENetBuffer {
                     data: in_buffer.as_ptr().cast_mut(),
