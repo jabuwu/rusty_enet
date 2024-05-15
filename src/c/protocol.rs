@@ -1,4 +1,7 @@
-use std::ptr::{copy_nonoverlapping, write_bytes};
+use std::{
+    alloc::Layout,
+    ptr::{copy_nonoverlapping, write_bytes},
+};
 
 use crate::{
     consts::{
@@ -354,7 +357,10 @@ unsafe fn enet_protocol_remove_sent_unreliable_commands<S: Socket>(
                 enet_packet_destroy((*outgoing_command).packet);
             }
         }
-        enet_free(outgoing_command.cast());
+        enet_free(
+            outgoing_command.cast(),
+            Layout::new::<ENetOutgoingCommand>(),
+        );
         if (*sent_unreliable_commands).sentinel.next
             == std::ptr::addr_of_mut!((*sent_unreliable_commands).sentinel)
         {
@@ -460,7 +466,10 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
             enet_packet_destroy((*outgoing_command).packet);
         }
     }
-    enet_free(outgoing_command.cast());
+    enet_free(
+        outgoing_command.cast(),
+        Layout::new::<ENetOutgoingCommand>(),
+    );
     if (*peer).sent_reliable_commands.sentinel.next
         == std::ptr::addr_of_mut!((*peer).sent_reliable_commands.sentinel)
     {
@@ -537,11 +546,7 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
     if channel_count > (*host).channel_limit {
         channel_count = (*host).channel_limit;
     }
-    (*peer).channels =
-        enet_malloc(channel_count.wrapping_mul(::core::mem::size_of::<ENetChannel>())).cast();
-    if ((*peer).channels).is_null() {
-        return std::ptr::null_mut();
-    }
+    (*peer).channels = enet_malloc(Layout::array::<ENetChannel>(channel_count).unwrap()).cast();
     (*peer).channel_count = channel_count;
     (*peer).state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
     (*peer).connect_id = (*command).connect.connect_id;
@@ -1742,7 +1747,7 @@ unsafe fn enet_protocol_send_acknowledgements<S: Socket>(
                 enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
             }
             enet_list_remove(&mut (*acknowledgement).acknowledgement_list);
-            enet_free(acknowledgement.cast());
+            enet_free(acknowledgement.cast(), Layout::new::<ENetAcknowledgement>());
             command = command.offset(1);
             buffer = buffer.offset(1);
         }
@@ -2016,7 +2021,10 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                                 enet_packet_destroy((*outgoing_command).packet);
                             }
                             enet_list_remove(&mut (*outgoing_command).outgoing_command_list);
-                            enet_free(outgoing_command.cast());
+                            enet_free(
+                                outgoing_command.cast(),
+                                Layout::new::<ENetOutgoingCommand>(),
+                            );
                             if current_command
                                 == std::ptr::addr_of_mut!((*peer).outgoing_commands.sentinel)
                             {
@@ -2059,7 +2067,10 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32
                 == 0
             {
-                enet_free(outgoing_command.cast());
+                enet_free(
+                    outgoing_command.cast(),
+                    Layout::new::<ENetOutgoingCommand>(),
+                );
             }
             (*peer).packets_sent = ((*peer).packets_sent).wrapping_add(1);
             command = command.offset(1);

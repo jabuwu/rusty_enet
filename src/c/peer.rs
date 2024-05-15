@@ -1,11 +1,12 @@
 use std::{
+    alloc::Layout,
     mem::MaybeUninit,
     ptr::{addr_of_mut, write_bytes},
 };
 
 use crate::{
-    consts::*, enet_free, enet_host_flush, enet_list_clear, enet_list_insert, enet_list_move,
-    enet_list_remove, enet_malloc, enet_packet_create, enet_packet_destroy,
+    consts::*, enet_free, enet_host_flush, enet_list_clear, enet_list_insert,
+    enet_list_move, enet_list_remove, enet_malloc, enet_packet_create, enet_packet_destroy,
     enet_protocol_command_size, error::PeerSendError, ENetAcknowledgement, ENetChannel,
     ENetIncomingCommand, ENetList, ENetListIterator, ENetListNode, ENetOutgoingCommand, ENetPacket,
     ENetProtocol, ENetProtocolAcknowledge, ENetProtocolCommandHeader, ENetProtocolHeader,
@@ -225,7 +226,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             if ((*packet).data_length).wrapping_sub(fragment_offset as usize) < fragment_length {
                 fragment_length = ((*packet).data_length).wrapping_sub(fragment_offset as usize);
             }
-            fragment = enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>()).cast();
+            fragment = enet_malloc(Layout::new::<ENetOutgoingCommand>()).cast();
             (*fragment).fragment_offset = fragment_offset;
             (*fragment).fragment_length = fragment_length as u16;
             (*fragment).packet = packet;
@@ -297,9 +298,19 @@ pub(crate) unsafe fn enet_peer_receive<S: Socket>(
     let packet = (*incoming_command).packet;
     (*packet).reference_count = ((*packet).reference_count).wrapping_sub(1);
     if !((*incoming_command).fragments).is_null() {
-        enet_free((*incoming_command).fragments.cast());
+        let count = (*incoming_command)
+            .fragment_count
+            .wrapping_add(31_i32 as u32)
+            .wrapping_div(32_i32 as u32) as usize;
+        enet_free(
+            (*incoming_command).fragments.cast(),
+            Layout::array::<u32>(count).unwrap(),
+        );
     }
-    enet_free(incoming_command.cast());
+    enet_free(
+        incoming_command.cast(),
+        Layout::new::<ENetIncomingCommand>(),
+    );
     (*peer).total_waiting_data = (*peer)
         .total_waiting_data
         .wrapping_sub((*packet).data_length) as usize as usize;
@@ -316,7 +327,10 @@ unsafe fn enet_peer_reset_outgoing_commands(queue: *mut ENetList) {
                 enet_packet_destroy((*outgoing_command).packet);
             }
         }
-        enet_free(outgoing_command.cast());
+        enet_free(
+            outgoing_command.cast(),
+            Layout::new::<ENetOutgoingCommand>(),
+        );
     }
 }
 unsafe fn enet_peer_remove_incoming_commands(
@@ -342,9 +356,19 @@ unsafe fn enet_peer_remove_incoming_commands(
             }
         }
         if !((*incoming_command).fragments).is_null() {
-            enet_free((*incoming_command).fragments.cast());
+            let count = (*incoming_command)
+                .fragment_count
+                .wrapping_add(31_i32 as u32)
+                .wrapping_div(32_i32 as u32) as usize;
+            enet_free(
+                (*incoming_command).fragments.cast(),
+                Layout::array::<u32>(count).unwrap(),
+            );
         }
-        enet_free(incoming_command.cast());
+        enet_free(
+            incoming_command.cast(),
+            Layout::new::<ENetIncomingCommand>(),
+        );
     }
 }
 unsafe fn enet_peer_reset_incoming_commands(queue: *mut ENetList) {
@@ -364,7 +388,10 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
     while (*peer).acknowledgements.sentinel.next
         != std::ptr::addr_of_mut!((*peer).acknowledgements.sentinel)
     {
-        enet_free(enet_list_remove((*peer).acknowledgements.sentinel.next));
+        enet_free(
+            enet_list_remove((*peer).acknowledgements.sentinel.next),
+            Layout::new::<ENetAcknowledgement>(),
+        );
     }
     enet_peer_reset_outgoing_commands(&mut (*peer).sent_reliable_commands);
     enet_peer_reset_outgoing_commands(&mut (*peer).outgoing_commands);
@@ -377,7 +404,10 @@ pub(crate) unsafe fn enet_peer_reset_queues<S: Socket>(peer: *mut ENetPeer<S>) {
             enet_peer_reset_incoming_commands(&mut (*channel).incoming_unreliable_commands);
             channel = channel.offset(1);
         }
-        enet_free((*peer).channels.cast());
+        enet_free(
+            (*peer).channels.cast(),
+            Layout::array::<ENetChannel>((*peer).channel_count).unwrap(),
+        );
     }
     (*peer).channels = std::ptr::null_mut();
     (*peer).channel_count = 0_i32 as usize;
@@ -631,10 +661,7 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
         }
     }
     let acknowledgement: *mut ENetAcknowledgement =
-        enet_malloc(::core::mem::size_of::<ENetAcknowledgement>()).cast();
-    if acknowledgement.is_null() {
-        return std::ptr::null_mut();
-    }
+        enet_malloc(Layout::new::<ENetAcknowledgement>()).cast();
     (*peer).outgoing_data_total = ((*peer).outgoing_data_total as u64)
         .wrapping_add(::core::mem::size_of::<ENetProtocolAcknowledge>() as u64)
         as u32;
@@ -738,7 +765,7 @@ pub(crate) unsafe fn enet_peer_queue_outgoing_command<S: Socket>(
     length: u16,
 ) -> *mut ENetOutgoingCommand {
     let outgoing_command: *mut ENetOutgoingCommand =
-        enet_malloc(::core::mem::size_of::<ENetOutgoingCommand>()).cast();
+        enet_malloc(Layout::new::<ENetOutgoingCommand>()).cast();
     if outgoing_command.is_null() {
         return std::ptr::null_mut();
     }
@@ -1135,8 +1162,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incoming_command =
-                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
-                                            .cast();
+                                        enet_malloc(Layout::new::<ENetIncomingCommand>()).cast();
                                     if incoming_command.is_null() {
                                         current_block = 15492018734234176694;
                                     } else {
@@ -1154,21 +1180,20 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
                                                     as u32
                                             {
-                                                (*incoming_command).fragments =
-                                                    enet_malloc(
-                                                        (fragment_count
-                                                            .wrapping_add(31_i32 as u32)
-                                                            .wrapping_div(32_i32 as u32)
-                                                            as usize)
-                                                            .wrapping_mul(::core::mem::size_of::<
-                                                                u32,
-                                                            >(
-                                                            )),
-                                                    )
-                                                    .cast();
+                                                let count = fragment_count
+                                                    .wrapping_add(31_i32 as u32)
+                                                    .wrapping_div(32_i32 as u32)
+                                                    as usize;
+                                                (*incoming_command).fragments = enet_malloc(
+                                                    Layout::array::<u32>(count).unwrap(),
+                                                )
+                                                .cast();
                                             }
                                             if ((*incoming_command).fragments).is_null() {
-                                                enet_free(incoming_command.cast());
+                                                enet_free(
+                                                    incoming_command.cast(),
+                                                    Layout::new::<ENetIncomingCommand>(),
+                                                );
                                                 current_block = 15492018734234176694;
                                             } else {
                                                 write_bytes(
@@ -1378,8 +1403,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incoming_command =
-                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
-                                            .cast();
+                                        enet_malloc(Layout::new::<ENetIncomingCommand>()).cast();
                                     if incoming_command.is_null() {
                                         current_block = 15492018734234176694;
                                     } else {
@@ -1397,21 +1421,20 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
                                                     as u32
                                             {
-                                                (*incoming_command).fragments =
-                                                    enet_malloc(
-                                                        (fragment_count
-                                                            .wrapping_add(31_i32 as u32)
-                                                            .wrapping_div(32_i32 as u32)
-                                                            as usize)
-                                                            .wrapping_mul(::core::mem::size_of::<
-                                                                u32,
-                                                            >(
-                                                            )),
-                                                    )
-                                                    .cast();
+                                                let count = fragment_count
+                                                    .wrapping_add(31_i32 as u32)
+                                                    .wrapping_div(32_i32 as u32)
+                                                    as usize;
+                                                (*incoming_command).fragments = enet_malloc(
+                                                    Layout::array::<u32>(count).unwrap(),
+                                                )
+                                                .cast();
                                             }
                                             if ((*incoming_command).fragments).is_null() {
-                                                enet_free(incoming_command.cast());
+                                                enet_free(
+                                                    incoming_command.cast(),
+                                                    Layout::new::<ENetIncomingCommand>(),
+                                                );
                                                 current_block = 15492018734234176694;
                                             } else {
                                                 write_bytes(
@@ -1621,8 +1644,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                     current_block = 15492018734234176694;
                                 } else {
                                     incoming_command =
-                                        enet_malloc(::core::mem::size_of::<ENetIncomingCommand>())
-                                            .cast();
+                                        enet_malloc(Layout::new::<ENetIncomingCommand>()).cast();
                                     if incoming_command.is_null() {
                                         current_block = 15492018734234176694;
                                     } else {
@@ -1640,21 +1662,20 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                                 <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
                                                     as u32
                                             {
-                                                (*incoming_command).fragments =
-                                                    enet_malloc(
-                                                        (fragment_count
-                                                            .wrapping_add(31_i32 as u32)
-                                                            .wrapping_div(32_i32 as u32)
-                                                            as usize)
-                                                            .wrapping_mul(::core::mem::size_of::<
-                                                                u32,
-                                                            >(
-                                                            )),
-                                                    )
-                                                    .cast();
+                                                let count = fragment_count
+                                                    .wrapping_add(31_i32 as u32)
+                                                    .wrapping_div(32_i32 as u32)
+                                                    as usize;
+                                                (*incoming_command).fragments = enet_malloc(
+                                                    Layout::array::<u32>(count).unwrap(),
+                                                )
+                                                .cast();
                                             }
                                             if ((*incoming_command).fragments).is_null() {
-                                                enet_free(incoming_command.cast());
+                                                enet_free(
+                                                    incoming_command.cast(),
+                                                    Layout::new::<ENetIncomingCommand>(),
+                                                );
                                                 current_block = 15492018734234176694;
                                             } else {
                                                 write_bytes(
