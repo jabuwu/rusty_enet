@@ -16,7 +16,7 @@ impl Version {
         Version {
             major: 1,
             minor: 3,
-            patch: 17,
+            patch: 18,
         }
     }
 }
