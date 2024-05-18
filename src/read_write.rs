@@ -1,11 +1,15 @@
 use std::collections::VecDeque;
 
-use crate::{Address, PacketReceived, Socket};
+use crate::{Address, PacketReceived, Socket, SocketOptions};
 
 /// Provides a Read/Write interface for use with [`Host`](`crate::Host`).
 ///
 /// This provides a useful alternative to implementing the [`Socket`] trait, especially when
 /// interfacing with multiple kinds of sockets at once.
+/// 
+/// The call to [`Socket::init`] never fails for this type, so it is safe to assume
+/// [`Host::new`](`crate::Host::new`) will not fail with
+/// [`HostNewError::FailedToInitializeSocket`](`crate::error::HostNewError::FailedToInitializeSocket`).
 ///
 /// ```
 /// use std::convert::Infallible;
@@ -21,7 +25,6 @@ use crate::{Address, PacketReceived, Socket};
 /// if let Some((address, packet)) = host.socket_mut().read() {
 ///     dbg!((address, packet));
 /// }
-/// ```
 #[derive(Debug)]
 pub struct ReadWrite<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> {
     inbound: VecDeque<(A, Vec<u8>)>,
@@ -69,6 +72,11 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Socket
 {
     type PeerAddress = A;
     type Error = E;
+
+    fn init(&mut self, _socket_options: SocketOptions) -> Result<(), Self::Error> {
+        // NOTE: this implementation must not become fallable
+        Ok(())
+    }
 
     fn send(&mut self, address: A, buffer: &[u8]) -> Result<usize, E> {
         self.outbound.push_back((address, buffer.to_vec()));
