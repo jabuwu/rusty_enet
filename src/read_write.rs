@@ -6,7 +6,7 @@ use crate::{Address, PacketReceived, Socket, SocketOptions};
 ///
 /// This provides a useful alternative to implementing the [`Socket`] trait, especially when
 /// interfacing with multiple kinds of sockets at once.
-/// 
+///
 /// The call to [`Socket::init`] never fails for this type, so it is safe to assume
 /// [`Host::new`](`crate::Host::new`) will not fail with
 /// [`HostNewError::FailedToInitializeSocket`](`crate::error::HostNewError::FailedToInitializeSocket`).
