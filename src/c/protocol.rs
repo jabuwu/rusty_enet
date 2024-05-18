@@ -1674,7 +1674,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             }
         };
         (*host).received_data = ((*host).packet_data[0_i32 as usize]).as_mut_ptr();
-        (*host).received_data_length = received_length as usize;
+        (*host).received_data_length = received_length;
         (*host).total_received_data = (*host)
             .total_received_data
             .wrapping_add(received_length as u32);
@@ -2288,7 +2288,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         }
                         (*current_peer).last_send_time = (*host).service_time;
                         let mut conglomerate_buffer = vec![];
-                        conglomerate_buffer.reserve_exact(BUFFER_MAXIMUM as usize);
+                        conglomerate_buffer.reserve_exact((*host).buffer_count);
                         for buffer_index in 0..(*host).buffer_count {
                             let buffer = &(*host).buffers[buffer_index];
                             conglomerate_buffer.extend_from_slice(super::from_raw_parts_or_empty(
