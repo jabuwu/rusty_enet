@@ -3,7 +3,7 @@ use std::{
     io::{copy, Cursor},
 };
 
-use crate::{Address, PacketReceived, Socket, SocketOptions, MTU_MAX};
+use crate::{Address, PacketReceived, Socket, SocketOptions, Vec, MTU_MAX};
 
 /// Provides a Read/Write interface for use with [`Host`](`crate::Host`).
 ///

@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use core::fmt::Debug;
 
 use crate::{
     enet_packet_create, enet_packet_destroy, ENetPacket, ENET_PACKET_FLAG_RELIABLE,
@@ -163,7 +163,7 @@ impl Drop for Packet {
 }
 
 impl Debug for Packet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let packet = unsafe { &(*self.packet) };
         f.debug_struct("Packet")
             .field("data", &packet.data)

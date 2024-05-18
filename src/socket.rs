@@ -1,3 +1,4 @@
+#[cfg(feature = "std")]
 use std::{
     io::{self, ErrorKind},
     net::{SocketAddr, UdpSocket},
@@ -39,7 +40,11 @@ pub trait Socket: Sized {
     /// [`std::net::UdpSocket`].
     type Address: Address;
     /// Errors returned by this socket.
+    #[cfg(feature = "std")]
     type Error: std::error::Error;
+    /// Errors returned by this socket.
+    #[cfg(not(feature = "std"))]
+    type Error: core::fmt::Debug;
 
     /// Initialize the socket with options passed down by ENet.
     ///
@@ -84,6 +89,7 @@ pub enum PacketReceived {
     Partial,
 }
 
+#[cfg(feature = "std")]
 impl Socket for UdpSocket {
     type Address = SocketAddr;
     type Error = io::Error;

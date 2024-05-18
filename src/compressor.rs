@@ -1,4 +1,4 @@
-use std::mem::zeroed;
+use core::mem::zeroed;
 
 use crate::{
     consts::BUFFER_MAXIMUM, enet_range_coder_compress, enet_range_coder_create,
@@ -37,7 +37,7 @@ impl Compressor for RangeCoder {
     fn compress(&mut self, in_buffers: &[&[u8]], in_limit: usize, out: &mut [u8]) -> usize {
         unsafe {
             let mut buffers: [ENetBuffer; BUFFER_MAXIMUM as usize] =
-                std::array::from_fn(|_| zeroed());
+                core::array::from_fn(|_| zeroed());
             for (i, in_buffer) in in_buffers.iter().enumerate() {
                 buffers[i] = ENetBuffer {
                     data: in_buffer.as_ptr().cast_mut(),

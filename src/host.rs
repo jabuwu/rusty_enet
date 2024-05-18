@@ -1,4 +1,6 @@
-use std::{fmt::Debug, mem::zeroed, time::Duration};
+use core::{fmt::Debug, mem::zeroed, time::Duration};
+
+use crate::{Box, Vec};
 
 use crate::{
     consts::{
@@ -109,7 +111,7 @@ impl<S: Socket> Host<S> {
                 settings.seed,
             )
             .map_err(|err| HostNewError::FailedToInitializeSocket(err))?;
-            let mut peers = vec![];
+            let mut peers = Vec::new();
             peers.reserve_exact((*host).peer_count);
             for peer_index in 0..(*host).peer_count {
                 peers.push(Peer((*host).peers.add(peer_index)));
@@ -435,7 +437,7 @@ impl<S: Socket> Drop for Host<S> {
 }
 
 impl<S: Socket> Debug for Host<S> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let host = unsafe { &(*self.host) };
         f.debug_struct("Host")
             .field("socket", &host.socket)
@@ -453,13 +455,13 @@ impl<S: Socket> Debug for Host<S> {
             .field("peerCount", &host.peer_count)
             .field("channelLimit", &host.channel_limit)
             .field("serviceTime", &host.service_time)
-            .field("dispatchQueue", &std::ptr::addr_of!(host.dispatch_queue))
+            .field("dispatchQueue", &core::ptr::addr_of!(host.dispatch_queue))
             .field("totalQueued", &host.total_queued)
             .field("packetSize", &host.packet_size)
             .field("headerFlags", &host.header_flags)
-            .field("commands", &std::ptr::addr_of!(host.commands))
+            .field("commands", &core::ptr::addr_of!(host.commands))
             .field("commandCount", &host.command_count)
-            .field("buffers", &std::ptr::addr_of!(host.buffers))
+            .field("buffers", &core::ptr::addr_of!(host.buffers))
             .field("bufferCount", &host.buffer_count)
             .field("checksum", &host.checksum)
             .field("time", &host.time)

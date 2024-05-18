@@ -1,9 +1,9 @@
-use std::{mem::MaybeUninit, ptr::write_bytes, time::Duration};
+use core::{alloc::Layout, mem::MaybeUninit, ptr::write_bytes, time::Duration};
 
 use crate::{
     consts::*, enet_free, enet_list_clear, enet_malloc, enet_packet_destroy,
-    enet_peer_queue_outgoing_command, enet_peer_reset, enet_peer_send, enet_time_get, Compressor,
-    ENetBuffer, ENetChannel, ENetList, ENetPacket, ENetPeer, ENetProtocol,
+    enet_peer_queue_outgoing_command, enet_peer_reset, enet_peer_send, enet_time_get, Box,
+    Compressor, ENetBuffer, ENetChannel, ENetList, ENetPacket, ENetPeer, ENetProtocol,
     ENetProtocolCommandHeader, Socket, SocketOptions, ENET_PEER_STATE_CONNECTED,
     ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_DISCONNECTED, ENET_PEER_STATE_DISCONNECT_LATER,
     ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT, ENET_PROTOCOL_COMMAND_CONNECT,
@@ -58,11 +58,9 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     seed: Option<u32>,
 ) -> Result<*mut ENetHost<S>, S::Error> {
     let mut current_peer: *mut ENetPeer<S>;
-    // note: allocations cannot be null, see enet_malloc docs
-    let host: *mut ENetHost<S> = enet_malloc(::core::mem::size_of::<ENetHost<S>>()).cast();
+    let host: *mut ENetHost<S> = enet_malloc(Layout::new::<ENetHost<S>>()).cast();
     write_bytes(host, 0, 1);
-    (*host).peers =
-        enet_malloc(peer_count.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>())).cast();
+    (*host).peers = enet_malloc(Layout::array::<ENetPeer<S>>(peer_count).unwrap()).cast();
     write_bytes((*host).peers, 0, peer_count);
     socket.init(SocketOptions {
         receive_buffer: HOST_RECEIVE_BUFFER_SIZE as usize,
@@ -94,7 +92,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).buffer_count = 0_i32 as usize;
     (*host).checksum.write(None);
     (*host).received_address.write(None);
-    (*host).received_data = std::ptr::null_mut();
+    (*host).received_data = core::ptr::null_mut();
     (*host).received_data_length = 0_i32 as usize;
     (*host).total_sent_data = 0_i32 as u32;
     (*host).total_sent_packets = 0_i32 as u32;
@@ -115,7 +113,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
         (*current_peer).incoming_session_id = 0xff_i32 as u8;
         (*current_peer).outgoing_session_id = (*current_peer).incoming_session_id;
         (*current_peer).address.write(None);
-        (*current_peer).data = std::ptr::null_mut();
+        (*current_peer).data = core::ptr::null_mut();
         enet_list_clear(&mut (*current_peer).acknowledgements);
         enet_list_clear(&mut (*current_peer).sent_reliable_commands);
         enet_list_clear(&mut (*current_peer).outgoing_commands);
@@ -142,8 +140,11 @@ pub(crate) unsafe fn enet_host_destroy<S: Socket>(host: *mut ENetHost<S>) {
     (*host).time.assume_init_drop();
     (*host).compressor.assume_init_drop();
     (*host).received_address.assume_init_drop();
-    enet_free((*host).peers.cast());
-    enet_free(host.cast());
+    enet_free(
+        (*host).peers.cast(),
+        Layout::array::<ENetPeer<S>>((*host).peer_count).unwrap(),
+    );
+    enet_free(host.cast(), Layout::new::<ENetHost<S>>());
 }
 pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> u32 {
     (*host).random_seed = (*host).random_seed.wrapping_add(0x6d2b79f5_u32);
@@ -180,10 +181,10 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
         current_peer = current_peer.offset(1);
     }
     if current_peer >= ((*host).peers).add((*host).peer_count) {
-        return std::ptr::null_mut();
+        return core::ptr::null_mut();
     }
     (*current_peer).channels =
-        enet_malloc(channel_count.wrapping_mul(::core::mem::size_of::<ENetChannel>())).cast();
+        enet_malloc(Layout::array::<ENetChannel>(channel_count).unwrap()).cast();
     (*current_peer).channel_count = channel_count;
     (*current_peer).state = ENET_PEER_STATE_CONNECTING;
     *(*current_peer).address.assume_init_mut() = Some(address);
@@ -234,7 +235,7 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
     enet_peer_queue_outgoing_command(
         current_peer,
         &command,
-        std::ptr::null_mut(),
+        core::ptr::null_mut(),
         0_i32 as u32,
         0_i32 as u16,
     );
@@ -439,7 +440,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                 enet_peer_queue_outgoing_command(
                     peer,
                     &command,
-                    std::ptr::null_mut(),
+                    core::ptr::null_mut(),
                     0_i32 as u32,
                     0_i32 as u16,
                 );
