@@ -1,4 +1,4 @@
-# UNRELEASED
+# 0.2.0
 - Compatible with ENet 1.3.18
 - Refine some trait requirements and derives
 - Reduce allocations introduced by Rust port ([#1](https://github.com/jabuwu/rusty_enet/issues/1))
