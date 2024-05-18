@@ -200,7 +200,7 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
             },
         };
         let mut fragment: *mut ENetOutgoingCommand;
-        if fragment_count > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32 {
+        if fragment_count > PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32 {
             return Err(PeerSendError::FragmentsExceeded);
         }
         if (*packet).flags
@@ -406,7 +406,7 @@ pub(crate) unsafe fn enet_peer_on_disconnect<S: Socket>(peer: *mut ENetPeer<S>) 
 }
 pub(crate) unsafe fn enet_peer_reset<S: Socket>(peer: *mut ENetPeer<S>) {
     enet_peer_on_disconnect(peer);
-    (*peer).outgoing_peer_id = ENET_PROTOCOL_MAXIMUM_PEER_ID as i32 as u16;
+    (*peer).outgoing_peer_id = PROTOCOL_MAXIMUM_PEER_ID as i32 as u16;
     (*peer).connect_id = 0_i32 as u32;
     (*peer).state = ENET_PEER_STATE_DISCONNECTED;
     (*peer).incoming_bandwidth = 0_i32 as u32;
@@ -424,27 +424,27 @@ pub(crate) unsafe fn enet_peer_reset<S: Socket>(peer: *mut ENetPeer<S>) {
     (*peer).packets_lost = 0_i32 as u32;
     (*peer).packet_loss = 0_i32 as u32;
     (*peer).packet_loss_variance = 0_i32 as u32;
-    (*peer).packet_throttle = ENET_PEER_DEFAULT_PACKET_THROTTLE as i32 as u32;
-    (*peer).packet_throttle_limit = ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32;
+    (*peer).packet_throttle = PEER_DEFAULT_PACKET_THROTTLE as i32 as u32;
+    (*peer).packet_throttle_limit = PEER_PACKET_THROTTLE_SCALE as i32 as u32;
     (*peer).packet_throttle_counter = 0_i32 as u32;
     (*peer).packet_throttle_epoch = 0_i32 as u32;
-    (*peer).packet_throttle_acceleration = ENET_PEER_PACKET_THROTTLE_ACCELERATION as i32 as u32;
-    (*peer).packet_throttle_deceleration = ENET_PEER_PACKET_THROTTLE_DECELERATION as i32 as u32;
-    (*peer).packet_throttle_interval = ENET_PEER_PACKET_THROTTLE_INTERVAL as i32 as u32;
-    (*peer).ping_interval = ENET_PEER_PING_INTERVAL as i32 as u32;
-    (*peer).timeout_limit = ENET_PEER_TIMEOUT_LIMIT as i32 as u32;
-    (*peer).timeout_minimum = ENET_PEER_TIMEOUT_MINIMUM as i32 as u32;
-    (*peer).timeout_maximum = ENET_PEER_TIMEOUT_MAXIMUM as i32 as u32;
-    (*peer).last_round_trip_time = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as i32 as u32;
-    (*peer).lowest_round_trip_time = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as i32 as u32;
+    (*peer).packet_throttle_acceleration = PEER_PACKET_THROTTLE_ACCELERATION as i32 as u32;
+    (*peer).packet_throttle_deceleration = PEER_PACKET_THROTTLE_DECELERATION as i32 as u32;
+    (*peer).packet_throttle_interval = PEER_PACKET_THROTTLE_INTERVAL as i32 as u32;
+    (*peer).ping_interval = PEER_PING_INTERVAL as i32 as u32;
+    (*peer).timeout_limit = PEER_TIMEOUT_LIMIT as i32 as u32;
+    (*peer).timeout_minimum = PEER_TIMEOUT_MINIMUM as i32 as u32;
+    (*peer).timeout_maximum = PEER_TIMEOUT_MAXIMUM as i32 as u32;
+    (*peer).last_round_trip_time = PEER_DEFAULT_ROUND_TRIP_TIME as i32 as u32;
+    (*peer).lowest_round_trip_time = PEER_DEFAULT_ROUND_TRIP_TIME as i32 as u32;
     (*peer).last_round_trip_time_variance = 0_i32 as u32;
     (*peer).highest_round_trip_time_variance = 0_i32 as u32;
-    (*peer).round_trip_time = ENET_PEER_DEFAULT_ROUND_TRIP_TIME as i32 as u32;
+    (*peer).round_trip_time = PEER_DEFAULT_ROUND_TRIP_TIME as i32 as u32;
     (*peer).round_trip_time_variance = 0_i32 as u32;
     (*peer).mtu = (*(*peer).host).mtu;
     (*peer).reliable_data_in_transit = 0_i32 as u32;
     (*peer).outgoing_reliable_sequence_number = 0_i32 as u16;
-    (*peer).window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+    (*peer).window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     (*peer).incoming_unsequenced_group = 0_i32 as u16;
     (*peer).outgoing_unsequenced_group = 0_i32 as u16;
     (*peer).event_data = 0_i32 as u32;
@@ -482,7 +482,7 @@ pub(crate) unsafe fn enet_peer_ping_interval<S: Socket>(
     (*peer).ping_interval = if ping_interval != 0 {
         ping_interval
     } else {
-        ENET_PEER_PING_INTERVAL as i32 as u32
+        PEER_PING_INTERVAL as i32 as u32
     };
 }
 pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
@@ -494,17 +494,17 @@ pub(crate) unsafe fn enet_peer_timeout<S: Socket>(
     (*peer).timeout_limit = if timeout_limit != 0 {
         timeout_limit
     } else {
-        ENET_PEER_TIMEOUT_LIMIT as i32 as u32
+        PEER_TIMEOUT_LIMIT as i32 as u32
     };
     (*peer).timeout_minimum = if timeout_minimum != 0 {
         timeout_minimum
     } else {
-        ENET_PEER_TIMEOUT_MINIMUM as i32 as u32
+        PEER_TIMEOUT_MINIMUM as i32 as u32
     };
     (*peer).timeout_maximum = if timeout_maximum != 0 {
         timeout_maximum
     } else {
-        ENET_PEER_TIMEOUT_MAXIMUM as i32 as u32
+        PEER_TIMEOUT_MAXIMUM as i32 as u32
     };
 }
 pub(crate) unsafe fn enet_peer_disconnect_now<S: Socket>(peer: *mut ENetPeer<S>, data: u32) {
@@ -614,18 +614,17 @@ pub(crate) unsafe fn enet_peer_queue_acknowledgement<S: Socket>(
         let channel: *mut ENetChannel =
             ((*peer).channels).offset((*command).header.channel_id as isize);
         let mut reliable_window: u16 = ((*command).header.reliable_sequence_number as i32
-            / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
+            / PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
         let current_window: u16 = ((*channel).incoming_reliable_sequence_number as i32
-            / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
+            / PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
         if ((*command).header.reliable_sequence_number as i32)
             < (*channel).incoming_reliable_sequence_number as i32
         {
-            reliable_window = (reliable_window as i32 + ENET_PEER_RELIABLE_WINDOWS as i32) as u16;
+            reliable_window = (reliable_window as i32 + PEER_RELIABLE_WINDOWS as i32) as u16;
         }
         if reliable_window as i32
-            >= current_window as i32 + ENET_PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
-            && reliable_window as i32
-                <= current_window as i32 + ENET_PEER_FREE_RELIABLE_WINDOWS as i32
+            >= current_window as i32 + PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
+            && reliable_window as i32 <= current_window as i32 + PEER_FREE_RELIABLE_WINDOWS as i32
         {
             return std::ptr::null_mut();
         }
@@ -802,20 +801,20 @@ pub(crate) unsafe fn enet_peer_dispatch_incoming_unreliable_commands<S: Socket>(
                 }
             } else {
                 let mut reliable_window: u16 = ((*incoming_command).reliable_sequence_number as i32
-                    / ENET_PEER_RELIABLE_WINDOW_SIZE as i32)
+                    / PEER_RELIABLE_WINDOW_SIZE as i32)
                     as u16;
                 let current_window: u16 = ((*channel).incoming_reliable_sequence_number as i32
-                    / ENET_PEER_RELIABLE_WINDOW_SIZE as i32)
+                    / PEER_RELIABLE_WINDOW_SIZE as i32)
                     as u16;
                 if ((*incoming_command).reliable_sequence_number as i32)
                     < (*channel).incoming_reliable_sequence_number as i32
                 {
                     reliable_window =
-                        (reliable_window as i32 + ENET_PEER_RELIABLE_WINDOWS as i32) as u16;
+                        (reliable_window as i32 + PEER_RELIABLE_WINDOWS as i32) as u16;
                 }
                 if reliable_window as i32 >= current_window as i32
                     && (reliable_window as i32)
-                        < current_window as i32 + ENET_PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
+                        < current_window as i32 + PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
                 {
                     break;
                 }
@@ -960,17 +959,16 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
         {
             reliable_sequence_number = (*command).header.reliable_sequence_number as u32;
             reliable_window = reliable_sequence_number
-                .wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as i32 as u32)
+                .wrapping_div(PEER_RELIABLE_WINDOW_SIZE as i32 as u32)
                 as u16;
             current_window = ((*channel).incoming_reliable_sequence_number as i32
-                / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
+                / PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
             if reliable_sequence_number < (*channel).incoming_reliable_sequence_number as u32 {
-                reliable_window =
-                    (reliable_window as i32 + ENET_PEER_RELIABLE_WINDOWS as i32) as u16;
+                reliable_window = (reliable_window as i32 + PEER_RELIABLE_WINDOWS as i32) as u16;
             }
             if (reliable_window as i32) < current_window as i32
                 || reliable_window as i32
-                    >= current_window as i32 + ENET_PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
+                    >= current_window as i32 + PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
             {
                 current_block = 9207730764507465628;
             } else {
@@ -1151,8 +1149,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incoming_command).fragments = std::ptr::null_mut();
                                         if fragment_count > 0_i32 as u32 {
                                             if fragment_count
-                                                <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
-                                                    as u32
+                                                <= PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
                                             {
                                                 (*incoming_command).fragments =
                                                     enet_malloc(
@@ -1394,8 +1391,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incoming_command).fragments = std::ptr::null_mut();
                                         if fragment_count > 0_i32 as u32 {
                                             if fragment_count
-                                                <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
-                                                    as u32
+                                                <= PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
                                             {
                                                 (*incoming_command).fragments =
                                                     enet_malloc(
@@ -1637,8 +1633,7 @@ pub(crate) unsafe fn enet_peer_queue_incoming_command<S: Socket>(
                                         (*incoming_command).fragments = std::ptr::null_mut();
                                         if fragment_count > 0_i32 as u32 {
                                             if fragment_count
-                                                <= ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32
-                                                    as u32
+                                                <= PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
                                             {
                                                 (*incoming_command).fragments =
                                                     enet_malloc(

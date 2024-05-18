@@ -3,7 +3,7 @@ use std::{
     net::{SocketAddr, UdpSocket},
 };
 
-use crate::{consts::ENET_PROTOCOL_MAXIMUM_MTU, Address};
+use crate::{consts::PROTOCOL_MAXIMUM_MTU, Address};
 
 /// The maximum amount of bytes ENet will ever send or receive. Useful for allocating buffers when
 /// sending and receiving.
@@ -12,8 +12,8 @@ use crate::{consts::ENET_PROTOCOL_MAXIMUM_MTU, Address};
 /// changed with [`Host::set_mtu`](`crate::Host::set_mtu`) and
 /// [`Peer::set_mtu`](`crate::Peer::set_mtu`).
 ///
-/// A shorter an easier to remember equivalent to [`ENET_PROTOCOL_MAXIMUM_MTU`].
-pub const MTU_MAX: usize = ENET_PROTOCOL_MAXIMUM_MTU;
+/// A shorter an easier to remember equivalent to [`PROTOCOL_MAXIMUM_MTU`].
+pub const MTU_MAX: usize = PROTOCOL_MAXIMUM_MTU;
 
 /// Socket options provided by ENet and passed to [`Socket::init`] when creating a
 /// [`Host`](`crate::Host`).

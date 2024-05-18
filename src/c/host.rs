@@ -27,14 +27,14 @@ pub(crate) struct ENetHost<S: Socket> {
     pub(crate) total_queued: u32,
     pub(crate) packet_size: usize,
     pub(crate) header_flags: u16,
-    pub(crate) commands: [ENetProtocol; ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS as usize],
+    pub(crate) commands: [ENetProtocol; PROTOCOL_MAXIMUM_PACKET_COMMANDS as usize],
     pub(crate) command_count: usize,
-    pub(crate) buffers: [ENetBuffer; ENET_BUFFER_MAXIMUM as usize],
+    pub(crate) buffers: [ENetBuffer; BUFFER_MAXIMUM as usize],
     pub(crate) buffer_count: usize,
     pub(crate) checksum: MaybeUninit<Option<Box<dyn Fn(&[&[u8]]) -> u32>>>,
     pub(crate) time: MaybeUninit<Box<dyn Fn() -> Duration>>,
     pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
-    pub(crate) packet_data: [[u8; ENET_PROTOCOL_MAXIMUM_MTU]; 2],
+    pub(crate) packet_data: [[u8; PROTOCOL_MAXIMUM_MTU]; 2],
     pub(crate) received_address: MaybeUninit<Option<S::Address>>,
     pub(crate) received_data: *mut u8,
     pub(crate) received_data_length: usize,
@@ -65,14 +65,14 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
         enet_malloc(peer_count.wrapping_mul(::core::mem::size_of::<ENetPeer<S>>())).cast();
     write_bytes((*host).peers, 0, peer_count);
     socket.init(SocketOptions {
-        receive_buffer: ENET_HOST_RECEIVE_BUFFER_SIZE as usize,
-        send_buffer: ENET_HOST_SEND_BUFFER_SIZE as usize,
+        receive_buffer: HOST_RECEIVE_BUFFER_SIZE as usize,
+        send_buffer: HOST_SEND_BUFFER_SIZE as usize,
     })?;
     (*host).socket.write(socket);
-    if channel_limit == 0 || channel_limit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize {
-        channel_limit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
-    } else if channel_limit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize {
-        channel_limit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize;
+    if channel_limit == 0 || channel_limit > PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize {
+        channel_limit = PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
+    } else if channel_limit < PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize {
+        channel_limit = PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize;
     }
     (*host).time.write(time);
     if let Some(seed) = seed {
@@ -88,7 +88,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).outgoing_bandwidth = outgoing_bandwidth;
     (*host).bandwidth_throttle_epoch = 0_i32 as u32;
     (*host).recalculate_bandwidth_limits = 0_i32;
-    (*host).mtu = ENET_HOST_DEFAULT_MTU as i32 as u32;
+    (*host).mtu = HOST_DEFAULT_MTU as i32 as u32;
     (*host).peer_count = peer_count;
     (*host).command_count = 0_i32 as usize;
     (*host).buffer_count = 0_i32 as usize;
@@ -103,9 +103,9 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).total_queued = 0_i32 as u32;
     (*host).connected_peers = 0_i32 as usize;
     (*host).bandwidth_limited_peers = 0_i32 as usize;
-    (*host).duplicate_peers = ENET_PROTOCOL_MAXIMUM_PEER_ID as i32 as usize;
-    (*host).maximum_packet_size = ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE as i32 as usize;
-    (*host).maximum_waiting_data = ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA as i32 as usize;
+    (*host).duplicate_peers = PROTOCOL_MAXIMUM_PEER_ID as i32 as usize;
+    (*host).maximum_packet_size = HOST_DEFAULT_MAXIMUM_PACKET_SIZE as i32 as usize;
+    (*host).maximum_waiting_data = HOST_DEFAULT_MAXIMUM_WAITING_DATA as i32 as usize;
     (*host).compressor.write(None);
     enet_list_clear(&mut (*host).dispatch_queue);
     current_peer = (*host).peers;
@@ -167,10 +167,10 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
             reliable_sequence_number: 0,
         },
     };
-    if channel_count < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize {
-        channel_count = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize;
-    } else if channel_count > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize {
-        channel_count = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
+    if channel_count < PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize {
+        channel_count = PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize;
+    } else if channel_count > PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize {
+        channel_count = PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
     }
     current_peer = (*host).peers;
     while current_peer < ((*host).peers).add((*host).peer_count) {
@@ -190,16 +190,16 @@ pub(crate) unsafe fn enet_host_connect<S: Socket>(
     (*current_peer).connect_id = enet_host_random(host);
     (*current_peer).mtu = (*host).mtu;
     if (*host).outgoing_bandwidth == 0_i32 as u32 {
-        (*current_peer).window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+        (*current_peer).window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     } else {
         (*current_peer).window_size = ((*host).outgoing_bandwidth)
-            .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as i32 as u32)
-            .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
+            .wrapping_div(PEER_WINDOW_SIZE_SCALE as i32 as u32)
+            .wrapping_mul(PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
     }
-    if (*current_peer).window_size < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
-        (*current_peer).window_size = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
-    } else if (*current_peer).window_size > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
-        (*current_peer).window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+    if (*current_peer).window_size < PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
+        (*current_peer).window_size = PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
+    } else if (*current_peer).window_size > PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
+        (*current_peer).window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     }
     channel = (*current_peer).channels;
     while channel < ((*current_peer).channels).add(channel_count) {
@@ -268,10 +268,10 @@ pub(crate) unsafe fn enet_host_channel_limit<S: Socket>(
     host: *mut ENetHost<S>,
     mut channel_limit: usize,
 ) {
-    if channel_limit == 0 || channel_limit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize {
-        channel_limit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
-    } else if channel_limit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize {
-        channel_limit = ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize;
+    if channel_limit == 0 || channel_limit > PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize {
+        channel_limit = PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize;
+    } else if channel_limit < PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize {
+        channel_limit = PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize;
     }
     (*host).channel_limit = channel_limit;
 }
@@ -301,7 +301,7 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
             reliable_sequence_number: 0,
         },
     };
-    if elapsed_time < ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL as i32 as u32 {
+    if elapsed_time < HOST_BANDWIDTH_THROTTLE_INTERVAL as i32 as u32 {
         return;
     }
     (*host).bandwidth_throttle_epoch = time_current;
@@ -326,10 +326,10 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
     while peers_remaining > 0_i32 as u32 && needs_adjustment {
         needs_adjustment = false;
         if data_total <= bandwidth {
-            throttle = ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32;
+            throttle = PEER_PACKET_THROTTLE_SCALE as i32 as u32;
         } else {
             throttle = bandwidth
-                .wrapping_mul(ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32)
+                .wrapping_mul(PEER_PACKET_THROTTLE_SCALE as i32 as u32)
                 .wrapping_div(data_total);
         }
         peer = (*host).peers;
@@ -345,11 +345,11 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
                     .wrapping_div(1000_i32 as u32);
                 if throttle
                     .wrapping_mul((*peer).outgoing_data_total)
-                    .wrapping_div(ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32)
+                    .wrapping_div(PEER_PACKET_THROTTLE_SCALE as i32 as u32)
                     > peer_bandwidth
                 {
                     (*peer).packet_throttle_limit = peer_bandwidth
-                        .wrapping_mul(ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32)
+                        .wrapping_mul(PEER_PACKET_THROTTLE_SCALE as i32 as u32)
                         .wrapping_div((*peer).outgoing_data_total);
                     if (*peer).packet_throttle_limit == 0_i32 as u32 {
                         (*peer).packet_throttle_limit = 1_i32 as u32;
@@ -371,10 +371,10 @@ pub(crate) unsafe fn enet_host_bandwidth_throttle<S: Socket>(host: *mut ENetHost
     }
     if peers_remaining > 0_i32 as u32 {
         if data_total <= bandwidth {
-            throttle = ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32;
+            throttle = PEER_PACKET_THROTTLE_SCALE as i32 as u32;
         } else {
             throttle = bandwidth
-                .wrapping_mul(ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32)
+                .wrapping_mul(PEER_PACKET_THROTTLE_SCALE as i32 as u32)
                 .wrapping_div(data_total);
         }
         peer = (*host).peers;

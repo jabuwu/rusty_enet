@@ -1,9 +1,11 @@
 use std::{fmt::Debug, time::Duration};
 
 use crate::{
-    consts::ENET_PROTOCOL_MAXIMUM_PEER_ID, enet_peer_disconnect, enet_peer_disconnect_later,
-    enet_peer_disconnect_now, enet_peer_ping, enet_peer_ping_interval, enet_peer_reset,
-    enet_peer_send, enet_peer_throttle_configure, enet_peer_timeout, error::PeerSendError,
+    consts::{PROTOCOL_MAXIMUM_MTU, PROTOCOL_MAXIMUM_PEER_ID, PROTOCOL_MINIMUM_MTU},
+    enet_peer_disconnect, enet_peer_disconnect_later, enet_peer_disconnect_now, enet_peer_ping,
+    enet_peer_ping_interval, enet_peer_reset, enet_peer_send, enet_peer_throttle_configure,
+    enet_peer_timeout,
+    error::{BadParameter, PeerSendError},
     ENetPeer, Packet, Socket, ENET_PEER_STATE_ACKNOWLEDGING_CONNECT,
     ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT, ENET_PEER_STATE_CONNECTED,
     ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
@@ -19,7 +21,7 @@ impl PeerID {
     /// The minimum valid value a [`PeerID`] can be.
     pub const MIN: usize = 0;
     /// The maximum valid value a [`PeerID`] can be.
-    pub const MAX: usize = ENET_PROTOCOL_MAXIMUM_PEER_ID as usize;
+    pub const MAX: usize = PROTOCOL_MAXIMUM_PEER_ID as usize;
 }
 
 /// The state of a [`Peer`].
@@ -120,11 +122,11 @@ impl<S: Socket> Peer<S> {
     /// the current timeout limit value.
     ///
     /// - `limit` - the timeout limit; defaults to
-    /// [`ENET_PEER_TIMEOUT_LIMIT`](`crate::consts::ENET_PEER_TIMEOUT_LIMIT`) if 0
+    /// [`PEER_TIMEOUT_LIMIT`](`crate::consts::PEER_TIMEOUT_LIMIT`) if 0
     /// - `minimum` - the timeout minimum; defaults to
-    /// [`ENET_PEER_TIMEOUT_MINIMUM`](`crate::consts::ENET_PEER_TIMEOUT_MINIMUM`) if 0
+    /// [`PEER_TIMEOUT_MINIMUM`](`crate::consts::PEER_TIMEOUT_MINIMUM`) if 0
     /// - `maximum` - the timeout maximum; defaults to
-    /// [`ENET_PEER_TIMEOUT_MAXIMUM`](`crate::consts::ENET_PEER_TIMEOUT_MAXIMUM`) if 0
+    /// [`PEER_TIMEOUT_MAXIMUM`](`crate::consts::PEER_TIMEOUT_MAXIMUM`) if 0
     pub fn set_timeout(&mut self, limit: u32, minimum: u32, maximum: u32) {
         unsafe { enet_peer_timeout(self.0, limit, minimum, maximum) }
     }
@@ -150,13 +152,13 @@ impl<S: Socket> Peer<S> {
     /// round trip time happens to be significantly less than the mean round trip time measured over
     /// the interval, then the throttle probability is increased to allow more traffic by an amount
     /// specified in the acceleration parameter, which is a ratio to the
-    /// [`ENET_PEER_PACKET_THROTTLE_SCALE`](`crate::consts::ENET_PEER_PACKET_THROTTLE_SCALE`)
+    /// [`PEER_PACKET_THROTTLE_SCALE`](`crate::consts::PEER_PACKET_THROTTLE_SCALE`)
     /// constant. If a measured round trip time happens to be significantly greater than the mean
     /// round trip time measured over the interval, then the throttle probability is decreased to
     /// limit traffic by an amount specified in the deceleration parameter, which is a ratio to the
-    /// [`ENET_PEER_PACKET_THROTTLE_SCALE`](`crate::consts::ENET_PEER_PACKET_THROTTLE_SCALE`) When
+    /// [`ENET_PEER_PACKET_THROTTLE_SCALE`](`crate::consts::PEER_PACKET_THROTTLE_SCALE`) When
     /// the throttle has a value of
-    /// [`ENET_PEER_PACKET_THROTTLE_SCALE`](`crate::consts::ENET_PEER_PACKET_THROTTLE_SCALE`) When
+    /// [`PEER_PACKET_THROTTLE_SCALE`](`crate::consts::PEER_PACKET_THROTTLE_SCALE`) When
     /// no unreliable packets are dropped by ENet, and so 100% of all unreliable packets will be
     /// sent. When the throttle has a value of 0, all unreliable packets are dropped by ENet, and so
     /// 0% of all unreliable packets will be sent. Intermediate values for the throttle represent
@@ -167,7 +169,7 @@ impl<S: Socket> Peer<S> {
     ///
     /// - `interval` - interval, in milliseconds, over which to measure lowest mean RTT; the default
     /// value is
-    /// [`ENET_PEER_PACKET_THROTTLE_INTERVAL`](`crate::consts::ENET_PEER_PACKET_THROTTLE_INTERVAL`)
+    /// [`PEER_PACKET_THROTTLE_INTERVAL`](`crate::consts::PEER_PACKET_THROTTLE_INTERVAL`)
     /// - `acceleration` - rate at which to increase the throttle probability as mean RTT declines
     /// - `deceleration` - rate at which to decrease the throttle probability as mean RTT increases
     pub fn set_throttle(&mut self, interval: u32, acceleration: u32, deceleration: u32) {
@@ -182,10 +184,22 @@ impl<S: Socket> Peer<S> {
 
     /// Set the maximum transmission unit for this peer. See
     /// [`Host::set_mtu`](`crate::Host::set_mtu`).
-    pub fn set_mtu(&self, mtu: u16) {
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BadParameter`] if `mtu` is greater than [`PROTOCOL_MAXIMUM_MTU`] or less than
+    /// [`PROTOCOL_MINIMUM_MTU`].
+    pub fn set_mtu(&self, mtu: u16) -> Result<(), BadParameter> {
+        if mtu > PROTOCOL_MAXIMUM_MTU as u16 || mtu < PROTOCOL_MINIMUM_MTU as u16 {
+            return Err(BadParameter {
+                method: "Peer::set_mtu",
+                parameter: "mtu",
+            });
+        }
         unsafe {
             (*self.0).mtu = mtu as u32;
         }
+        Ok(())
     }
 
     /// Get the current state of the peer.
@@ -257,7 +271,7 @@ impl<S: Socket> Peer<S> {
     }
 
     /// Mean packet loss of reliable packets as a ratio with respect to the constant
-    /// [`ENET_PEER_PACKET_LOSS_SCALE`](crate::consts::ENET_PEER_PACKET_LOSS_SCALE).
+    /// [`PEER_PACKET_LOSS_SCALE`](crate::consts::PEER_PACKET_LOSS_SCALE).
     #[must_use]
     pub fn packet_loss(&self) -> u32 {
         unsafe { (*self.0).packet_loss }

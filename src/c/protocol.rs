@@ -2,16 +2,13 @@ use std::ptr::{copy_nonoverlapping, write_bytes};
 
 use crate::{
     consts::{
-        ENET_BUFFER_MAXIMUM, ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL,
-        ENET_PEER_FREE_RELIABLE_WINDOWS, ENET_PEER_FREE_UNSEQUENCED_WINDOWS,
-        ENET_PEER_PACKET_LOSS_INTERVAL, ENET_PEER_PACKET_LOSS_SCALE,
-        ENET_PEER_PACKET_THROTTLE_COUNTER, ENET_PEER_PACKET_THROTTLE_SCALE,
-        ENET_PEER_RELIABLE_WINDOWS, ENET_PEER_RELIABLE_WINDOW_SIZE,
-        ENET_PEER_UNSEQUENCED_WINDOW_SIZE, ENET_PEER_WINDOW_SIZE_SCALE,
-        ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT,
-        ENET_PROTOCOL_MAXIMUM_MTU, ENET_PROTOCOL_MAXIMUM_PEER_ID,
-        ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE, ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT,
-        ENET_PROTOCOL_MINIMUM_MTU, ENET_PROTOCOL_MINIMUM_WINDOW_SIZE,
+        BUFFER_MAXIMUM, HOST_BANDWIDTH_THROTTLE_INTERVAL, PEER_FREE_RELIABLE_WINDOWS,
+        PEER_FREE_UNSEQUENCED_WINDOWS, PEER_PACKET_LOSS_INTERVAL, PEER_PACKET_LOSS_SCALE,
+        PEER_PACKET_THROTTLE_COUNTER, PEER_PACKET_THROTTLE_SCALE, PEER_RELIABLE_WINDOWS,
+        PEER_RELIABLE_WINDOW_SIZE, PEER_UNSEQUENCED_WINDOW_SIZE, PEER_WINDOW_SIZE_SCALE,
+        PROTOCOL_MAXIMUM_CHANNEL_COUNT, PROTOCOL_MAXIMUM_FRAGMENT_COUNT, PROTOCOL_MAXIMUM_MTU,
+        PROTOCOL_MAXIMUM_PEER_ID, PROTOCOL_MAXIMUM_WINDOW_SIZE, PROTOCOL_MINIMUM_CHANNEL_COUNT,
+        PROTOCOL_MINIMUM_MTU, PROTOCOL_MINIMUM_WINDOW_SIZE,
     },
     enet_free, enet_host_bandwidth_throttle, enet_list_clear, enet_list_insert, enet_list_remove,
     enet_malloc, enet_packet_destroy, enet_peer_disconnect,
@@ -434,7 +431,7 @@ unsafe fn enet_protocol_remove_sent_reliable_command<S: Socket>(
     if (channel_id as usize) < (*peer).channel_count {
         let channel: *mut ENetChannel = ((*peer).channels).offset(channel_id as isize);
         let reliable_window: u16 =
-            (reliable_sequence_number as i32 / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
+            (reliable_sequence_number as i32 / PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
         if (*channel).reliable_windows[reliable_window as usize] as i32 > 0_i32 {
             (*channel).reliable_windows[reliable_window as usize] =
                 ((*channel).reliable_windows[reliable_window as usize]).wrapping_sub(1);
@@ -499,8 +496,8 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         },
     };
     channel_count = u32::from_be((*command).connect.channel_count) as usize;
-    if channel_count < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize
-        || channel_count > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize
+    if channel_count < PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize
+        || channel_count > PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize
     {
         return std::ptr::null_mut();
     }
@@ -605,16 +602,16 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         channel = channel.offset(1);
     }
     mtu = u32::from_be((*command).connect.mtu);
-    if mtu < ENET_PROTOCOL_MINIMUM_MTU as i32 as u32 {
-        mtu = ENET_PROTOCOL_MINIMUM_MTU as i32 as u32;
-    } else if mtu > ENET_PROTOCOL_MAXIMUM_MTU as i32 as u32 {
-        mtu = ENET_PROTOCOL_MAXIMUM_MTU as i32 as u32;
+    if mtu < PROTOCOL_MINIMUM_MTU as i32 as u32 {
+        mtu = PROTOCOL_MINIMUM_MTU as i32 as u32;
+    } else if mtu > PROTOCOL_MAXIMUM_MTU as i32 as u32 {
+        mtu = PROTOCOL_MAXIMUM_MTU as i32 as u32;
     }
     if mtu < (*peer).mtu {
         (*peer).mtu = mtu;
     }
     if (*host).outgoing_bandwidth == 0_i32 as u32 && (*peer).incoming_bandwidth == 0_i32 as u32 {
-        (*peer).window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+        (*peer).window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     } else if (*host).outgoing_bandwidth == 0_i32 as u32
         || (*peer).incoming_bandwidth == 0_i32 as u32
     {
@@ -623,36 +620,36 @@ unsafe fn enet_protocol_handle_connect<S: Socket>(
         } else {
             (*peer).incoming_bandwidth
         })
-        .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as i32 as u32)
-        .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
+        .wrapping_div(PEER_WINDOW_SIZE_SCALE as i32 as u32)
+        .wrapping_mul(PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
     } else {
         (*peer).window_size = (if (*host).outgoing_bandwidth < (*peer).incoming_bandwidth {
             (*host).outgoing_bandwidth
         } else {
             (*peer).incoming_bandwidth
         })
-        .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as i32 as u32)
-        .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
+        .wrapping_div(PEER_WINDOW_SIZE_SCALE as i32 as u32)
+        .wrapping_mul(PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
     }
-    if (*peer).window_size < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
-        (*peer).window_size = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
-    } else if (*peer).window_size > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
-        (*peer).window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+    if (*peer).window_size < PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
+        (*peer).window_size = PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
+    } else if (*peer).window_size > PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
+        (*peer).window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     }
     if (*host).incoming_bandwidth == 0_i32 as u32 {
-        window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+        window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     } else {
         window_size = ((*host).incoming_bandwidth)
-            .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as i32 as u32)
-            .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
+            .wrapping_div(PEER_WINDOW_SIZE_SCALE as i32 as u32)
+            .wrapping_mul(PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
     }
     if window_size > u32::from_be((*command).connect.window_size) {
         window_size = u32::from_be((*command).connect.window_size);
     }
-    if window_size < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
-        window_size = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
-    } else if window_size > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
-        window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+    if window_size < PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
+        window_size = PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
+    } else if window_size > PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
+        window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     }
     verify_command.header.command = (ENET_PROTOCOL_COMMAND_VERIFY_CONNECT as i32
         | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE as i32) as u8;
@@ -739,14 +736,13 @@ unsafe fn enet_protocol_handle_send_unsequenced<S: Socket>(
         return -1_i32;
     }
     unsequenced_group = u16::from_be((*command).send_unsequenced.unsequenced_group) as u32;
-    let index = unsequenced_group.wrapping_rem(ENET_PEER_UNSEQUENCED_WINDOW_SIZE as i32 as u32);
+    let index = unsequenced_group.wrapping_rem(PEER_UNSEQUENCED_WINDOW_SIZE as i32 as u32);
     if unsequenced_group < (*peer).incoming_unsequenced_group as u32 {
         unsequenced_group = unsequenced_group.wrapping_add(0x10000_i32 as u32);
     }
     if unsequenced_group
         >= ((*peer).incoming_unsequenced_group as u32).wrapping_add(
-            (ENET_PEER_FREE_UNSEQUENCED_WINDOWS as i32 * ENET_PEER_UNSEQUENCED_WINDOW_SIZE as i32)
-                as u32,
+            (PEER_FREE_UNSEQUENCED_WINDOWS as i32 * PEER_UNSEQUENCED_WINDOW_SIZE as i32) as u32,
         )
     {
         return 0_i32;
@@ -843,15 +839,14 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     let channel = ((*peer).channels).offset((*command).header.channel_id as isize);
     let start_sequence_number = u16::from_be((*command).send_fragment.start_sequence_number) as u32;
     start_window =
-        start_sequence_number.wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as i32 as u32) as u16;
+        start_sequence_number.wrapping_div(PEER_RELIABLE_WINDOW_SIZE as i32 as u32) as u16;
     let current_window = ((*channel).incoming_reliable_sequence_number as i32
-        / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
+        / PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
     if start_sequence_number < (*channel).incoming_reliable_sequence_number as u32 {
-        start_window = (start_window as i32 + ENET_PEER_RELIABLE_WINDOWS as i32) as u16;
+        start_window = (start_window as i32 + PEER_RELIABLE_WINDOWS as i32) as u16;
     }
     if (start_window as i32) < current_window as i32
-        || start_window as i32
-            >= current_window as i32 + ENET_PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
+        || start_window as i32 >= current_window as i32 + PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
     {
         return 0_i32;
     }
@@ -859,7 +854,7 @@ unsafe fn enet_protocol_handle_send_fragment<S: Socket>(
     let fragment_count = u32::from_be((*command).send_fragment.fragment_count);
     let fragment_offset = u32::from_be((*command).send_fragment.fragment_offset);
     let total_length = u32::from_be((*command).send_fragment.total_length);
-    if fragment_count > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
+    if fragment_count > PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
         || fragment_number >= fragment_count
         || total_length as usize > (*host).maximum_packet_size
         || total_length < fragment_count
@@ -979,15 +974,15 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     let reliable_sequence_number = (*command).header.reliable_sequence_number as u32;
     let start_sequence_number = u16::from_be((*command).send_fragment.start_sequence_number) as u32;
     reliable_window =
-        reliable_sequence_number.wrapping_div(ENET_PEER_RELIABLE_WINDOW_SIZE as i32 as u32) as u16;
+        reliable_sequence_number.wrapping_div(PEER_RELIABLE_WINDOW_SIZE as i32 as u32) as u16;
     let current_window = ((*channel).incoming_reliable_sequence_number as i32
-        / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
+        / PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
     if reliable_sequence_number < (*channel).incoming_reliable_sequence_number as u32 {
-        reliable_window = (reliable_window as i32 + ENET_PEER_RELIABLE_WINDOWS as i32) as u16;
+        reliable_window = (reliable_window as i32 + PEER_RELIABLE_WINDOWS as i32) as u16;
     }
     if (reliable_window as i32) < current_window as i32
         || reliable_window as i32
-            >= current_window as i32 + ENET_PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
+            >= current_window as i32 + PEER_FREE_RELIABLE_WINDOWS as i32 - 1_i32
     {
         return 0_i32;
     }
@@ -1000,7 +995,7 @@ unsafe fn enet_protocol_handle_send_unreliable_fragment<S: Socket>(
     let fragment_count = u32::from_be((*command).send_fragment.fragment_count);
     let fragment_offset = u32::from_be((*command).send_fragment.fragment_offset);
     let total_length = u32::from_be((*command).send_fragment.total_length);
-    if fragment_count > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
+    if fragment_count > PROTOCOL_MAXIMUM_FRAGMENT_COUNT as i32 as u32
         || fragment_number >= fragment_count
         || total_length as usize > (*host).maximum_packet_size
         || fragment_offset >= total_length
@@ -1126,7 +1121,7 @@ unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
         (*host).bandwidth_limited_peers = ((*host).bandwidth_limited_peers).wrapping_add(1);
     }
     if (*peer).incoming_bandwidth == 0_i32 as u32 && (*host).outgoing_bandwidth == 0_i32 as u32 {
-        (*peer).window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+        (*peer).window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     } else if (*peer).incoming_bandwidth == 0_i32 as u32
         || (*host).outgoing_bandwidth == 0_i32 as u32
     {
@@ -1135,21 +1130,21 @@ unsafe fn enet_protocol_handle_bandwidth_limit<S: Socket>(
         } else {
             (*host).outgoing_bandwidth
         })
-        .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as i32 as u32)
-        .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
+        .wrapping_div(PEER_WINDOW_SIZE_SCALE as i32 as u32)
+        .wrapping_mul(PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
     } else {
         (*peer).window_size = (if (*peer).incoming_bandwidth < (*host).outgoing_bandwidth {
             (*peer).incoming_bandwidth
         } else {
             (*host).outgoing_bandwidth
         })
-        .wrapping_div(ENET_PEER_WINDOW_SIZE_SCALE as i32 as u32)
-        .wrapping_mul(ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
+        .wrapping_div(PEER_WINDOW_SIZE_SCALE as i32 as u32)
+        .wrapping_mul(PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32);
     }
-    if (*peer).window_size < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
-        (*peer).window_size = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
-    } else if (*peer).window_size > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
-        (*peer).window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+    if (*peer).window_size < PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
+        (*peer).window_size = PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
+    } else if (*peer).window_size > PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
+        (*peer).window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     }
     0_i32
 }
@@ -1339,8 +1334,8 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
         return 0_i32;
     }
     let channel_count = u32::from_be((*command).verify_connect.channel_count) as usize;
-    if channel_count < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize
-        || channel_count > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize
+    if channel_count < PROTOCOL_MINIMUM_CHANNEL_COUNT as i32 as usize
+        || channel_count > PROTOCOL_MAXIMUM_CHANNEL_COUNT as i32 as usize
         || u32::from_be((*command).verify_connect.packet_throttle_interval)
             != (*peer).packet_throttle_interval
         || u32::from_be((*command).verify_connect.packet_throttle_acceleration)
@@ -1361,20 +1356,20 @@ unsafe fn enet_protocol_handle_verify_connect<S: Socket>(
     (*peer).incoming_session_id = (*command).verify_connect.incoming_session_id;
     (*peer).outgoing_session_id = (*command).verify_connect.outgoing_session_id;
     mtu = u32::from_be((*command).verify_connect.mtu);
-    if mtu < ENET_PROTOCOL_MINIMUM_MTU as i32 as u32 {
-        mtu = ENET_PROTOCOL_MINIMUM_MTU as i32 as u32;
-    } else if mtu > ENET_PROTOCOL_MAXIMUM_MTU as i32 as u32 {
-        mtu = ENET_PROTOCOL_MAXIMUM_MTU as i32 as u32;
+    if mtu < PROTOCOL_MINIMUM_MTU as i32 as u32 {
+        mtu = PROTOCOL_MINIMUM_MTU as i32 as u32;
+    } else if mtu > PROTOCOL_MAXIMUM_MTU as i32 as u32 {
+        mtu = PROTOCOL_MAXIMUM_MTU as i32 as u32;
     }
     if mtu < (*peer).mtu {
         (*peer).mtu = mtu;
     }
     window_size = u32::from_be((*command).verify_connect.window_size);
-    if window_size < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
-        window_size = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
+    if window_size < PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32 {
+        window_size = PROTOCOL_MINIMUM_WINDOW_SIZE as i32 as u32;
     }
-    if window_size > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
-        window_size = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
+    if window_size > PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32 {
+        window_size = PROTOCOL_MAXIMUM_WINDOW_SIZE as i32 as u32;
     }
     if window_size < (*peer).window_size {
         (*peer).window_size = window_size;
@@ -1413,7 +1408,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
         header_size =
             (header_size as u64).wrapping_add(::core::mem::size_of::<u32>() as u64) as usize;
     }
-    if peer_id as i32 == ENET_PROTOCOL_MAXIMUM_PEER_ID as i32 {
+    if peer_id as i32 == PROTOCOL_MAXIMUM_PEER_ID as i32 {
         peer = std::ptr::null_mut();
     } else if peer_id as usize >= (*host).peer_count {
         return false;
@@ -1433,7 +1428,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
                     .as_ref()
                     .unwrap()
                     .is_broadcast()
-            || ((*peer).outgoing_peer_id as i32) < ENET_PROTOCOL_MAXIMUM_PEER_ID as i32
+            || ((*peer).outgoing_peer_id as i32) < PROTOCOL_MAXIMUM_PEER_ID as i32
                 && session_id as i32 != (*peer).incoming_session_id as i32
         {
             return false;
@@ -1658,7 +1653,7 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             data_length: 0,
         };
         buffer.data = ((*host).packet_data[0_i32 as usize]).as_mut_ptr();
-        buffer.data_length = ::core::mem::size_of::<[u8; ENET_PROTOCOL_MAXIMUM_MTU]>();
+        buffer.data_length = ::core::mem::size_of::<[u8; PROTOCOL_MAXIMUM_MTU]>();
         let received_length = match (*host)
             .socket
             .assume_init_mut()
@@ -1885,29 +1880,26 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 std::ptr::null_mut()
             };
             reliable_window = ((*outgoing_command).reliable_sequence_number as i32
-                / ENET_PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
+                / PEER_RELIABLE_WINDOW_SIZE as i32) as u16;
             if !channel.is_null() {
                 if window_wrap != 0 {
                     continue;
                 }
                 if ((*outgoing_command).send_attempts as i32) < 1_i32
                     && (*outgoing_command).reliable_sequence_number as i32
-                        % ENET_PEER_RELIABLE_WINDOW_SIZE as i32
+                        % PEER_RELIABLE_WINDOW_SIZE as i32
                         == 0
                     && ((*channel).reliable_windows[((reliable_window as i32
-                        + ENET_PEER_RELIABLE_WINDOWS as i32
+                        + PEER_RELIABLE_WINDOWS as i32
                         - 1_i32)
-                        % ENET_PEER_RELIABLE_WINDOWS as i32)
+                        % PEER_RELIABLE_WINDOWS as i32)
                         as usize] as i32
-                        >= ENET_PEER_RELIABLE_WINDOW_SIZE as i32
+                        >= PEER_RELIABLE_WINDOW_SIZE as i32
                         || (*channel).used_reliable_windows as i32
-                            & (((1_i32 << (ENET_PEER_FREE_RELIABLE_WINDOWS as i32 + 2_i32))
-                                - 1_i32)
+                            & (((1_i32 << (PEER_FREE_RELIABLE_WINDOWS as i32 + 2_i32)) - 1_i32)
                                 << reliable_window as i32
-                                | ((1_i32 << (ENET_PEER_FREE_RELIABLE_WINDOWS as i32 + 2_i32))
-                                    - 1_i32)
-                                    >> (ENET_PEER_RELIABLE_WINDOWS as i32
-                                        - reliable_window as i32))
+                                | ((1_i32 << (PEER_FREE_RELIABLE_WINDOWS as i32 + 2_i32)) - 1_i32)
+                                    >> (PEER_RELIABLE_WINDOWS as i32 - reliable_window as i32))
                             != 0)
                 {
                     window_wrap = 1_i32;
@@ -1919,7 +1911,7 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
             if !((*outgoing_command).packet).is_null() {
                 let window_size: u32 = ((*peer).packet_throttle)
                     .wrapping_mul((*peer).window_size)
-                    .wrapping_div(ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32);
+                    .wrapping_div(PEER_PACKET_THROTTLE_SCALE as i32 as u32);
                 if ((*peer).reliable_data_in_transit)
                     .wrapping_add((*outgoing_command).fragment_length as u32)
                     > (if window_size > (*peer).mtu {
@@ -2000,10 +1992,10 @@ unsafe fn enet_protocol_check_outgoing_commands<S: Socket>(
                 {
                     (*peer).packet_throttle_counter = (*peer)
                         .packet_throttle_counter
-                        .wrapping_add(ENET_PEER_PACKET_THROTTLE_COUNTER as i32 as u32);
+                        .wrapping_add(PEER_PACKET_THROTTLE_COUNTER as i32 as u32);
                     (*peer).packet_throttle_counter = (*peer)
                         .packet_throttle_counter
-                        .wrapping_rem(ENET_PEER_PACKET_THROTTLE_SCALE as i32 as u32);
+                        .wrapping_rem(PEER_PACKET_THROTTLE_SCALE as i32 as u32);
                     if (*peer).packet_throttle_counter > (*peer).packet_throttle {
                         let reliable_sequence_number: u16 =
                             (*outgoing_command).reliable_sequence_number;
@@ -2171,11 +2163,11 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             ((*current_peer).packet_loss_epoch).wrapping_sub((*host).service_time)
                         } else {
                             ((*host).service_time).wrapping_sub((*current_peer).packet_loss_epoch)
-                        }) >= ENET_PEER_PACKET_LOSS_INTERVAL as i32 as u32
+                        }) >= PEER_PACKET_LOSS_INTERVAL as i32 as u32
                             && (*current_peer).packets_sent > 0_i32 as u32
                         {
                             let packet_loss: u32 = ((*current_peer).packets_lost)
-                                .wrapping_mul(ENET_PEER_PACKET_LOSS_SCALE as i32 as u32)
+                                .wrapping_mul(PEER_PACKET_LOSS_SCALE as i32 as u32)
                                 .wrapping_div((*current_peer).packets_sent);
                             (*current_peer).packet_loss_variance = ((*current_peer)
                                 .packet_loss_variance)
@@ -2210,7 +2202,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         if let Some(compressor) = (*host).compressor.assume_init_mut() {
                             let original_size: usize = ((*host).packet_size)
                                 .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>());
-                            let mut in_buffers: [&[u8]; ENET_BUFFER_MAXIMUM as usize] =
+                            let mut in_buffers: [&[u8]; BUFFER_MAXIMUM as usize] =
                                 std::array::from_fn(|_| {
                                     from_raw_parts_or_empty::<u8>(std::ptr::null(), 0)
                                 });
@@ -2238,7 +2230,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             }
                         }
                         if ((*current_peer).outgoing_peer_id as i32)
-                            < ENET_PROTOCOL_MAXIMUM_PEER_ID as i32
+                            < PROTOCOL_MAXIMUM_PEER_ID as i32
                         {
                             (*host).header_flags = ((*host).header_flags as i32
                                 | ((*current_peer).outgoing_session_id as i32)
@@ -2254,7 +2246,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                                 .as_mut_ptr()
                                 .add((*((*host).buffers).as_mut_ptr()).data_length);
                             let mut checksum = if ((*current_peer).outgoing_peer_id as i32)
-                                < ENET_PROTOCOL_MAXIMUM_PEER_ID as i32
+                                < PROTOCOL_MAXIMUM_PEER_ID as i32
                             {
                                 (*current_peer).connect_id
                             } else {
@@ -2269,7 +2261,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             *fresh35 = (*fresh35 as u64)
                                 .wrapping_add(::core::mem::size_of::<u32>() as u64)
                                 as usize;
-                            let mut in_buffers: [&[u8]; ENET_BUFFER_MAXIMUM as usize] =
+                            let mut in_buffers: [&[u8]; BUFFER_MAXIMUM as usize] =
                                 std::array::from_fn(|_| {
                                     from_raw_parts_or_empty::<u8>(std::ptr::null(), 0)
                                 });
@@ -2296,7 +2288,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         }
                         (*current_peer).last_send_time = (*host).service_time;
                         let mut conglomerate_buffer = vec![];
-                        conglomerate_buffer.reserve_exact(ENET_BUFFER_MAXIMUM as usize);
+                        conglomerate_buffer.reserve_exact(BUFFER_MAXIMUM as usize);
                         for buffer_index in 0..(*host).buffer_count {
                             let buffer = &(*host).buffers[buffer_index];
                             conglomerate_buffer.extend_from_slice(super::from_raw_parts_or_empty(
@@ -2369,7 +2361,7 @@ pub(crate) unsafe fn enet_host_service<S: Socket>(
         ((*host).bandwidth_throttle_epoch).wrapping_sub((*host).service_time)
     } else {
         ((*host).service_time).wrapping_sub((*host).bandwidth_throttle_epoch)
-    }) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL
+    }) >= HOST_BANDWIDTH_THROTTLE_INTERVAL
     {
         enet_host_bandwidth_throttle(host);
     }

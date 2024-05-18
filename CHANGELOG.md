@@ -9,6 +9,7 @@
   - [`Host::set_mtu`]
   - [`Peer::mtu`]
   - [`Peer::set_mtu`]
+- Remove redundant `ENET_` prefix on `consts`
 
 # 0.1.0
 - Initial release

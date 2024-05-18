@@ -115,7 +115,7 @@ fn resend_reliable_packet() {
     assert_eq!(events.len(), 0);
     assert!(events.is_empty());
     network.conditions(host1, host2, NetworkConditions::perfect());
-    let events = network.update(enet::consts::ENET_PEER_DEFAULT_ROUND_TRIP_TIME as usize - 1);
+    let events = network.update(enet::consts::PEER_DEFAULT_ROUND_TRIP_TIME as usize - 1);
     assert_eq!(events.len(), 0);
 
     let events = network.update(1);
