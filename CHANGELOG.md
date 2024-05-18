@@ -7,10 +7,10 @@
 - Add `#![no_std]` support (by disabling `std` feature)
 - Add `MTU_MAX` constant (an alias of `ENET_PROTOCOL_MAXIMUM_MTU`)
 - Add functions:
-  - [`Host::mtu`]
-  - [`Host::set_mtu`]
-  - [`Peer::mtu`]
-  - [`Peer::set_mtu`]
+  - `Host::mtu`
+  - `Host::set_mtu`
+  - `Peer::mtu`
+  - `Peer::set_mtu`
 - Remove redundant `ENET_` prefix on `consts`
 
 # 0.1.0
