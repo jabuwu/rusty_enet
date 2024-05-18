@@ -18,6 +18,14 @@ pub const MTU_MAX: usize = PROTOCOL_MAXIMUM_MTU;
 
 /// Socket options provided by ENet and passed to [`Socket::init`] when creating a
 /// [`Host`](`crate::Host`).
+///
+/// In the C library, ENet sets the socket to non-blocking mode (`O_NONBLOCK`) and enables the
+/// broadcast (`SO_BROADCAST`) address, as well as setting the maximum socket receive buffer
+/// (`SO_RCVBUF`) and send buffer (`SO_SNDBUF`).
+///
+/// An implementation of [`Socket::init`] should always assume ENet runs in non-blocking mode. The
+/// maximum buffers ENet wants to set are sent as fields in this struct, although setting these
+/// isn't actually necessary.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SocketOptions {
     /// Size of the receive buffer desired by ENet.
