@@ -4,7 +4,17 @@ use std::{
     net::{SocketAddr, UdpSocket},
 };
 
-use crate::{Address, Vec};
+use crate::{consts::PROTOCOL_MAXIMUM_MTU, Address};
+
+/// The maximum amount of bytes ENet will ever send or receive. Useful for allocating buffers when
+/// sending and receiving.
+///
+/// The actual MTU used by hosts and peers is typically much lower than this maximum and can be
+/// changed with [`Host::set_mtu`](`crate::Host::set_mtu`) and
+/// [`Peer::set_mtu`](`crate::Peer::set_mtu`).
+///
+/// A shorter an easier to remember equivalent to [`PROTOCOL_MAXIMUM_MTU`].
+pub const MTU_MAX: usize = PROTOCOL_MAXIMUM_MTU;
 
 /// Socket options provided by ENet and passed to [`Socket::init`] when creating a
 /// [`Host`](`crate::Host`).
@@ -28,25 +38,37 @@ pub trait Socket: Sized {
     ///
     /// An example is the standard library's [`std::net::SocketAddr`], used with
     /// [`std::net::UdpSocket`].
-    type PeerAddress: Address + 'static;
+    type Address: Address;
     /// Errors returned by this socket.
-    type Error: core::fmt::Debug + Send + Sync + 'static;
+    #[cfg(feature = "std")]
+    type Error: std::error::Error;
+    /// Errors returned by this socket.
+    #[cfg(not(feature = "std"))]
+    type Error: core::fmt::Debug;
 
     /// Initialize the socket with options passed down by ENet.
     ///
-    /// Called in [`Host::new`](`crate::Host::new`).
+    /// Called in [`Host::new`](`crate::Host::new`). If this function returns an error, it is
+    /// bubbled up through [`Host::new`](`crate::Host::new`).
     fn init(&mut self, _socket_options: SocketOptions) -> Result<(), Self::Error> {
         Ok(())
     }
     /// Try to send data. Should return the number of bytes successfully sent, or an error.
-    fn send(&mut self, address: Self::PeerAddress, buffer: &[u8]) -> Result<usize, Self::Error>;
-    /// Try to receive data. May return an error, or optionally, a data packet.
+    fn send(&mut self, address: Self::Address, buffer: &[u8]) -> Result<usize, Self::Error>;
+
+    /// Try to receive data from the socket into a buffer of size [`MTU_MAX`].
     ///
-    /// Data packets are wrapped in [`PacketReceived`]. See its docs for more info.
+    /// A received packet should be written into the provided buffer. If a packet is received that
+    /// is larger than [`MTU_MAX`], it should simply be discarded. ENet will never send a packet
+    /// that is larger than this maximum, so if one is received, it was not sent by ENet.
+    ///
+    /// The return value should be `Ok(None)` if no packet was received. If a packet was received,
+    /// the address of the peer socket, as well as the amount of bytes received should be returned.
+    /// Packets received may be complete or partial. See [`PacketReceived`] for more info.
     fn receive(
         &mut self,
-        mtu: usize,
-    ) -> Result<Option<(Self::PeerAddress, PacketReceived)>, Self::Error>;
+        buffer: &mut [u8; MTU_MAX],
+    ) -> Result<Option<(Self::Address, PacketReceived)>, Self::Error>;
 }
 
 /// Return type of [`Socket::receive`], representing either a complete packet, or a partial
@@ -61,15 +83,15 @@ pub trait Socket: Sized {
 /// [`PacketReceived::Complete`].
 #[derive(Debug)]
 pub enum PacketReceived {
-    /// A complete packet was received.
-    Complete(Vec<u8>),
+    /// A complete packet was received. The inner value is the size of the packet in bytes.
+    Complete(usize),
     /// A partial packet was received.
     Partial,
 }
 
 #[cfg(feature = "std")]
 impl Socket for UdpSocket {
-    type PeerAddress = SocketAddr;
+    type Address = SocketAddr;
     type Error = io::Error;
 
     fn init(&mut self, _socket_options: SocketOptions) -> Result<(), io::Error> {
@@ -87,15 +109,14 @@ impl Socket for UdpSocket {
         }
     }
 
-    fn receive(&mut self, mtu: usize) -> Result<Option<(SocketAddr, PacketReceived)>, io::Error> {
-        let mut buffer = vec![0; mtu];
-        match self.recv_from(&mut buffer) {
+    fn receive(
+        &mut self,
+        buffer: &mut [u8; MTU_MAX],
+    ) -> Result<Option<(SocketAddr, PacketReceived)>, io::Error> {
+        match self.recv_from(buffer) {
             Ok((recv_length, recv_addr)) => {
                 // TODO: MSG_TRUNC? (not supported by rust stdlib)
-                Ok(Some((
-                    recv_addr,
-                    PacketReceived::Complete(Vec::from(&buffer[0..recv_length])),
-                )))
+                Ok(Some((recv_addr, PacketReceived::Complete(recv_length))))
             }
             Err(err) if err.kind() == ErrorKind::WouldBlock => Ok(None),
             Err(err) => Err(err),

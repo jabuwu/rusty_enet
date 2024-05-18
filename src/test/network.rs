@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     convert::Infallible,
+    io::{copy, Cursor},
     ops::{Deref, DerefMut},
     sync::{mpsc, Arc, RwLock},
     time::Duration,
@@ -47,24 +48,31 @@ impl Socket {
 }
 
 impl enet::Socket for Socket {
-    type PeerAddress = usize;
+    type Address = usize;
     type Error = Infallible;
 
     fn init(&mut self, _socket_options: enet::SocketOptions) -> Result<(), Self::Error> {
         Ok(())
     }
 
-    fn send(&mut self, address: Self::PeerAddress, buffer: &[u8]) -> Result<usize, Self::Error> {
+    fn send(&mut self, address: Self::Address, buffer: &[u8]) -> Result<usize, Self::Error> {
         Socket::send(self, address, buffer);
         Ok(buffer.len())
     }
 
     fn receive(
         &mut self,
-        _mtu: usize,
-    ) -> Result<Option<(Self::PeerAddress, enet::PacketReceived)>, Self::Error> {
+        buffer: &mut [u8; enet::MTU_MAX],
+    ) -> Result<Option<(Self::Address, enet::PacketReceived)>, Self::Error> {
         if let Some((address, data)) = Socket::receive(self) {
-            Ok(Some((address, enet::PacketReceived::Complete(data))))
+            let data_length = data.len();
+            if data_length <= enet::MTU_MAX {
+                copy(&mut Cursor::new(data), &mut Cursor::new(&mut buffer[..]))
+                    .expect("Buffer copy should not fail.");
+                Ok(Some((address, enet::PacketReceived::Complete(data_length))))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }

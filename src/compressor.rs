@@ -1,18 +1,23 @@
+use core::mem::zeroed;
+
 use crate::{
-    enet_range_coder_compress, enet_range_coder_create, enet_range_coder_decompress,
-    enet_range_coder_destroy, ENetBuffer, ENetRangeCoder, Vec,
+    consts::BUFFER_MAXIMUM, enet_range_coder_compress, enet_range_coder_create,
+    enet_range_coder_decompress, enet_range_coder_destroy, ENetBuffer, ENetRangeCoder,
 };
 
 /// An interface for compressing ENet packets.
 pub trait Compressor {
     /// Compress the incoming buffers.
-    fn compress(&mut self, in_buffers: Vec<&[u8]>, in_limit: usize, out: &mut [u8]) -> usize;
+    fn compress(&mut self, in_buffers: &[&[u8]], in_limit: usize, out: &mut [u8]) -> usize;
     /// Decompress the buffer.
     fn decompress(&mut self, in_data: &[u8], out: &mut [u8]) -> usize;
 }
 
 /// The built-in range coder compression provided by ENet.
 pub struct RangeCoder(*mut ENetRangeCoder);
+
+unsafe impl Send for RangeCoder {}
+unsafe impl Sync for RangeCoder {}
 
 impl RangeCoder {
     /// Create a new range coder compressor.
@@ -29,19 +34,20 @@ impl Default for RangeCoder {
 }
 
 impl Compressor for RangeCoder {
-    fn compress(&mut self, in_buffers: Vec<&[u8]>, in_limit: usize, out: &mut [u8]) -> usize {
+    fn compress(&mut self, in_buffers: &[&[u8]], in_limit: usize, out: &mut [u8]) -> usize {
         unsafe {
-            let mut buffers = Vec::new();
-            for in_buffer in in_buffers {
-                buffers.push(ENetBuffer {
+            let mut buffers: [ENetBuffer; BUFFER_MAXIMUM as usize] =
+                core::array::from_fn(|_| zeroed());
+            for (i, in_buffer) in in_buffers.iter().enumerate() {
+                buffers[i] = ENetBuffer {
                     data: in_buffer.as_ptr().cast_mut(),
                     data_length: in_buffer.len(),
-                });
+                };
             }
             enet_range_coder_compress(
                 self.0.cast(),
                 buffers.as_ptr(),
-                buffers.len(),
+                in_buffers.len(),
                 in_limit,
                 out.as_mut_ptr(),
                 out.len(),

@@ -1,11 +1,18 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    io::{copy, Cursor},
+};
 
-use crate::{Address, PacketReceived, Socket, Vec};
+use crate::{Address, PacketReceived, Socket, SocketOptions, Vec, MTU_MAX};
 
 /// Provides a Read/Write interface for use with [`Host`](`crate::Host`).
 ///
 /// This provides a useful alternative to implementing the [`Socket`] trait, especially when
 /// interfacing with multiple kinds of sockets at once.
+///
+/// The call to [`Socket::init`] never fails for this type, so it is safe to assume
+/// [`Host::new`](`crate::Host::new`) will not fail with
+/// [`HostNewError::FailedToInitializeSocket`](`crate::error::HostNewError::FailedToInitializeSocket`).
 ///
 /// ```
 /// use std::convert::Infallible;
@@ -21,15 +28,14 @@ use crate::{Address, PacketReceived, Socket, Vec};
 /// if let Some((address, packet)) = host.socket_mut().read() {
 ///     dbg!((address, packet));
 /// }
-/// ```
 #[derive(Debug)]
-pub struct ReadWrite<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> {
+pub struct ReadWrite<A: Address, E: std::error::Error> {
     inbound: VecDeque<(A, Vec<u8>)>,
     outbound: VecDeque<(A, Vec<u8>)>,
     error: Option<E>,
 }
 
-impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> ReadWrite<A, E> {
+impl<A: Address, E: std::error::Error> ReadWrite<A, E> {
     /// Create an intermediate Read/Write socket for use with [`Host`](`crate::Host`).
     #[must_use]
     pub fn new() -> Self {
@@ -52,9 +58,7 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> ReadWri
     }
 }
 
-impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Default
-    for ReadWrite<A, E>
-{
+impl<A: Address, E: std::error::Error> Default for ReadWrite<A, E> {
     fn default() -> Self {
         Self {
             inbound: VecDeque::new(),
@@ -67,19 +71,31 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Default
 impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Socket
     for ReadWrite<A, E>
 {
-    type PeerAddress = A;
+    type Address = A;
     type Error = E;
+
+    fn init(&mut self, _socket_options: SocketOptions) -> Result<(), Self::Error> {
+        // NOTE: this implementation must not become fallable
+        Ok(())
+    }
 
     fn send(&mut self, address: A, buffer: &[u8]) -> Result<usize, E> {
         self.outbound.push_back((address, buffer.to_vec()));
         Ok(buffer.len())
     }
 
-    fn receive(&mut self, _mtu: usize) -> Result<Option<(A, PacketReceived)>, E> {
+    fn receive(&mut self, buffer: &mut [u8; MTU_MAX]) -> Result<Option<(A, PacketReceived)>, E> {
         if let Some(error) = self.error.take() {
             Err(error)
-        } else if let Some((address, buffer)) = self.inbound.pop_front() {
-            Ok(Some((address, PacketReceived::Complete(buffer))))
+        } else if let Some((address, inbound)) = self.inbound.pop_front() {
+            let bytes = inbound.len();
+            if bytes <= MTU_MAX {
+                copy(&mut Cursor::new(inbound), &mut Cursor::new(&mut buffer[..]))
+                    .expect("Buffer copy should not fail.");
+                Ok(Some((address, PacketReceived::Complete(bytes))))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }

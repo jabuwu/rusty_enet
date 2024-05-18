@@ -3,7 +3,10 @@ use core::{fmt::Debug, mem::zeroed, time::Duration};
 use crate::{Box, Vec};
 
 use crate::{
-    consts::{ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, ENET_PROTOCOL_MAXIMUM_PEER_ID},
+    consts::{
+        PROTOCOL_MAXIMUM_CHANNEL_COUNT, PROTOCOL_MAXIMUM_MTU, PROTOCOL_MAXIMUM_PEER_ID,
+        PROTOCOL_MINIMUM_MTU,
+    },
     enet_host_bandwidth_limit, enet_host_broadcast, enet_host_channel_limit,
     enet_host_check_events, enet_host_compress, enet_host_connect, enet_host_create,
     enet_host_destroy, enet_host_flush, enet_host_service,
@@ -46,7 +49,7 @@ impl Default for HostSettings {
     fn default() -> Self {
         Self {
             peer_limit: PeerID::MAX,
-            channel_limit: ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT as usize,
+            channel_limit: PROTOCOL_MAXIMUM_CHANNEL_COUNT as usize,
             incoming_bandwidth_limit: None,
             outgoing_bandwidth_limit: None,
             compressor: None,
@@ -80,7 +83,8 @@ impl<S: Socket> Host<S> {
     /// - If [`HostSettings::channel_limit`] is equal to `0`.
     /// - If [`HostSettings::incoming_bandwidth_limit`] is equal to `Some(0)`.
     /// - If [`HostSettings::outgoing_bandwidth_limit`] is equal to `Some(0)`.
-    /// - If [`HostSettings::peer_limit`] is equal to `0` or [`ENET_PROTOCOL_MAXIMUM_PEER_ID`].
+    /// - If [`HostSettings::peer_limit`] is equal to `0` or greater than
+    /// [`PROTOCOL_MAXIMUM_PEER_ID`].
     ///
     /// Returns [`HostNewError::FailedToInitializeSocket`] if the call to [`Socket::init`] fails.
     pub fn new(socket: S, settings: HostSettings) -> Result<Host<S>, HostNewError<S>> {
@@ -93,8 +97,7 @@ impl<S: Socket> Host<S> {
         if settings.outgoing_bandwidth_limit == Some(0) {
             return Err(HostNewError::BadParameter);
         }
-        if settings.peer_limit == 0 || settings.peer_limit > ENET_PROTOCOL_MAXIMUM_PEER_ID as usize
-        {
+        if settings.peer_limit == 0 || settings.peer_limit > PROTOCOL_MAXIMUM_PEER_ID as usize {
             return Err(HostNewError::BadParameter);
         }
         unsafe {
@@ -109,6 +112,7 @@ impl<S: Socket> Host<S> {
             )
             .map_err(|err| HostNewError::FailedToInitializeSocket(err))?;
             let mut peers = Vec::new();
+            peers.reserve_exact((*host).peer_count);
             for peer_index in 0..(*host).peer_count {
                 peers.push(Peer((*host).peers.add(peer_index)));
             }
@@ -132,7 +136,7 @@ impl<S: Socket> Host<S> {
     /// Returns [`NoAvailablePeers`] if all peer slots have been filled.
     pub fn connect(
         &mut self,
-        address: S::PeerAddress,
+        address: S::Address,
         channel_count: usize,
         data: u32,
     ) -> Result<&mut Peer<S>, NoAvailablePeers> {
@@ -373,6 +377,31 @@ impl<S: Socket> Host<S> {
                 incoming_bandwidth_limit.unwrap_or(0),
                 outgoing_bandwidth_limit.unwrap_or(0),
             );
+        }
+        Ok(())
+    }
+
+    /// The maximum transmission unit, or the maximum packet size that will be sent by this host.
+    #[must_use]
+    pub fn mtu(&self) -> u16 {
+        unsafe { (*self.host).mtu as u16 }
+    }
+
+    /// Set the maximum transmission unit. See [`Host::mtu`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BadParameter`] if `mtu` is greater than [`PROTOCOL_MAXIMUM_MTU`] or less than
+    /// [`PROTOCOL_MINIMUM_MTU`].
+    pub fn set_mtu(&self, mtu: u16) -> Result<(), BadParameter> {
+        if mtu > PROTOCOL_MAXIMUM_MTU as u16 || mtu < PROTOCOL_MINIMUM_MTU as u16 {
+            return Err(BadParameter {
+                method: "Host::set_mtu",
+                parameter: "mtu",
+            });
+        }
+        unsafe {
+            (*self.host).mtu = mtu as u32;
         }
         Ok(())
     }
