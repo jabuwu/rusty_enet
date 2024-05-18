@@ -26,13 +26,13 @@ use crate::{Address, PacketReceived, Socket, SocketOptions};
 ///     dbg!((address, packet));
 /// }
 #[derive(Debug)]
-pub struct ReadWrite<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> {
+pub struct ReadWrite<A: Address, E: std::error::Error> {
     inbound: VecDeque<(A, Vec<u8>)>,
     outbound: VecDeque<(A, Vec<u8>)>,
     error: Option<E>,
 }
 
-impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> ReadWrite<A, E> {
+impl<A: Address, E: std::error::Error> ReadWrite<A, E> {
     /// Create an intermediate Read/Write socket for use with [`Host`](`crate::Host`).
     #[must_use]
     pub fn new() -> Self {
@@ -55,9 +55,7 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> ReadWri
     }
 }
 
-impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Default
-    for ReadWrite<A, E>
-{
+impl<A: Address, E: std::error::Error> Default for ReadWrite<A, E> {
     fn default() -> Self {
         Self {
             inbound: VecDeque::new(),

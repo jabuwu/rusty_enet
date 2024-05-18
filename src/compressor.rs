@@ -14,6 +14,9 @@ pub trait Compressor {
 /// The built-in range coder compression provided by ENet.
 pub struct RangeCoder(*mut ENetRangeCoder);
 
+unsafe impl Send for RangeCoder {}
+unsafe impl Sync for RangeCoder {}
+
 impl RangeCoder {
     /// Create a new range coder compressor.
     #[must_use]

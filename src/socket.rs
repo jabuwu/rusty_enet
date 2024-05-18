@@ -27,9 +27,9 @@ pub trait Socket: Sized {
     ///
     /// An example is the standard library's [`std::net::SocketAddr`], used with
     /// [`std::net::UdpSocket`].
-    type Address: Address + 'static;
+    type Address: Address;
     /// Errors returned by this socket.
-    type Error: std::error::Error + std::fmt::Debug + Send + Sync + 'static;
+    type Error: std::error::Error;
 
     /// Initialize the socket with options passed down by ENet.
     ///

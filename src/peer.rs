@@ -43,6 +43,9 @@ pub enum PeerState {
 /// To check on the connectivity of a peer, see [`Peer::state`].
 pub struct Peer<S: Socket>(pub(crate) *mut ENetPeer<S>);
 
+unsafe impl<S: Socket> Send for Peer<S> {}
+unsafe impl<S: Socket> Sync for Peer<S> {}
+
 impl<S: Socket> Peer<S> {
     /// Get the [`PeerID`] of this peer.
     #[must_use]

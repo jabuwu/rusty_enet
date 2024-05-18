@@ -1,6 +1,7 @@
 use crate::Socket;
 
 /// Error for [`Host::new`](`crate::Host::new`).
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum HostNewError<S: Socket> {
     /// Failed to create a new ENet host due to a bad parameter.
     BadParameter,
@@ -34,7 +35,7 @@ impl<S: Socket> std::fmt::Display for HostNewError<S> {
 }
 
 /// Error for [`Peer::send`](`crate::Peer::send`).
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PeerSendError {
     /// Cannot send to peer because it is not connected.
     NotConnected,
@@ -73,7 +74,7 @@ impl std::fmt::Display for PeerSendError {
 }
 
 /// A bad parameter was passed to a method.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BadParameter {
     /// The name of the method where this parameter was checked.
     pub method: &'static str,
@@ -93,7 +94,7 @@ impl std::fmt::Display for BadParameter {
 }
 
 /// Failed to connect because there were no available ENet peer slots.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct NoAvailablePeers;
 
 impl std::error::Error for NoAvailablePeers {}
