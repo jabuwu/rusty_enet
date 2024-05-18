@@ -1,6 +1,9 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    io::{copy, Cursor},
+};
 
-use crate::{Address, PacketReceived, Socket, SocketOptions};
+use crate::{Address, PacketReceived, Socket, SocketOptions, MTU_MAX};
 
 /// Provides a Read/Write interface for use with [`Host`](`crate::Host`).
 ///
@@ -81,11 +84,18 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Socket
         Ok(buffer.len())
     }
 
-    fn receive(&mut self, _mtu: usize) -> Result<Option<(A, PacketReceived)>, E> {
+    fn receive(&mut self, buffer: &mut [u8; MTU_MAX]) -> Result<Option<(A, PacketReceived)>, E> {
         if let Some(error) = self.error.take() {
             Err(error)
-        } else if let Some((address, buffer)) = self.inbound.pop_front() {
-            Ok(Some((address, PacketReceived::Complete(buffer))))
+        } else if let Some((address, inbound)) = self.inbound.pop_front() {
+            let bytes = inbound.len();
+            if bytes <= MTU_MAX {
+                copy(&mut Cursor::new(inbound), &mut Cursor::new(&mut buffer[..]))
+                    .expect("Buffer copy should not fail.");
+                Ok(Some((address, PacketReceived::Complete(bytes))))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }

@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     convert::Infallible,
+    io::{copy, Cursor},
     ops::{Deref, DerefMut},
     sync::{mpsc, Arc, RwLock},
     time::Duration,
@@ -9,7 +10,7 @@ use std::{
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
-use crate as enet;
+use crate::{self as enet, MTU_MAX};
 
 pub struct Socket {
     sender: mpsc::Sender<(usize, Vec<u8>)>,
@@ -60,10 +61,17 @@ impl enet::Socket for Socket {
 
     fn receive(
         &mut self,
-        _mtu: usize,
+        buffer: &mut [u8; MTU_MAX],
     ) -> Result<Option<(Self::Address, enet::PacketReceived)>, Self::Error> {
         if let Some((address, data)) = Socket::receive(self) {
-            Ok(Some((address, enet::PacketReceived::Complete(data))))
+            let data_length = data.len();
+            if data_length <= MTU_MAX {
+                copy(&mut Cursor::new(data), &mut Cursor::new(&mut buffer[..]))
+                    .expect("Buffer copy should not fail.");
+                Ok(Some((address, enet::PacketReceived::Complete(data_length))))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }

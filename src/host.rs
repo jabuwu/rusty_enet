@@ -107,6 +107,7 @@ impl<S: Socket> Host<S> {
             )
             .map_err(|err| HostNewError::FailedToInitializeSocket(err))?;
             let mut peers = vec![];
+            peers.reserve_exact((*host).peer_count);
             for peer_index in 0..(*host).peer_count {
                 peers.push(Peer((*host).peers.add(peer_index)));
             }
@@ -373,6 +374,19 @@ impl<S: Socket> Host<S> {
             );
         }
         Ok(())
+    }
+
+    /// The maximum transmission unit, or the maximum packet size that will be sent by this host.
+    #[must_use]
+    pub fn mtu(&self) -> u16 {
+        unsafe { (*self.host).mtu as u16 }
+    }
+
+    /// Set the maximum transmission unit. See [`Host::mtu`].
+    pub fn set_mtu(&self, mtu: u16) {
+        unsafe {
+            (*self.host).mtu = mtu as u32;
+        }
     }
 
     fn create_event<'a>(&'a mut self, event: &ENetEvent<S>) -> Event<'a, S> {

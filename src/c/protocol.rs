@@ -2,16 +2,16 @@ use std::ptr::{copy_nonoverlapping, write_bytes};
 
 use crate::{
     consts::{
-        ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL, ENET_PEER_FREE_RELIABLE_WINDOWS,
-        ENET_PEER_FREE_UNSEQUENCED_WINDOWS, ENET_PEER_PACKET_LOSS_INTERVAL,
-        ENET_PEER_PACKET_LOSS_SCALE, ENET_PEER_PACKET_THROTTLE_COUNTER,
-        ENET_PEER_PACKET_THROTTLE_SCALE, ENET_PEER_RELIABLE_WINDOWS,
-        ENET_PEER_RELIABLE_WINDOW_SIZE, ENET_PEER_UNSEQUENCED_WINDOW_SIZE,
-        ENET_PEER_WINDOW_SIZE_SCALE, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT,
-        ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT, ENET_PROTOCOL_MAXIMUM_MTU,
-        ENET_PROTOCOL_MAXIMUM_PEER_ID, ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE,
-        ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT, ENET_PROTOCOL_MINIMUM_MTU,
-        ENET_PROTOCOL_MINIMUM_WINDOW_SIZE,
+        ENET_BUFFER_MAXIMUM, ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL,
+        ENET_PEER_FREE_RELIABLE_WINDOWS, ENET_PEER_FREE_UNSEQUENCED_WINDOWS,
+        ENET_PEER_PACKET_LOSS_INTERVAL, ENET_PEER_PACKET_LOSS_SCALE,
+        ENET_PEER_PACKET_THROTTLE_COUNTER, ENET_PEER_PACKET_THROTTLE_SCALE,
+        ENET_PEER_RELIABLE_WINDOWS, ENET_PEER_RELIABLE_WINDOW_SIZE,
+        ENET_PEER_UNSEQUENCED_WINDOW_SIZE, ENET_PEER_WINDOW_SIZE_SCALE,
+        ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT,
+        ENET_PROTOCOL_MAXIMUM_MTU, ENET_PROTOCOL_MAXIMUM_PEER_ID,
+        ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE, ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT,
+        ENET_PROTOCOL_MINIMUM_MTU, ENET_PROTOCOL_MINIMUM_WINDOW_SIZE,
     },
     enet_free, enet_host_bandwidth_throttle, enet_list_clear, enet_list_insert, enet_list_remove,
     enet_malloc, enet_packet_destroy, enet_peer_disconnect,
@@ -19,12 +19,13 @@ use crate::{
     enet_peer_has_outgoing_commands, enet_peer_on_connect, enet_peer_on_disconnect, enet_peer_ping,
     enet_peer_queue_acknowledgement, enet_peer_queue_incoming_command,
     enet_peer_queue_outgoing_command, enet_peer_receive, enet_peer_reset, enet_peer_reset_queues,
-    enet_peer_throttle, enet_time_get, Address, ENetAcknowledgement, ENetBuffer, ENetChannel,
-    ENetEvent, ENetHost, ENetIncomingCommand, ENetList, ENetListIterator, ENetListNode,
-    ENetOutgoingCommand, ENetPeer, ENetPeerState, PacketReceived, Socket, ENET_EVENT_TYPE_CONNECT,
-    ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_NONE, ENET_EVENT_TYPE_RECEIVE,
-    ENET_PACKET_FLAG_RELIABLE, ENET_PACKET_FLAG_SENT, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT,
-    ENET_PACKET_FLAG_UNSEQUENCED, ENET_PEER_FLAG_CONTINUE_SENDING, ENET_PEER_FLAG_NEEDS_DISPATCH,
+    enet_peer_throttle, enet_time_get, from_raw_parts_or_empty, Address, ENetAcknowledgement,
+    ENetBuffer, ENetChannel, ENetEvent, ENetHost, ENetIncomingCommand, ENetList, ENetListIterator,
+    ENetListNode, ENetOutgoingCommand, ENetPeer, ENetPeerState, PacketReceived, Socket,
+    ENET_EVENT_TYPE_CONNECT, ENET_EVENT_TYPE_DISCONNECT, ENET_EVENT_TYPE_NONE,
+    ENET_EVENT_TYPE_RECEIVE, ENET_PACKET_FLAG_RELIABLE, ENET_PACKET_FLAG_SENT,
+    ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
+    ENET_PEER_FLAG_CONTINUE_SENDING, ENET_PEER_FLAG_NEEDS_DISPATCH,
     ENET_PEER_STATE_ACKNOWLEDGING_CONNECT, ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT,
     ENET_PEER_STATE_CONNECTED, ENET_PEER_STATE_CONNECTING, ENET_PEER_STATE_CONNECTION_PENDING,
     ENET_PEER_STATE_CONNECTION_SUCCEEDED, ENET_PEER_STATE_DISCONNECTED,
@@ -1657,16 +1658,15 @@ unsafe fn enet_protocol_receive_incoming_commands<S: Socket>(
             data_length: 0,
         };
         buffer.data = ((*host).packet_data[0_i32 as usize]).as_mut_ptr();
-        buffer.data_length = ::core::mem::size_of::<[u8; ENET_PROTOCOL_MAXIMUM_MTU as usize]>();
-        let received_length = match (*host).socket.assume_init_mut().receive(buffer.data_length) {
-            Ok(Some((received_address, PacketReceived::Complete(received_data)))) => {
-                if received_data.len() <= ENET_PROTOCOL_MAXIMUM_MTU as usize {
-                    *(*host).received_address.assume_init_mut() = Some(received_address);
-                    copy_nonoverlapping(received_data.as_ptr(), buffer.data, received_data.len());
-                    received_data.len() as i32
-                } else {
-                    continue;
-                }
+        buffer.data_length = ::core::mem::size_of::<[u8; ENET_PROTOCOL_MAXIMUM_MTU]>();
+        let received_length = match (*host)
+            .socket
+            .assume_init_mut()
+            .receive(&mut *buffer.data.cast::<[u8; 4096]>())
+        {
+            Ok(Some((received_address, PacketReceived::Complete(received_length)))) => {
+                *(*host).received_address.assume_init_mut() = Some(received_address);
+                received_length
             }
             Ok(Some((_, PacketReceived::Partial))) => {
                 continue;
@@ -2210,16 +2210,20 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         if let Some(compressor) = (*host).compressor.assume_init_mut() {
                             let original_size: usize = ((*host).packet_size)
                                 .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>());
-                            let mut in_buffers = vec![];
+                            let mut in_buffers: [&[u8]; ENET_BUFFER_MAXIMUM as usize] =
+                                std::array::from_fn(|_| {
+                                    from_raw_parts_or_empty::<u8>(std::ptr::null(), 0)
+                                });
+                            #[allow(clippy::needless_range_loop)]
                             for i in 0..((*host).buffer_count).wrapping_sub(1) {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(1 + i);
-                                in_buffers.push(super::from_raw_parts_or_empty(
+                                in_buffers[i] = super::from_raw_parts_or_empty(
                                     (*buffer).data,
                                     (*buffer).data_length,
-                                ));
+                                );
                             }
                             let compressed_size: usize = compressor.compress(
-                                in_buffers,
+                                &in_buffers[0..((*host).buffer_count).wrapping_sub(1)],
                                 original_size,
                                 super::from_raw_parts_or_empty_mut(
                                     ((*host).packet_data[1_i32 as usize]).as_mut_ptr(),
@@ -2265,13 +2269,17 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             *fresh35 = (*fresh35 as u64)
                                 .wrapping_add(::core::mem::size_of::<u32>() as u64)
                                 as usize;
-                            let mut in_buffers = vec![];
+                            let mut in_buffers: [&[u8]; ENET_BUFFER_MAXIMUM as usize] =
+                                std::array::from_fn(|_| {
+                                    from_raw_parts_or_empty::<u8>(std::ptr::null(), 0)
+                                });
+                            #[allow(clippy::needless_range_loop)]
                             for i in 0..(*host).buffer_count {
                                 let buffer = ((*host).buffers).as_mut_ptr().add(i);
-                                in_buffers.push(super::from_raw_parts_or_empty(
+                                in_buffers[i] = super::from_raw_parts_or_empty(
                                     (*buffer).data,
                                     (*buffer).data_length,
-                                ));
+                                );
                             }
                             checksum = checksum_fn(&in_buffers);
                             copy_nonoverlapping(
@@ -2288,6 +2296,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                         }
                         (*current_peer).last_send_time = (*host).service_time;
                         let mut conglomerate_buffer = vec![];
+                        conglomerate_buffer.reserve_exact(ENET_BUFFER_MAXIMUM as usize);
                         for buffer_index in 0..(*host).buffer_count {
                             let buffer = &(*host).buffers[buffer_index];
                             conglomerate_buffer.extend_from_slice(super::from_raw_parts_or_empty(

@@ -174,6 +174,20 @@ impl<S: Socket> Peer<S> {
         unsafe { enet_peer_throttle_configure(self.0, interval, acceleration, deceleration) }
     }
 
+    /// The maximum transmission unit of this peer. See [`Host::mtu`](`crate::Host::mtu`).
+    #[must_use]
+    pub fn mtu(&self) -> u16 {
+        unsafe { (*self.0).mtu as u16 }
+    }
+
+    /// Set the maximum transmission unit for this peer. See
+    /// [`Host::set_mtu`](`crate::Host::set_mtu`).
+    pub fn set_mtu(&self, mtu: u16) {
+        unsafe {
+            (*self.0).mtu = mtu as u32;
+        }
+    }
+
     /// Get the current state of the peer.
     #[must_use]
     pub fn state(&self) -> PeerState {
