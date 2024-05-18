@@ -27,7 +27,7 @@ pub trait Socket: Sized {
     ///
     /// An example is the standard library's [`std::net::SocketAddr`], used with
     /// [`std::net::UdpSocket`].
-    type PeerAddress: Address + 'static;
+    type Address: Address + 'static;
     /// Errors returned by this socket.
     type Error: std::error::Error + std::fmt::Debug + Send + Sync + 'static;
 
@@ -38,14 +38,14 @@ pub trait Socket: Sized {
         Ok(())
     }
     /// Try to send data. Should return the number of bytes successfully sent, or an error.
-    fn send(&mut self, address: Self::PeerAddress, buffer: &[u8]) -> Result<usize, Self::Error>;
+    fn send(&mut self, address: Self::Address, buffer: &[u8]) -> Result<usize, Self::Error>;
     /// Try to receive data. May return an error, or optionally, a data packet.
     ///
     /// Data packets are wrapped in [`PacketReceived`]. See its docs for more info.
     fn receive(
         &mut self,
         mtu: usize,
-    ) -> Result<Option<(Self::PeerAddress, PacketReceived)>, Self::Error>;
+    ) -> Result<Option<(Self::Address, PacketReceived)>, Self::Error>;
 }
 
 /// Return type of [`Socket::receive`], representing either a complete packet, or a partial
@@ -67,7 +67,7 @@ pub enum PacketReceived {
 }
 
 impl Socket for UdpSocket {
-    type PeerAddress = SocketAddr;
+    type Address = SocketAddr;
     type Error = io::Error;
 
     fn init(&mut self, _socket_options: SocketOptions) -> Result<(), io::Error> {

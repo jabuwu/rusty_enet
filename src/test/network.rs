@@ -46,14 +46,14 @@ impl Socket {
 }
 
 impl enet::Socket for Socket {
-    type PeerAddress = usize;
+    type Address = usize;
     type Error = Infallible;
 
     fn init(&mut self, _socket_options: enet::SocketOptions) -> Result<(), Self::Error> {
         Ok(())
     }
 
-    fn send(&mut self, address: Self::PeerAddress, buffer: &[u8]) -> Result<usize, Self::Error> {
+    fn send(&mut self, address: Self::Address, buffer: &[u8]) -> Result<usize, Self::Error> {
         Socket::send(self, address, buffer);
         Ok(buffer.len())
     }
@@ -61,7 +61,7 @@ impl enet::Socket for Socket {
     fn receive(
         &mut self,
         _mtu: usize,
-    ) -> Result<Option<(Self::PeerAddress, enet::PacketReceived)>, Self::Error> {
+    ) -> Result<Option<(Self::Address, enet::PacketReceived)>, Self::Error> {
         if let Some((address, data)) = Socket::receive(self) {
             Ok(Some((address, enet::PacketReceived::Complete(data))))
         } else {

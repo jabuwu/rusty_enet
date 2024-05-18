@@ -70,7 +70,7 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Default
 impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Socket
     for ReadWrite<A, E>
 {
-    type PeerAddress = A;
+    type Address = A;
     type Error = E;
 
     fn init(&mut self, _socket_options: SocketOptions) -> Result<(), Self::Error> {

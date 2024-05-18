@@ -44,7 +44,7 @@ pub(crate) struct ENetPeer<S: Socket> {
     pub(crate) connect_id: u32,
     pub(crate) outgoing_session_id: u8,
     pub(crate) incoming_session_id: u8,
-    pub(crate) address: MaybeUninit<Option<S::PeerAddress>>,
+    pub(crate) address: MaybeUninit<Option<S::Address>>,
     pub(crate) data: *mut u8,
     pub(crate) state: ENetPeerState,
     pub(crate) channels: *mut ENetChannel,

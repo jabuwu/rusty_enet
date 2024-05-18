@@ -130,7 +130,7 @@ impl<S: Socket> Host<S> {
     /// Returns [`NoAvailablePeers`] if all peer slots have been filled.
     pub fn connect(
         &mut self,
-        address: S::PeerAddress,
+        address: S::Address,
         channel_count: usize,
         data: u32,
     ) -> Result<&mut Peer<S>, NoAvailablePeers> {

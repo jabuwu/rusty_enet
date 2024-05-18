@@ -35,7 +35,7 @@ pub(crate) struct ENetHost<S: Socket> {
     pub(crate) time: MaybeUninit<Box<dyn Fn() -> Duration>>,
     pub(crate) compressor: MaybeUninit<Option<Box<dyn Compressor>>>,
     pub(crate) packet_data: [[u8; 4096]; 2],
-    pub(crate) received_address: MaybeUninit<Option<S::PeerAddress>>,
+    pub(crate) received_address: MaybeUninit<Option<S::Address>>,
     pub(crate) received_data: *mut u8,
     pub(crate) received_data_length: usize,
     pub(crate) total_sent_data: u32,
@@ -154,7 +154,7 @@ pub(crate) unsafe fn enet_host_random<S: Socket>(host: *mut ENetHost<S>) -> u32 
 }
 pub(crate) unsafe fn enet_host_connect<S: Socket>(
     host: *mut ENetHost<S>,
-    address: S::PeerAddress,
+    address: S::Address,
     mut channel_count: usize,
     data: u32,
 ) -> *mut ENetPeer<S> {

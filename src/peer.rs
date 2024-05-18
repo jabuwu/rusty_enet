@@ -275,7 +275,7 @@ impl<S: Socket> Peer<S> {
     ///
     /// If the peer has disconnected, the previously connected peer's address will be returned.
     #[must_use]
-    pub fn address(&self) -> Option<S::PeerAddress> {
+    pub fn address(&self) -> Option<S::Address> {
         unsafe { (*self.0).address.assume_init_ref().clone() }
     }
 }
