@@ -4,7 +4,7 @@ use crate::Socket;
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum HostNewError<S: Socket> {
     /// Failed to create a new ENet host due to a bad parameter.
-    BadParameter,
+    BadParameter(BadParameter),
     /// Failed to create a new ENet host because socket initialization failed.
     FailedToInitializeSocket(S::Error),
 }
@@ -12,10 +12,10 @@ pub enum HostNewError<S: Socket> {
 impl<S: Socket> core::fmt::Debug for HostNewError<S> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            HostNewError::BadParameter => f.write_str("BadParameter"),
-            HostNewError::FailedToInitializeSocket(f0) => f
+            HostNewError::BadParameter(err) => f.debug_tuple("BadParameter").field(&err).finish(),
+            HostNewError::FailedToInitializeSocket(err) => f
                 .debug_tuple("FailedToInitializeSocket")
-                .field(&f0)
+                .field(&err)
                 .finish(),
         }
     }
@@ -24,7 +24,7 @@ impl<S: Socket> core::fmt::Debug for HostNewError<S> {
 impl<S: Socket> core::fmt::Display for HostNewError<S> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            HostNewError::BadParameter => {
+            HostNewError::BadParameter(_) => {
                 f.write_str("Failed to create a new ENet host due to a bad parameter.")
             }
             HostNewError::FailedToInitializeSocket(_) => f.write_str(

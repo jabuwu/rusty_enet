@@ -89,16 +89,28 @@ impl<S: Socket> Host<S> {
     /// Returns [`HostNewError::FailedToInitializeSocket`] if the call to [`Socket::init`] fails.
     pub fn new(socket: S, settings: HostSettings) -> Result<Host<S>, HostNewError<S>> {
         if settings.channel_limit == 0 {
-            return Err(HostNewError::BadParameter);
+            return Err(HostNewError::BadParameter(BadParameter {
+                method: "Host::new",
+                parameter: "settings.channel_limit",
+            }));
         }
         if settings.incoming_bandwidth_limit == Some(0) {
-            return Err(HostNewError::BadParameter);
+            return Err(HostNewError::BadParameter(BadParameter {
+                method: "Host::new",
+                parameter: "settings.incoming_bandwidth_limit",
+            }));
         }
         if settings.outgoing_bandwidth_limit == Some(0) {
-            return Err(HostNewError::BadParameter);
+            return Err(HostNewError::BadParameter(BadParameter {
+                method: "Host::new",
+                parameter: "settings.outgoing_bandwidth_limit",
+            }));
         }
         if settings.peer_limit == 0 || settings.peer_limit > PROTOCOL_MAXIMUM_PEER_ID as usize {
-            return Err(HostNewError::BadParameter);
+            return Err(HostNewError::BadParameter(BadParameter {
+                method: "Host::new",
+                parameter: "settings.peer_limit",
+            }));
         }
         unsafe {
             let host = enet_host_create::<S>(
@@ -393,7 +405,7 @@ impl<S: Socket> Host<S> {
     ///
     /// Returns [`BadParameter`] if `mtu` is greater than [`PROTOCOL_MAXIMUM_MTU`] or less than
     /// [`PROTOCOL_MINIMUM_MTU`].
-    pub fn set_mtu(&self, mtu: u16) -> Result<(), BadParameter> {
+    pub fn set_mtu(&mut self, mtu: u16) -> Result<(), BadParameter> {
         if mtu > PROTOCOL_MAXIMUM_MTU as u16 || mtu < PROTOCOL_MINIMUM_MTU as u16 {
             return Err(BadParameter {
                 method: "Host::set_mtu",
@@ -404,6 +416,12 @@ impl<S: Socket> Host<S> {
             (*self.host).mtu = mtu as u32;
         }
         Ok(())
+    }
+
+    /// Get the time according to this host, as provided by
+    /// [`HostSettings::time`](`crate::HostSettings::time`).
+    pub fn now(&self) -> Duration {
+        unsafe { (*self.host).time.assume_init_ref()() }
     }
 
     fn create_event<'a>(&'a mut self, event: &ENetEvent<S>) -> Event<'a, S> {

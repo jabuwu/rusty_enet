@@ -1,3 +1,10 @@
+# UNRELEASED
+- Add [`SocketError`] trait
+- Add [`BadParameter`] type in [`HostNewError`]
+- Add [`Host::now`] to get the current time according to ENet
+- Allow [`ReadWrite`] in `#![no_std]` environments
+- Change [`Host::set_mtu`] and [`Peer::set_mtu`] to take `&mut self` instead of `&self`
+
 # 0.2.0
 - Compatible with ENet 1.3.18
 - Refine some trait requirements and derives

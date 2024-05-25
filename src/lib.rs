@@ -147,6 +147,7 @@ mod event;
 mod host;
 mod packet;
 mod peer;
+mod read_write;
 mod socket;
 mod time;
 mod version;
@@ -159,14 +160,10 @@ pub use event::*;
 pub use host::*;
 pub use packet::*;
 pub use peer::*;
+pub use read_write::*;
 pub use socket::*;
 pub use time::*;
 pub use version::*;
-
-#[cfg(feature = "std")]
-mod read_write;
-#[cfg(feature = "std")]
-pub use read_write::*;
 
 /// Error types.
 pub mod error;
@@ -180,11 +177,7 @@ pub mod consts;
 mod test;
 
 #[cfg(feature = "std")]
-pub(crate) use std::boxed::Box;
-#[cfg(feature = "std")]
-pub(crate) use std::vec::Vec;
+pub(crate) use std::{boxed::Box, collections::VecDeque, vec::Vec};
 
 #[cfg(not(feature = "std"))]
-pub(crate) use alloc::boxed::Box;
-#[cfg(not(feature = "std"))]
-pub(crate) use alloc::vec::Vec;
+pub(crate) use alloc::{boxed::Box, collections::VecDeque, vec::Vec};

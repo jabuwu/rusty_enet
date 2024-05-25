@@ -7,23 +7,23 @@ pub enum Event<'a, S: Socket> {
     Connect {
         /// Peer that generated the event.
         peer: &'a mut Peer<S>,
-        /// Data associated with the event, sent by the client on connect.
+        /// Data associated with the event, sent by the peer on connect.
         data: u32,
     },
     /// A peer has disconnected.
     Disconnect {
         /// Peer that generated the event.
         peer: &'a mut Peer<S>,
-        /// Data associated with the event, sent by the client on disconnect.
+        /// Data associated with the event, sent by the peer on disconnect.
         data: u32,
     },
     /// A peer sent a packet to us.
     Receive {
         /// Peer that generated the event.
         peer: &'a mut Peer<S>,
-        /// Channel on the peer that generated the event.
+        /// Channel the peer sent the packet on.
         channel_id: u8,
-        /// Packet associated with the event.
+        /// The actual packet data.
         packet: Packet,
     },
 }
@@ -63,23 +63,23 @@ pub enum EventNoRef {
     Connect {
         /// Peer that generated the event.
         peer: PeerID,
-        /// Data associated with the event, sent by the client on connect.
+        /// Data associated with the event, sent by the peer on connect.
         data: u32,
     },
     /// A peer has disconnected.
     Disconnect {
         /// Peer that generated the event.
         peer: PeerID,
-        /// Data associated with the event, sent by the client on disconnect.
+        /// Data associated with the event, sent by the peer on disconnect.
         data: u32,
     },
     /// A peer sent a packet to us.
     Receive {
         /// Peer that generated the event.
         peer: PeerID,
-        /// Channel on the peer that generated the event.
+        /// Channel the peer sent the packet on.
         channel_id: u8,
-        /// Packet associated with the event.
+        /// The actual packet data.
         packet: Packet,
     },
 }

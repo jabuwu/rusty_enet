@@ -6,6 +6,29 @@ use std::{
 
 use crate::{consts::PROTOCOL_MAXIMUM_MTU, Address};
 
+// This macro allows the same doc comment to apply to both variants.
+macro_rules! socket_error {
+    ($(#[$($attrss:tt)*])*) => {
+        #[cfg(feature = "std")]
+        $(#[$($attrss)*])*
+        pub trait SocketError: std::error::Error {}
+        #[cfg(feature = "std")]
+        impl<T: std::error::Error> SocketError for T {}
+
+        #[cfg(not(feature = "std"))]
+        $(#[$($attrss)*])*
+        pub trait SocketError: core::fmt::Debug {}
+        #[cfg(not(feature = "std"))]
+        impl<T: core::fmt::Debug> SocketError for T {}
+    };
+}
+socket_error!(
+    /// A trait specifying the bounds of [`Socket::Error`].
+    ///
+    /// This normally binds errors to [`std::error::Error`], however in a `#![no_std]` environment,
+    /// it binds them to only [`core::fmt::Debug`].
+);
+
 /// The maximum amount of bytes ENet will ever send or receive. Useful for allocating buffers when
 /// sending and receiving.
 ///
@@ -48,11 +71,7 @@ pub trait Socket: Sized {
     /// [`std::net::UdpSocket`].
     type Address: Address;
     /// Errors returned by this socket.
-    #[cfg(feature = "std")]
-    type Error: std::error::Error;
-    /// Errors returned by this socket.
-    #[cfg(not(feature = "std"))]
-    type Error: core::fmt::Debug;
+    type Error: SocketError;
 
     /// Initialize the socket with options passed down by ENet.
     ///

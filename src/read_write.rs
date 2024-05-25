@@ -1,7 +1,4 @@
-use std::{
-    collections::VecDeque,
-    io::{copy, Cursor},
-};
+use crate::{SocketError, VecDeque};
 
 use crate::{Address, PacketReceived, Socket, SocketOptions, Vec, MTU_MAX};
 
@@ -29,13 +26,13 @@ use crate::{Address, PacketReceived, Socket, SocketOptions, Vec, MTU_MAX};
 ///     dbg!((address, packet));
 /// }
 #[derive(Debug)]
-pub struct ReadWrite<A: Address, E: std::error::Error> {
+pub struct ReadWrite<A: Address, E: SocketError> {
     inbound: VecDeque<(A, Vec<u8>)>,
     outbound: VecDeque<(A, Vec<u8>)>,
     error: Option<E>,
 }
 
-impl<A: Address, E: std::error::Error> ReadWrite<A, E> {
+impl<A: Address, E: SocketError> ReadWrite<A, E> {
     /// Create an intermediate Read/Write socket for use with [`Host`](`crate::Host`).
     #[must_use]
     pub fn new() -> Self {
@@ -58,7 +55,7 @@ impl<A: Address, E: std::error::Error> ReadWrite<A, E> {
     }
 }
 
-impl<A: Address, E: std::error::Error> Default for ReadWrite<A, E> {
+impl<A: Address, E: SocketError> Default for ReadWrite<A, E> {
     fn default() -> Self {
         Self {
             inbound: VecDeque::new(),
@@ -68,9 +65,7 @@ impl<A: Address, E: std::error::Error> Default for ReadWrite<A, E> {
     }
 }
 
-impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Socket
-    for ReadWrite<A, E>
-{
+impl<A: Address + 'static, E: SocketError> Socket for ReadWrite<A, E> {
     type Address = A;
     type Error = E;
 
@@ -90,8 +85,17 @@ impl<A: Address + 'static, E: std::error::Error + Send + Sync + 'static> Socket
         } else if let Some((address, inbound)) = self.inbound.pop_front() {
             let bytes = inbound.len();
             if bytes <= MTU_MAX {
-                copy(&mut Cursor::new(inbound), &mut Cursor::new(&mut buffer[..]))
-                    .expect("Buffer copy should not fail.");
+                #[cfg(feature = "std")]
+                {
+                    use std::io::{copy, Cursor};
+                    copy(&mut Cursor::new(inbound), &mut Cursor::new(&mut buffer[..]))
+                        .expect("Buffer copy should not fail.");
+                }
+                #[cfg(not(feature = "std"))]
+                unsafe {
+                    use core::ptr::copy_nonoverlapping;
+                    copy_nonoverlapping(inbound.as_ptr(), buffer.as_mut_ptr(), bytes);
+                }
                 Ok(Some((address, PacketReceived::Complete(bytes))))
             } else {
                 Ok(None)
