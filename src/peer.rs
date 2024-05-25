@@ -305,7 +305,7 @@ impl<S: Socket> Peer<S> {
     /// Address of the remote peer, or [`None`] if this peer has never been connected.
     ///
     /// If the peer has disconnected, the previously connected peer's address will be returned.
-    /// 
+    ///
     /// This value can be safely unwrapped if a peer was obtained from [`Event`](`crate::Event`).
     #[must_use]
     pub fn address(&self) -> Option<S::Address> {

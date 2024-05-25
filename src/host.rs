@@ -420,6 +420,7 @@ impl<S: Socket> Host<S> {
 
     /// Get the time according to this host, as provided by
     /// [`HostSettings::time`](`crate::HostSettings::time`).
+    #[must_use]
     pub fn now(&self) -> Duration {
         unsafe { (*self.host).time.assume_init_ref()() }
     }
