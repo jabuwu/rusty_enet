@@ -4,14 +4,14 @@
 
 ```
 [dependencies]
-rusty_enet = "0.2"
+rusty_enet = "0.3"
 ```
 
 ## ENet Versions
 
 | rusty_enet  | ENet    | Commit
 | ----------- | ------- | ------
-| main        | 1.3.18  | ([enet/2662c0d](https://github.com/lsalzman/enet/commit/2662c0de09e36f2a2030ccc2c528a3e4c9e8138a))
+| 0.3         | 1.3.18  | ([enet/2662c0d](https://github.com/lsalzman/enet/commit/2662c0de09e36f2a2030ccc2c528a3e4c9e8138a))
 | 0.2         | 1.3.18  | ([enet/2662c0d](https://github.com/lsalzman/enet/commit/2662c0de09e36f2a2030ccc2c528a3e4c9e8138a))
 | 0.1         | 1.3.17* | ([enet/2a85cd6](https://github.com/lsalzman/enet/commit/2a85cd64459f6ba038d233a634d9440490dbba12))
 

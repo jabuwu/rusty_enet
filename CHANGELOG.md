@@ -1,4 +1,4 @@
-# UNRELEASED
+# 0.3.0
 - Add `SocketError` trait
 - Add `BadParameter` type in `HostNewError::BadParameter`
 - Add `Host::now` to get the current time according to ENet
