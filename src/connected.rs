@@ -1151,6 +1151,11 @@ impl<C: Connection> Host<C> {
     pub fn set_mtu(&mut self, mtu: u16) -> Result<(), crate::error::BadParameter> {
         self.host.set_mtu(mtu)
     }
+
+    /// See [`Host::now`](`crate::Host::now`).
+    pub fn now(&self) -> Duration {
+        self.host.now()
+    }
 }
 
 #[cfg(feature = "std")]

@@ -1,3 +1,6 @@
+# 0.3.1
+- Add missing `enet::connected::Host::now` function
+
 # 0.3.0
 - Add `SocketError` trait
 - Add `BadParameter` type in `HostNewError::BadParameter`
