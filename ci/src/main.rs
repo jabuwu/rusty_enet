@@ -49,10 +49,10 @@ fn main() -> anyhow::Result<()> {
 
     let sh = Shell::new()?;
     if what_to_run.contains(Check::CHECK) {
-        check(&sh, Target::Default, Features(&["std"]))?;
+        check(&sh, Target::Default, Features(&["std", "connected"]))?;
     }
     if what_to_run.contains(Check::WASM_CHECK) {
-        check(&sh, Target::Wasm, Features(&["std"]))?;
+        check(&sh, Target::Wasm, Features(&["std", "connected"]))?;
     }
     if what_to_run.contains(Check::EXAMPLE_CHECK) {
         example_check(&sh)?;

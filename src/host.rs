@@ -84,7 +84,7 @@ impl<S: Socket> Host<S> {
     /// - If [`HostSettings::incoming_bandwidth_limit`] is equal to `Some(0)`.
     /// - If [`HostSettings::outgoing_bandwidth_limit`] is equal to `Some(0)`.
     /// - If [`HostSettings::peer_limit`] is equal to `0` or greater than
-    /// [`PROTOCOL_MAXIMUM_PEER_ID`].
+    ///   [`PROTOCOL_MAXIMUM_PEER_ID`].
     ///
     /// Returns [`HostNewError::FailedToInitializeSocket`] if the call to [`Socket::init`] fails.
     pub fn new(socket: S, settings: HostSettings) -> Result<Host<S>, HostNewError<S>> {

@@ -6,12 +6,12 @@
 //! both for convenience, and in case that resource is unavailable for any reason.
 //!
 //! > ENet's purpose is to provide a relatively thin, simple and robust network communication layer
-//! on top of UDP (User Datagram Protocol). The primary feature it provides is optional reliable,
-//! in-order delivery of packets.  
+//! > on top of UDP (User Datagram Protocol). The primary feature it provides is optional reliable,
+//! > in-order delivery of packets.  
 //! >
 //! > ENet omits certain higher level networking features such as authentication, lobbying, server
-//! discovery, encryption, or other similar tasks that are particularly application specific so that
-//! the library remains flexible, portable, and easily embeddable.
+//! > discovery, encryption, or other similar tasks that are particularly application specific so
+//! > that the library remains flexible, portable, and easily embeddable.
 //!
 //! [See the examples](https://github.com/jabuwu/rusty_enet/tree/main/examples)
 //!
@@ -108,6 +108,7 @@
 //! the volume of packets sent.
 
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![warn(
     missing_docs,
     clippy::missing_panics_doc,
@@ -165,7 +166,9 @@ pub use socket::*;
 pub use time::*;
 pub use version::*;
 
-/// Error types.
+#[cfg(any(feature = "connected", doc))]
+#[cfg_attr(docsrs, doc(cfg(feature = "connected")))]
+pub mod connected;
 pub mod error;
 
 /// Constants provided by ENet.

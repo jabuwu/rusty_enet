@@ -1,3 +1,5 @@
+//! Error types.
+
 use crate::Socket;
 
 /// Error for [`Host::new`](`crate::Host::new`).

@@ -122,11 +122,11 @@ impl<S: Socket> Peer<S> {
     /// the current timeout limit value.
     ///
     /// - `limit` - the timeout limit; defaults to
-    /// [`PEER_TIMEOUT_LIMIT`](`crate::consts::PEER_TIMEOUT_LIMIT`) if 0
+    ///   [`PEER_TIMEOUT_LIMIT`](`crate::consts::PEER_TIMEOUT_LIMIT`) if 0
     /// - `minimum` - the timeout minimum; defaults to
-    /// [`PEER_TIMEOUT_MINIMUM`](`crate::consts::PEER_TIMEOUT_MINIMUM`) if 0
+    ///   [`PEER_TIMEOUT_MINIMUM`](`crate::consts::PEER_TIMEOUT_MINIMUM`) if 0
     /// - `maximum` - the timeout maximum; defaults to
-    /// [`PEER_TIMEOUT_MAXIMUM`](`crate::consts::PEER_TIMEOUT_MAXIMUM`) if 0
+    ///   [`PEER_TIMEOUT_MAXIMUM`](`crate::consts::PEER_TIMEOUT_MAXIMUM`) if 0
     pub fn set_timeout(&mut self, limit: u32, minimum: u32, maximum: u32) {
         unsafe { enet_peer_timeout(self.0, limit, minimum, maximum) }
     }
@@ -168,8 +168,8 @@ impl<S: Socket> Peer<S> {
     /// of conditions.
     ///
     /// - `interval` - interval, in milliseconds, over which to measure lowest mean RTT; the default
-    /// value is
-    /// [`PEER_PACKET_THROTTLE_INTERVAL`](`crate::consts::PEER_PACKET_THROTTLE_INTERVAL`)
+    ///   value is
+    ///   [`PEER_PACKET_THROTTLE_INTERVAL`](`crate::consts::PEER_PACKET_THROTTLE_INTERVAL`)
     /// - `acceleration` - rate at which to increase the throttle probability as mean RTT declines
     /// - `deceleration` - rate at which to decrease the throttle probability as mean RTT increases
     pub fn set_throttle(&mut self, interval: u32, acceleration: u32, deceleration: u32) {

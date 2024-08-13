@@ -1,7 +1,8 @@
 # UNRELEASED
 - Add `SocketError` trait
-- Add `BadParameter` type in `HostNewError`
+- Add `BadParameter` type in `HostNewError::BadParameter`
 - Add `Host::now` to get the current time according to ENet
+- Add `connected` feature, providing an easier integration with connection based protocols
 - Allow `ReadWrite` in `#![no_std]` environments
 - Change `Host::set_mtu` and `Peer::set_mtu` to take `&mut self` instead of `&self`
 
