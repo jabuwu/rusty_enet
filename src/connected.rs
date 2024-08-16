@@ -873,7 +873,7 @@ impl<C: Connection> Host<C> {
         for peer in &mut self.peers {
             let mut disconnect = false;
             if let PeerState::AwaitingPeer { since, timeout, .. } = &mut peer.state {
-                if *since < now - *timeout {
+                if *since + *timeout < now {
                     peer.state = PeerState::Disconnected {
                         last_peer_ptr: None,
                     };
@@ -887,7 +887,7 @@ impl<C: Connection> Host<C> {
                 ..
             } = &mut peer.state
             {
-                if *last_send < now - Duration::from_secs(2) {
+                if *last_send + Duration::from_secs(2) < now {
                     peer.state = PeerState::Disconnected {
                         last_peer_ptr: last_peer_ptr.take(),
                     };
