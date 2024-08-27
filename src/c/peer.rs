@@ -19,7 +19,7 @@ use crate::{
     ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED, ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE,
 };
 
-use super::ENetHost;
+use super::{ENetHost, ENetNewProtocolHeader};
 
 pub(crate) type ENetPeerState = _ENetPeerState;
 pub(crate) type _ENetPeerState = u32;
@@ -178,9 +178,15 @@ pub(crate) unsafe fn enet_peer_send<S: Socket>(
         return Err(PeerSendError::PacketTooLarge);
     }
     let channel = ((*peer).channels).offset(channel_id as isize);
-    fragment_length = ((*peer).mtu as usize)
-        .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>())
-        .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>());
+    if (*(*peer).host).using_new_packet {
+        fragment_length = ((*peer).mtu as usize)
+            .wrapping_sub(::core::mem::size_of::<ENetNewProtocolHeader>())
+            .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>());
+    } else {
+        fragment_length = ((*peer).mtu as usize)
+            .wrapping_sub(::core::mem::size_of::<ENetProtocolHeader>())
+            .wrapping_sub(::core::mem::size_of::<ENetProtocolSendFragment>());
+    }
     if ((*(*peer).host).checksum.assume_init_ref()).is_some() {
         fragment_length =
             (fragment_length as u64).wrapping_sub(::core::mem::size_of::<u32>() as u64) as usize;

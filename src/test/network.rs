@@ -91,6 +91,10 @@ impl enet::Address for usize {
     fn is_broadcast(&self) -> bool {
         false
     }
+
+    fn port(&self) -> u16 {
+        self.port()
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

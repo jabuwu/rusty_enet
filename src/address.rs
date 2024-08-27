@@ -14,6 +14,7 @@ pub trait Address: Sized + Clone {
     ///
     /// For IP based addresses, checks if this is the IPv4 broadcast address.
     fn is_broadcast(&self) -> bool;
+    fn port(&self) -> u16;
 }
 
 impl Address for () {
@@ -27,6 +28,9 @@ impl Address for () {
 
     fn is_broadcast(&self) -> bool {
         false
+    }
+    fn port(&self) -> u16 {
+        0
     }
 }
 
@@ -44,5 +48,9 @@ impl Address for SocketAddr {
             SocketAddr::V4(self_addr_v4) => self_addr_v4.ip().is_broadcast(),
             _ => false,
         }
+    }
+
+    fn port(&self) -> u16 {
+        self.port()
     }
 }

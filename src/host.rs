@@ -498,6 +498,7 @@ impl<S: Socket> Debug for Host<S> {
             .field("duplicatePeers", &host.duplicate_peers)
             .field("maximumPacketSize", &host.maximum_packet_size)
             .field("maximumWaitingData", &host.maximum_waiting_data)
+            .field("usingNewPacket", &host.using_new_packet)
             .field("peers", &self.peers)
             .finish()
     }

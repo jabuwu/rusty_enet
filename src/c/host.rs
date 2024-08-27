@@ -47,6 +47,7 @@ pub(crate) struct ENetHost<S: Socket> {
     pub(crate) duplicate_peers: usize,
     pub(crate) maximum_packet_size: usize,
     pub(crate) maximum_waiting_data: usize,
+    pub(crate) using_new_packet: bool,
 }
 pub(crate) unsafe fn enet_host_create<S: Socket>(
     mut socket: S,
