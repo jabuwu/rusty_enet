@@ -2,7 +2,7 @@ use core::{
     alloc::Layout,
     ptr::{copy_nonoverlapping, write_bytes},
 };
-
+use std::{mem, ptr};
 use crate::{
     consts::{
         BUFFER_MAXIMUM, HOST_BANDWIDTH_THROTTLE_INTERVAL, PEER_FREE_RELIABLE_WINDOWS,
@@ -2100,7 +2100,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
             ::core::mem::size_of::<ENetProtocolHeader>()
         }
     };
-    let mut header_data: [u8; 8] = [0; 8];
+    let mut header_data: [u8; std::mem::size_of::<ENetNewProtocolHeader>() + std::mem::size_of::<u32>()] = [0; std::mem::size_of::<ENetNewProtocolHeader>() + std::mem::size_of::<u32>()];
     let header: *mut ENetProtocolHeader = header_data.as_mut_ptr().cast();
     let new_header: *mut ENetNewProtocolHeader = header_data.as_mut_ptr().cast();
     let mut should_compress: usize;
@@ -2124,8 +2124,7 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
         unsafe {
             (*new_header).integrity[0] = rand1.to_be();
             (*new_header).integrity[1] = (rand1 ^ port).to_be();
-            (*new_header).integrity[2] =
-                ((enet_host_random(host) & 0x61D2) | 0x920D).to_be() as u16;
+            (*new_header).integrity[2] = ((enet_host_random(host) as u16) & 0x61D2 | 0x920D).to_be();
         }
     }
 

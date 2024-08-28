@@ -43,6 +43,7 @@ pub struct HostSettings {
     pub time: Box<dyn Fn() -> Duration>,
     /// Seed the host with a specific random seed, or set to [`None`] to use a random seed.
     pub seed: Option<u32>,
+    pub using_new_packet: bool,
 }
 
 impl Default for HostSettings {
@@ -56,6 +57,7 @@ impl Default for HostSettings {
             checksum: None,
             time: Box::new(time_since_epoch),
             seed: None,
+            using_new_packet: false,
         }
     }
 }
@@ -121,6 +123,7 @@ impl<S: Socket> Host<S> {
                 settings.outgoing_bandwidth_limit.unwrap_or(0),
                 settings.time,
                 settings.seed,
+                settings.using_new_packet,
             )
             .map_err(|err| HostNewError::FailedToInitializeSocket(err))?;
             let mut peers = Vec::new();

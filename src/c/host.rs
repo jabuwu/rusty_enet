@@ -57,6 +57,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     outgoing_bandwidth: u32,
     time: Box<dyn Fn() -> Duration>,
     seed: Option<u32>,
+    using_new_packet: bool,
 ) -> Result<*mut ENetHost<S>, S::Error> {
     let mut current_peer: *mut ENetPeer<S>;
     let host: *mut ENetHost<S> = enet_malloc(Layout::new::<ENetHost<S>>()).cast();
@@ -106,6 +107,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
     (*host).maximum_packet_size = HOST_DEFAULT_MAXIMUM_PACKET_SIZE as i32 as usize;
     (*host).maximum_waiting_data = HOST_DEFAULT_MAXIMUM_WAITING_DATA as i32 as usize;
     (*host).compressor.write(None);
+    (*host).using_new_packet = using_new_packet;
     enet_list_clear(&mut (*host).dispatch_queue);
     current_peer = (*host).peers;
     while current_peer < ((*host).peers).add((*host).peer_count) {
