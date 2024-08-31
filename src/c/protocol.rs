@@ -3,6 +3,7 @@ use core::{
     ptr::{copy_nonoverlapping, write_bytes},
 };
 use std::{mem, ptr};
+use std::mem::offset_of;
 use crate::{
     consts::{
         BUFFER_MAXIMUM, HOST_BANDWIDTH_THROTTLE_INTERVAL, PEER_FREE_RELIABLE_WINDOWS,
@@ -2241,7 +2242,13 @@ unsafe fn enet_protocol_send_outgoing_commands<S: Socket>(
                             }
                             (*((*host).buffers).as_mut_ptr()).data_length = packet_size;
                         } else {
-                            (*((*host).buffers).as_mut_ptr()).data_length = 2;
+                            let data_length = if (*host).using_new_packet {
+                                offset_of!(ENetNewProtocolHeader, sent_time)
+                            } else {
+                                offset_of!(ENetProtocolHeader, sent_time)
+                            };
+
+                            (*((*host).buffers).as_mut_ptr()).data_length = data_length;
                         }
 
                         should_compress = 0_i32 as usize;
