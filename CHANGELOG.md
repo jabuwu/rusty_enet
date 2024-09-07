@@ -1,3 +1,6 @@
+# 0.3.3
+- Reset peer on connection error in `enet::connected`
+
 # 0.3.2
 - Fix a `Duration` underflow panic in `enet::connected`
 
