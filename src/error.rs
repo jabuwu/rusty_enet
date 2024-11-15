@@ -11,6 +11,9 @@ pub enum HostNewError<S: Socket> {
     FailedToInitializeSocket(S::Error),
 }
 
+#[cfg(feature = "std")]
+impl<S: Socket> std::error::Error for HostNewError<S> {}
+
 impl<S: Socket> core::fmt::Debug for HostNewError<S> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
