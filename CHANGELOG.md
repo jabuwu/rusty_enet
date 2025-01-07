@@ -1,3 +1,6 @@
+# 0.4.0
+- Add missing `Error` impl on `HostNewError`
+
 # 0.3.3
 - Reset peer on connection error in `enet::connected`
 

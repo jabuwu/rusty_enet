@@ -81,7 +81,7 @@ pub(crate) unsafe fn enet_host_create<S: Socket>(
         (*host).random_seed = host as usize as u32;
         (*host).random_seed =
             ((*host).random_seed as u32).wrapping_add(enet_time_get(host)) as u32 as u32;
-        (*host).random_seed = (*host).random_seed << 16_i32 | (*host).random_seed >> 16_i32;
+        (*host).random_seed = (*host).random_seed.rotate_right(16);
     }
     (*host).channel_limit = channel_limit;
     (*host).incoming_bandwidth = incoming_bandwidth;
