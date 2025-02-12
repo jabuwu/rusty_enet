@@ -96,6 +96,8 @@ pub trait Socket: Sized {
         &mut self,
         buffer: &mut [u8; MTU_MAX],
     ) -> Result<Option<(Self::Address, PacketReceived)>, Self::Error>;
+
+    fn address(&self) -> Self::Address;
 }
 
 /// Return type of [`Socket::receive`], representing either a complete packet, or a partial
@@ -148,5 +150,9 @@ impl Socket for UdpSocket {
             Err(err) if err.kind() == ErrorKind::WouldBlock => Ok(None),
             Err(err) => Err(err),
         }
+    }
+
+    fn address(&self) -> SocketAddr {
+        self.local_addr().unwrap()
     }
 }

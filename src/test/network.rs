@@ -6,7 +6,7 @@ use std::{
     sync::{mpsc, Arc, RwLock},
     time::Duration,
 };
-
+use std::net::IpAddr;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
@@ -77,6 +77,10 @@ impl enet::Socket for Socket {
             Ok(None)
         }
     }
+
+    fn address(&self) -> Self::Address {
+        0
+    }
 }
 
 impl enet::Address for usize {
@@ -94,6 +98,10 @@ impl enet::Address for usize {
 
     fn port(&self) -> u16 {
         self.port()
+    }
+
+    fn address(&self) -> IpAddr {
+        IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, *self as u8))
     }
 }
 

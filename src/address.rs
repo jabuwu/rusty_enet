@@ -1,4 +1,5 @@
 use core::net::SocketAddr;
+use std::net::{IpAddr, Ipv4Addr};
 
 /// An address type, for use with the [`Socket`](`crate::Socket`) trait.
 pub trait Address: Sized + Clone {
@@ -15,6 +16,7 @@ pub trait Address: Sized + Clone {
     /// For IP based addresses, checks if this is the IPv4 broadcast address.
     fn is_broadcast(&self) -> bool;
     fn port(&self) -> u16;
+    fn address(&self) -> IpAddr;
 }
 
 impl Address for () {
@@ -31,6 +33,9 @@ impl Address for () {
     }
     fn port(&self) -> u16 {
         0
+    }
+    fn address(&self) -> IpAddr {
+        IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))
     }
 }
 
@@ -52,5 +57,8 @@ impl Address for SocketAddr {
 
     fn port(&self) -> u16 {
         self.port()
+    }
+    fn address(&self) -> IpAddr {
+        self.ip()
     }
 }

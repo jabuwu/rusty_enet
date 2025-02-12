@@ -104,4 +104,8 @@ impl<A: Address + 'static, E: SocketError> Socket for ReadWrite<A, E> {
             Ok(None)
         }
     }
+
+    fn address(&self) -> Self::Address {
+        unimplemented!()
+    }
 }
