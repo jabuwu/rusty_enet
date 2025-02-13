@@ -1598,12 +1598,7 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
                 if !peer.is_null() {
                     break;
                 }
-                if (*host).using_new_packet_server {
-                    let mut peer_id = (*new_header).peer_id;
-                    peer = enet_protocol_handle_connect(host, &mut peer_id as *mut _ as *mut ENetProtocolHeader, command);
-                } else {
-                    peer = enet_protocol_handle_connect(host, header, command);
-                }
+                peer = enet_protocol_handle_connect(host, header, command);
                 if peer.is_null() {
                     break;
                 }
