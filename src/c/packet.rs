@@ -12,7 +12,7 @@ pub(crate) struct ENetPacket {
     pub(crate) data: *mut u8,
     pub(crate) data_length: usize,
     pub(crate) free_callback: Option<ENetPacketFreeCallback>,
-    pub(crate) user_data: *mut c_void
+    pub(crate) user_data: *mut c_void,
 }
 pub(crate) unsafe fn enet_packet_create(
     data: *const u8,

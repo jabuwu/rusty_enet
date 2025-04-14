@@ -1,9 +1,9 @@
 use core::fmt::Debug;
 
 use crate::{
-    Box, Vec,
-    enet_packet_create, enet_packet_destroy, ENetPacket, ENET_PACKET_FLAG_NO_ALLOCATE, ENET_PACKET_FLAG_RELIABLE,
-    ENET_PACKET_FLAG_SENT, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT, ENET_PACKET_FLAG_UNSEQUENCED,
+    enet_packet_create, enet_packet_destroy, Box, ENetPacket, Vec, ENET_PACKET_FLAG_NO_ALLOCATE,
+    ENET_PACKET_FLAG_RELIABLE, ENET_PACKET_FLAG_SENT, ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT,
+    ENET_PACKET_FLAG_UNSEQUENCED,
 };
 
 /// Types of packets supported by ENet, used with [`Packet::new`].
@@ -147,7 +147,11 @@ impl Packet {
     }
 
     unsafe fn drop_packet_data<P: ToRawPacket>(packet: *mut ENetPacket) {
-        P::drop_packet_data(RawPacket { data: (*packet).data, len: (*packet).data_length, user_data: (*packet).user_data as usize });
+        P::drop_packet_data(RawPacket {
+            data: (*packet).data,
+            len: (*packet).data_length,
+            user_data: (*packet).user_data as usize,
+        });
     }
 }
 
@@ -191,9 +195,9 @@ pub trait ToRawPacket {
     fn into_packet_data(self) -> RawPacket;
 
     /// Drops packet data that was previously created for this type.
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// For this function call to be sound, `packet` must have been previously
     /// created with [`Self::into_packet_data`].
     unsafe fn drop_packet_data(packet: RawPacket);
@@ -215,7 +219,11 @@ impl ToRawPacket for Vec<u8> {
         let len = self.len();
         let user_data = self.capacity();
         core::mem::forget(self);
-        RawPacket { data, len, user_data  }
+        RawPacket {
+            data,
+            len,
+            user_data,
+        }
     }
 
     unsafe fn drop_packet_data(packet: RawPacket) {
@@ -227,7 +235,11 @@ impl ToRawPacket for Box<[u8]> {
     fn into_packet_data(self) -> RawPacket {
         let len = self.len();
         let data = Box::into_raw(self).cast();
-        RawPacket { data, len, user_data: 0 }
+        RawPacket {
+            data,
+            len,
+            user_data: 0,
+        }
     }
 
     unsafe fn drop_packet_data(packet: RawPacket) {
@@ -241,7 +253,11 @@ impl<T: AsRef<[u8]> + Sized> ToRawPacket for Box<T> {
         let data = slice.as_ptr().cast_mut();
         let len = slice.len();
         let user_data = Box::into_raw(self) as usize;
-        RawPacket { data, len, user_data }
+        RawPacket {
+            data,
+            len,
+            user_data,
+        }
     }
 
     unsafe fn drop_packet_data(packet: RawPacket) {
@@ -256,5 +272,5 @@ pub struct RawPacket {
     /// The length of the data in bytes.
     pub len: usize,
     /// Extra data identifying the object.
-    pub user_data: usize
+    pub user_data: usize,
 }

@@ -28,7 +28,7 @@ pub enum Event<'a, S: Socket> {
     },
 }
 
-impl<'a, S: Socket> Event<'a, S> {
+impl<S: Socket> Event<'_, S> {
     /// Remove the peer reference from this event, converting into an [`EventNoRef`].
     #[must_use]
     pub fn no_ref(self) -> EventNoRef {
