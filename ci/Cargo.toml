@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.70"
 xshell = "0.2"
-bitflags = "2.0"
-itertools = "0.10"
+bitflags = "2.9"
+itertools = "0.14"
