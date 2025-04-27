@@ -7,6 +7,7 @@ homepage = "https://github.com/jabuwu/rusty_enet"
 repository = "https://github.com/jabuwu/rusty_enet"
 readme = "README.md"
 license = "MIT"
+rust-version = "1.77"
 exclude = [
     "/.github",
     "/ci",
