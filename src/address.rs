@@ -15,7 +15,9 @@ pub trait Address: Sized + Clone {
     ///
     /// For IP based addresses, checks if this is the IPv4 broadcast address.
     fn is_broadcast(&self) -> bool;
+    /// Returns the port number associated with this address.
     fn port(&self) -> u16;
+    /// Returns the IP address associated with this address.
     fn address(&self) -> IpAddr;
 }
 
@@ -51,6 +53,13 @@ impl Address for SocketAddrV4 {
     fn is_broadcast(&self) -> bool {
         self.ip().is_broadcast()
     }
+
+    fn port(&self) -> u16 {
+        0
+    }
+    fn address(&self) -> IpAddr {
+        IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))
+    }
 }
 
 impl Address for SocketAddrV6 {
@@ -64,6 +73,13 @@ impl Address for SocketAddrV6 {
 
     fn is_broadcast(&self) -> bool {
         false
+    }
+
+    fn port(&self) -> u16 {
+        0
+    }
+    fn address(&self) -> IpAddr {
+        IpAddr::V6(self.ip().clone())
     }
 }
 
