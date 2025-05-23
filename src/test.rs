@@ -153,11 +153,11 @@ fn round_trip_time() {
 
     network.conditions(host1, host2, NetworkConditions::good());
     network.update(10000);
-    assert_eq!(network.round_trip_time(host1, host2).as_millis(), 90);
+    assert_eq!(network.round_trip_time(host1, host2).as_millis(), 93);
 
     network.conditions(host1, host2, NetworkConditions::bad());
     network.update(10000);
-    assert_eq!(network.round_trip_time(host1, host2).as_millis(), 338);
+    assert_eq!(network.round_trip_time(host1, host2).as_millis(), 302);
 }
 
 #[test]

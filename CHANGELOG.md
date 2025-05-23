@@ -1,5 +1,8 @@
 # 0.4.0
 - Add missing `Error` impl on `HostNewError`
+- Implement `Address` trait for `SocketAddrV4` and `SocketAddrV6`
+- Add `ToRawPacket` trait to support zero-copy packet types ([#5](https://github.com/jabuwu/rusty_enet/pull/5))
+  - Change `Packet::new` and helper functions to take `impl ToRawPacket` instead of `&[u8]`
 
 # 0.3.3
 - Reset peer on connection error in `enet::connected`

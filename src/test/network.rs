@@ -181,12 +181,12 @@ impl Network {
         for (from, socket) in self.sockets.iter_mut().enumerate() {
             while let Some((to, data)) = socket.receive() {
                 if let Some(conditions) = self.conditions.get(&(to, from)).copied() {
-                    if self.rng.gen_bool(1. - conditions.loss_chance as f64) {
+                    if self.rng.random_bool(1. - conditions.loss_chance as f64) {
                         self.events.push(NetworkEvent {
                             sent: false,
                             send_time: time
                                 + (conditions.round_trip_time as i32
-                                    + self.rng.gen_range(
+                                    + self.rng.random_range(
                                         -(conditions.round_trip_time_variance as i32)
                                             ..=conditions.round_trip_time_variance as i32,
                                     ))

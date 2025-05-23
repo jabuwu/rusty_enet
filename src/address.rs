@@ -1,4 +1,4 @@
-use core::net::SocketAddr;
+use core::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::net::{IpAddr, Ipv4Addr};
 
 /// An address type, for use with the [`Socket`](`crate::Socket`) trait.
@@ -36,6 +36,34 @@ impl Address for () {
     }
     fn address(&self) -> IpAddr {
         IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))
+    }
+}
+
+impl Address for SocketAddrV4 {
+    fn same_host(&self, other: &Self) -> bool {
+        self.ip() == other.ip()
+    }
+
+    fn same(&self, other: &Self) -> bool {
+        *self == *other
+    }
+
+    fn is_broadcast(&self) -> bool {
+        self.ip().is_broadcast()
+    }
+}
+
+impl Address for SocketAddrV6 {
+    fn same_host(&self, other: &Self) -> bool {
+        self.ip() == other.ip()
+    }
+
+    fn same(&self, other: &Self) -> bool {
+        *self == *other
+    }
+
+    fn is_broadcast(&self) -> bool {
+        false
     }
 }
 

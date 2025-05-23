@@ -1,6 +1,8 @@
-use core::{alloc::Layout, ptr::copy_nonoverlapping};
+use core::{alloc::Layout, ffi::c_void, ptr::copy_nonoverlapping};
 
 use crate::{enet_free, enet_malloc, ENET_PACKET_FLAG_NO_ALLOCATE};
+
+pub(crate) type ENetPacketFreeCallback = unsafe fn(*mut ENetPacket);
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -9,6 +11,8 @@ pub(crate) struct ENetPacket {
     pub(crate) flags: u32,
     pub(crate) data: *mut u8,
     pub(crate) data_length: usize,
+    pub(crate) free_callback: Option<ENetPacketFreeCallback>,
+    pub(crate) user_data: *mut c_void,
 }
 pub(crate) unsafe fn enet_packet_create(
     data: *const u8,
@@ -29,11 +33,16 @@ pub(crate) unsafe fn enet_packet_create(
     (*packet).reference_count = 0_i32 as usize;
     (*packet).flags = flags;
     (*packet).data_length = data_length;
+    (*packet).free_callback = None;
+    (*packet).user_data = core::ptr::null_mut();
     packet
 }
 pub(crate) unsafe fn enet_packet_destroy(packet: *mut ENetPacket) {
     if packet.is_null() {
         return;
+    }
+    if let Some(callback) = (*packet).free_callback {
+        callback(packet);
     }
     if (*packet).flags & ENET_PACKET_FLAG_NO_ALLOCATE as i32 as u32 == 0
         && !((*packet).data).is_null()
