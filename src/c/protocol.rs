@@ -1430,7 +1430,11 @@ unsafe fn enet_protocol_handle_incoming_commands<S: Socket>(
             ::core::mem::size_of::<ENetProtocolHeader>()
         }
     } else {
-        2_usize
+        if (*host).using_new_packet_server {
+            8_usize
+        } else {
+            2_usize
+        }
     };
     if ((*host).checksum.assume_init_ref()).is_some() {
         header_size =
