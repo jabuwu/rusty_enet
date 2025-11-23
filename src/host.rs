@@ -176,7 +176,8 @@ impl<S: Socket> Host<S> {
 
     /// Checks for events on the host and shuttles packets between the host and its peers.
     ///
-    /// Should be called fairly regularly for adequate performance.
+    /// Should be called fairly regularly for adequate performance (see
+    /// [`Host Servicing`](`crate#host-servicing`)).
     ///
     /// # Errors
     ///

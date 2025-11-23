@@ -106,6 +106,39 @@
 //! capabilities. Further, ENet also provides a dynamic throttle that responds to deviations from
 //! normal network connections to rectify various types of network congestion by further limiting
 //! the volume of packets sent.
+//!
+//! # Host Servicing
+//!
+//! ENet only sends and receives packets during [`Host::service`], so performance is closely tied
+//! to this function. Applications have three options when it comes to calling this function:
+//!
+//! 1. Run on the main thread, updating every frame.
+//! 2. Run on a separate thread, blocking between updates.
+//! 3. Run on a separate thread, sleeping for a fixed amount of time between updates.
+//!
+//! Running on the main thread (option 1) might have a noticeable impact on performance, as games
+//! are typically tied to vsync, and a 60hz display may cause an additional 16ms delay to
+//! networking. For this reason, it's common to have a dedicated thread to service network sockets.
+//!
+//! The original C library provides a convenient mechanism for servicing ENet in a dedicated
+//! thread while blocking between updates (option 2): the `enet_host_service` function takes a
+//! `timeout` parameter, which when set to a number greater than 0, blocks the thread until either:
+//!
+//! * The underlying socket is ready to send or receive data.
+//! * The specified timeout duration (in milliseconds) is reached (important for sending occasional
+//!   keep-alive packets).
+//!
+//! The C library implements this behavior by using [select], which does not have an equivalent in
+//! the Rust standard library. For that reason, this library does not implement similar behavior,
+//! and it's not possible to achieve option 2 with [`UdpSocket`](`std::net::UdpSocket`). Option 3
+//! is the recommended approach if using [`UdpSocket`](`std::net::UdpSocket`), however, it would be
+//! possible to implement option 2 using [`mio::net::UdpSocket`], [`socket2::Socket`], or even
+//! [`tokio::net::UdpSocket`] with the proper setup, as they each provide some [select] mechanism.
+//!
+//! [select]: https://en.wikipedia.org/wiki/Select_(Unix)
+//! [`mio::net::UdpSocket`]: https://docs.rs/mio/latest/mio/net/struct.UdpSocket.html
+//! [`socket2::Socket`]: https://docs.rs/socket2/latest/socket2/struct.Socket.html
+//! [`tokio::net::UdpSocket`]: https://docs.rs/tokio/latest/tokio/net/struct.UdpSocket.html
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
