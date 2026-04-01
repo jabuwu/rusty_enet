@@ -68,8 +68,8 @@ pub struct Host<S: Socket> {
     peers: Vec<Peer<S>>,
 }
 
-unsafe impl<S: Socket> Send for Host<S> {}
-unsafe impl<S: Socket> Sync for Host<S> {}
+unsafe impl<S: Socket> Send for Host<S> where S: Send {}
+unsafe impl<S: Socket> Sync for Host<S> where S: Sync {}
 
 impl<S: Socket> Host<S> {
     /// Creates a host for communicating to peers, using the socket provided as a transport layer.

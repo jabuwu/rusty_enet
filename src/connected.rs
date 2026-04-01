@@ -247,6 +247,9 @@ pub struct Peer<C: Connection + 'static> {
     state: PeerState<C>,
 }
 
+unsafe impl<C: Connection> Send for Peer<C> where C: Send {}
+unsafe impl<C: Connection> Sync for Peer<C> where C: Sync {}
+
 impl<C: Connection> Peer<C> {
     fn peer(&self) -> Option<&mut crate::Peer<SocketInterface<C>>> {
         match self.state {
@@ -630,6 +633,9 @@ pub struct Host<C: Connection + 'static> {
     peers: Vec<Peer<C>>,
     next_generation: usize,
 }
+
+unsafe impl<C: Connection> Send for Host<C> where C: Send {}
+unsafe impl<C: Connection> Sync for Host<C> where C: Sync {}
 
 impl<C: Connection> Host<C> {
     /// Creates a host for communicating to connection based peers.

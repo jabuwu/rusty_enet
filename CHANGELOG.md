@@ -1,3 +1,7 @@
+# 0.5.0 (UNRELEASED)
+- Fix Send and Sync bounds for `enet::Host` and `enet::Peer`
+- Add Send and Sync bounds to `enet::connected::Host` and `enet::connected::Connection`
+
 # 0.4.0
 - Add missing `Error` impl on `HostNewError`
 - Implement `Address` trait for `SocketAddrV4` and `SocketAddrV6`
