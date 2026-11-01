@@ -418,6 +418,63 @@ impl<S: Socket> Host<S> {
         Ok(())
     }
 
+    /// Largest packet, in bytes, the host sends or accepts (including the total length declared
+    /// by the first fragment of a fragmented packet). Defaults to ENet's 32 MiB.
+    #[must_use]
+    pub fn maximum_packet_size(&self) -> usize {
+        unsafe { (*self.host).maximum_packet_size }
+    }
+
+    /// Set the largest packet size, in bytes. Cannot be 0. See [`Host::maximum_packet_size`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BadParameter`] if `maximum_packet_size` is `0`.
+    pub fn set_maximum_packet_size(
+        &mut self,
+        maximum_packet_size: usize,
+    ) -> Result<(), BadParameter> {
+        if maximum_packet_size == 0 {
+            return Err(BadParameter {
+                method: "Host::set_maximum_packet_size",
+                parameter: "maximum_packet_size",
+            });
+        }
+        unsafe {
+            (*self.host).maximum_packet_size = maximum_packet_size;
+        }
+        Ok(())
+    }
+
+    /// Most bytes of received packets a peer may have waiting (out of order or not yet
+    /// dispatched) before further incoming data is discarded. Defaults to ENet's 32 MiB.
+    #[must_use]
+    pub fn maximum_waiting_data(&self) -> usize {
+        unsafe { (*self.host).maximum_waiting_data }
+    }
+
+    /// Set the most bytes of received packets a peer may have waiting. Cannot be 0. See
+    /// [`Host::maximum_waiting_data`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BadParameter`] if `maximum_waiting_data` is `0`.
+    pub fn set_maximum_waiting_data(
+        &mut self,
+        maximum_waiting_data: usize,
+    ) -> Result<(), BadParameter> {
+        if maximum_waiting_data == 0 {
+            return Err(BadParameter {
+                method: "Host::set_maximum_waiting_data",
+                parameter: "maximum_waiting_data",
+            });
+        }
+        unsafe {
+            (*self.host).maximum_waiting_data = maximum_waiting_data;
+        }
+        Ok(())
+    }
+
     /// Get the time according to this host, as provided by
     /// [`HostSettings::time`](`crate::HostSettings::time`).
     #[must_use]

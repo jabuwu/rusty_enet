@@ -1,3 +1,10 @@
+# 0.4.1
+- Expose ENet's maximum packet size and maximum waiting data limits ([#11](https://github.com/jabuwu/rusty_enet/pull/11))
+  - `Host::maximum_packet_size`
+  - `Host::set_maximum_packet_size`
+  - `Host::maximum_waiting_data`
+  - `Host::set_maximum_waiting_data`
+
 # 0.4.0
 - Add missing `Error` impl on `HostNewError`
 - Implement `Address` trait for `SocketAddrV4` and `SocketAddrV6`
